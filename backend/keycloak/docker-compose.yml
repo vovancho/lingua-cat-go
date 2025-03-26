@@ -1,0 +1,51 @@
+services:
+    lcg-keycloak-postgresql:
+        image: postgres:17.2-alpine
+        environment:
+            POSTGRES_USER: keycloak
+            POSTGRES_PASSWORD_FILE: /run/secrets/keycloak_db_password
+            POSTGRES_DB: keycloak
+        volumes:
+            - keycloak-postgres:/var/lib/postgresql/data
+        secrets:
+            - keycloak_db_password
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.keycloak-postgres.rule=Host(`keycloak-postgres.localhost`)
+            - traefik.http.routers.api.entryPoints=web
+            - traefik.http.services.keycloak-postgres.loadbalancer.server.port=5432
+            
+    lcg-keycloak:
+        image: quay.io/keycloak/keycloak:26.0
+        environment:
+            KC_DB: postgres
+            KC_DB_URL_HOST: lcg-keycloak-postgresql
+            KC_DB_URL_DATABASE: keycloak
+            KC_DB_USERNAME: keycloak
+            KC_DB_PASSWORD: secret
+            KEYCLOAK_ADMIN: admin
+            KEYCLOAK_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 80
+#            KC_LOG_LEVEL: ALL
+        depends_on:
+            - lcg-keycloak-postgresql
+        command: start-dev
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.keycloak.entrypoints=web
+            - traefik.http.routers.keycloak.rule=Host(`keycloak.localhost`)
+#            - traefik.http.routers.keycloak.rule=Host(`localhost`) && PathPrefix(`/keycloak`)
+#            - traefik.http.middlewares.keycloak-redirect.replacePath.path=/
+#            - traefik.http.middlewares.keycloak-redirect.replacePathRegex.regex=^/keycloak/(.*)
+#            - traefik.http.middlewares.keycloak-redirect.replacePathRegex.replacement=/$${1}
+#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.regex=^(https?://)localhost/keycloak/(.*)$$
+#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.replacement=$${1}localhost/$${2}
+#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.permanent=true
+#            - traefik.http.routers.keycloak.middlewares=keycloak-redirect
+#            - traefik.http.middlewares.keycloak-strip.stripprefix.prefixes=/keycloak
+#            - traefik.http.routers.keycloak.middlewares=keycloak-strip
+#            - traefik.http.services.keycloak.loadbalancer.server.url=http://lcg-keycloak/
+            - traefik.http.services.keycloak.loadbalancer.server.port=80
+
+volumes:
+    keycloak-postgres:

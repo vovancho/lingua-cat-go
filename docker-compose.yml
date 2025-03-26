@@ -1,0 +1,23 @@
+include:
+    - backend/keycloak/docker-compose.yml
+    - backend/api/docker-compose.yml
+
+services:
+    lcg-traefik:
+        image: traefik:3.2.3
+        command:
+            --api.insecure=true
+            --providers.docker=true
+            --providers.docker.exposedByDefault=false
+            --entryPoints.web.address=:80
+        ports:
+            - "80:80"
+#            - "8080:8080"
+        volumes:
+            - //var/run/docker.sock:/var/run/docker.sock:ro
+        labels:
+            - traefik.enable=true
+
+secrets:
+    keycloak_db_password:
+        file: ./docker/secrets/backend_keycloak_db_password

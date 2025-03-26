@@ -1,0 +1,68 @@
+
+
+
+
+
+
+
+
+
+
+
+POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/auth
+
+###
+
+
+
+POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+grant_type=client_credentials&scope=openid&client_id=lingua-cat-go&client_secret=lsb2JfgG7RE2FmbDOLPTnIpinuLYUmyv
+
+###
+
+# {
+#   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ3c1A2RW9SZUFYYlRmWTZBMTU3NEt4SFdPZlZXUTJwNTN3eEtIUjR2N0VFIn0.eyJleHAiOjE3NDI5NjQ1ODUsImlhdCI6MTc0Mjk2NDI4NSwianRpIjoiYTJjYWU5YTQtNGIwOS00MjVkLWE0NzYtMThjMDI0YjI5ZTFhIiwiaXNzIjoiaHR0cDovL2tleWNsb2FrLmxvY2FsaG9zdC9yZWFsbXMvbGluZ3VhLWNhdC1nbyIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIwMmYzNmI3NC02MWE2LTRhZjYtOWI5Mi1lM2JjY2NhZDY3ZTIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJsaW5ndWEtY2F0LWdvIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyJodHRwOi8vbGluZ3VhLWNhdC1nby5sb2NhbGhvc3QiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbGluZ3VhLWNhdC1nbyIsIm9mZmxpbmVfYWNjZXNzIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwiY2xpZW50SG9zdCI6IjE3Mi4yMi4wLjMiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC1saW5ndWEtY2F0LWdvIiwiY2xpZW50QWRkcmVzcyI6IjE3Mi4yMi4wLjMiLCJjbGllbnRfaWQiOiJsaW5ndWEtY2F0LWdvIn0.qbEDUstElxCFai67hyhB35wgq0nEZpeU5Wm9UxW0pyC82Tfm6PRxQ7Hq5ebohFyquxNCsebTC0DZpbfhQz9t-qXurhsBvrasvDDAj6YR4qppCIGtB4mm8jUDkr2nHwI055J2lf-BvfWU5JWnjrk8d7tZeclqdMdT9VCElvrXrnSKdJB2EMvKgTi-nNqhT3Hj_0V2bG-MkYYpZM95yf-gP3e1HeiqGgvLonSoBGhjiGmNMFAM9EIXINlUKyQFge-IUG1nhUdiRjhY7igWibhmRBBHpb3-DlOB_x-QaUolJyCzcXcgQ4OCqyMVZKPJH_iUkO3OftzGk7UNBlQL-YPsGA",
+#   "expires_in": 300,
+#   "refresh_expires_in": 0,
+#   "token_type": "Bearer",
+#   "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ3c1A2RW9SZUFYYlRmWTZBMTU3NEt4SFdPZlZXUTJwNTN3eEtIUjR2N0VFIn0.eyJleHAiOjE3NDI5NjQ1ODUsImlhdCI6MTc0Mjk2NDI4NSwianRpIjoiZDdmNTMzNTMtOWQ4Ni00OTAxLTg2YTctMTg0YWJiZjI0OWQzIiwiaXNzIjoiaHR0cDovL2tleWNsb2FrLmxvY2FsaG9zdC9yZWFsbXMvbGluZ3VhLWNhdC1nbyIsImF1ZCI6Imxpbmd1YS1jYXQtZ28iLCJzdWIiOiIwMmYzNmI3NC02MWE2LTRhZjYtOWI5Mi1lM2JjY2NhZDY3ZTIiLCJ0eXAiOiJJRCIsImF6cCI6Imxpbmd1YS1jYXQtZ28iLCJhdF9oYXNoIjoiRE5ZWFg5M2piSDlRTjZySTV3TVc0dyIsImFjciI6IjEiLCJjbGllbnRIb3N0IjoiMTcyLjIyLjAuMyIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LWxpbmd1YS1jYXQtZ28iLCJjbGllbnRBZGRyZXNzIjoiMTcyLjIyLjAuMyIsImNsaWVudF9pZCI6Imxpbmd1YS1jYXQtZ28ifQ.UTCYj_3CMY7baHEKL08M3OJGHbIQ8o-7zYXwB-IfoY2Wtrp0mQHENAMt8GHllSlA5dy63G-ZDvtd0Zpg7pxO_KaQqpq32JH2sHNdaHWr94plJ3crmJxH4WCj_L7lJ0WKCDWj46bXZN5A07EutPk9iTModdg4dj0SQxkeZsivo30266D2glZGryBmT68cW2Tcbe07yicxhLCHJ9nQ35UMifMzHjiYUKLuka2JlWhftlW3LQO9fw25sTiHO-6qodb4m-sk1g1bhgnkfNm4c_qPJQESNIRRJoEUlpRzt-0m4KxWtqsBNtlG9pMMZC7bvLvAn1Z5NMCOj1w7zDIOyCgOrQ",
+#   "not-before-policy": 0,
+#   "scope": "openid profile email"
+# }
+
+
+# http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/auth?client_id=account-console&redirect_uri=http%3A%2F%2Fkeycloak.localhost%2Frealms%2Flingua-cat-go%2Faccount%2F&state=e23979c6-1f8d-4220-8a3c-d63becb31909&response_mode=query&response_type=code&scope=openid&nonce=904ec333-e851-40ce-a8d9-88e72d78cbcf&code_challenge=IEcIynSnvRIVJcq-45nqBfwQMSmjs7FCd-Y2Gqw35xY&code_challenge_method=S256
+
+
+
+POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+grant_type=password&scope=openid&client_id=lingua-cat-go&client_secret=lsb2JfgG7RE2FmbDOLPTnIpinuLYUmyv&username=luke&password=password
+
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
