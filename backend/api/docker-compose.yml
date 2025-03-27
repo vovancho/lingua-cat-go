@@ -10,3 +10,8 @@ services:
         cap_add:
             - SYS_PTRACE
         command: /dlv --headless --listen=:40000 --api-version=2 exec /server
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.keycloak.entrypoints=web
+            - traefik.http.routers.keycloak.rule=Host(`api.lingua-cat-go.localhost`)
+            - traefik.http.services.keycloak.loadbalancer.server.port=80

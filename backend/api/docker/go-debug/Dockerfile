@@ -14,6 +14,9 @@ RUN go build -gcflags "all=-N -l" -o /server
 # Final stage
 FROM debian:buster
 
+RUN apt-get update -y
+RUN apt-get install -y libc6
+
 EXPOSE 8000 40000
 
 WORKDIR /
