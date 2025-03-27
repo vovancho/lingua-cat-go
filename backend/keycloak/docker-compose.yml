@@ -27,6 +27,8 @@ services:
             KEYCLOAK_ADMIN_PASSWORD: admin
             KC_HTTP_PORT: 80
 #            KC_LOG_LEVEL: ALL
+        volumes:
+            - ./keycloak-export:/tmp/keycloak-export
         depends_on:
             - lcg-keycloak-postgresql
         command: start-dev
