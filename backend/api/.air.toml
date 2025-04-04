@@ -6,6 +6,7 @@ tmp_dir = "tmp"
   args_bin = [
     "--listen=0.0.0.0:2345",
     "--headless",
+    "--api-version=2",
     "--continue",
     "--accept-multiclient",
     "--",
