@@ -10,9 +10,12 @@ services:
             --providers.docker=true
             --providers.docker.exposedByDefault=false
             --entryPoints.web.address=:80
+            --entryPoints.web2.address=:8081
+            --entryPoints.web-debug.address=:2345
         ports:
             - "80:80"
-#            - "8080:8080"
+            - "2345:2345"
+            - "8081:8081"
         volumes:
             - //var/run/docker.sock:/var/run/docker.sock:ro
         labels:

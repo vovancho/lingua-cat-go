@@ -12,7 +12,7 @@ services:
         labels:
             - traefik.enable=true
             - traefik.http.routers.keycloak-postgres.rule=Host(`keycloak-postgres.localhost`)
-            - traefik.http.routers.api.entryPoints=web
+            - traefik.http.routers.keycloak-postgres.entryPoints=web
             - traefik.http.services.keycloak-postgres.loadbalancer.server.port=5432
             
     lcg-keycloak:

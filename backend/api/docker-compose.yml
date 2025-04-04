@@ -2,16 +2,20 @@ services:
     lcg-api-debug:
         build:
             dockerfile: docker/go-debug/Dockerfile
-        ports:
-            - "8000:8000"
-            - "40000:40000"
         security_opt:
             - "seccomp:unconfined"
         cap_add:
             - SYS_PTRACE
-        command: /dlv --headless --listen=:40000 --api-version=2 exec /server
+#        command: /dlv --headless --listen=:40000 --api-version=2 exec /server
+        volumes:
+            - ./:/app
         labels:
             - traefik.enable=true
-            - traefik.http.routers.keycloak.entrypoints=web
-            - traefik.http.routers.keycloak.rule=Host(`api.lingua-cat-go.localhost`)
-            - traefik.http.services.keycloak.loadbalancer.server.port=80
+            - traefik.http.routers.lcg-api.entrypoints=web
+            - traefik.http.routers.lcg-api.service=lcg-api
+            - traefik.http.routers.lcg-api.rule=Host(`api.lingua-cat-go.localhost`)
+            - traefik.http.services.lcg-api.loadbalancer.server.port=80
+            - traefik.http.routers.lcg-api-debug.entrypoints=web-debug
+            - traefik.http.routers.lcg-api-debug.service=lcg-api-debug
+            - traefik.http.routers.lcg-api-debug.rule=Host(`api.lingua-cat-go.localhost`)
+            - traefik.http.services.lcg-api-debug.loadbalancer.server.port=2345
