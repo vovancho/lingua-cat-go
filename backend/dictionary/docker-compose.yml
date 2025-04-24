@@ -9,6 +9,8 @@ services:
             - traefik.http.routers.lcg-dictionary-backend.entrypoints=web
             - traefik.http.routers.lcg-dictionary-backend.service=lcg-dictionary-backend
             - traefik.http.routers.lcg-dictionary-backend.rule=Host(`api.lingua-cat-go.localhost`) && PathPrefix(`/dictionary/`)
+            - traefik.http.routers.lcg-dictionary-backend.middlewares=strip-dictionary-prefix
+            - traefik.http.middlewares.strip-dictionary-prefix.stripprefix.prefixes=/dictionary
             - traefik.http.services.lcg-dictionary-backend.loadbalancer.server.port=80
         entrypoint: go run app/main.go
         depends_on:

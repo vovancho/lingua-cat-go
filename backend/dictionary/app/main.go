@@ -1,23 +1,60 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
+	"github.com/joho/godotenv"
+	_dictionaryHttpDelivery "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+	_dictionaryRepo "github.com/vovancho/lingua-cat-go/dictionary/dictionary/repository/postgres"
+	_dictionaryUcase "github.com/vovancho/lingua-cat-go/dictionary/dictionary/usecase"
+	"log/slog"
 	"net/http"
+	"os"
+	"time"
+
+	_ "github.com/lib/pq"
 )
 
-func main() {
-	// Set the flags for the logging package to give us the filename in the logs
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		slog.Error("Error loading .env file, using default config")
+	}
+}
 
-	log.Println("starting server...")
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintln(w, `Hello, visitor!`)
-	})
-	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintln(w, `Hello, test12 visitor!`)
-	})
-	log.Fatal(http.ListenAndServe(":80", nil))
+func main() {
+	dbDsn := os.Getenv("DB_DSN")
+
+	slog.Warn("DB_DSN: ", "dbDsn", dbDsn)
+
+	dbConn, err := sql.Open(`postgres`, dbDsn)
+	if err != nil {
+		slog.Error(err.Error())
+	}
+	err = dbConn.Ping()
+	if err != nil {
+		slog.Error(err.Error())
+	}
+
+	defer func() {
+		err := dbConn.Close()
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	}()
+
+	router := http.NewServeMux()
+
+	dictionaryRepo := _dictionaryRepo.NewPostgresDictionaryRepository(dbConn)
+
+	timeoutContext := time.Duration(2) * time.Second
+	du := _dictionaryUcase.NewDictionaryUseCase(dictionaryRepo, timeoutContext)
+	_dictionaryHttpDelivery.NewDictionaryHandler(router, du)
+
+	server := http.Server{
+		Addr:    ":80",
+		Handler: router,
+	}
+	fmt.Println("Server is listening on port 80")
+	server.ListenAndServe()
 }

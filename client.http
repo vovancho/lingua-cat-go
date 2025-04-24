@@ -88,11 +88,21 @@ grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPb
 
 
 
+POST http://api.lingua-cat-go.localhost/dictionary/dictionary
+Content-Type: application/json
+Accept: application/json
 
+{
+  "lang": "en",
+  "name": "approve",
+  "type":  1
+}
 
+###
 
+GET http://api.lingua-cat-go.localhost/dictionary/
 
-
+###
 
 
 
