@@ -1,0 +1,34 @@
+services:
+    lcg-dictionary-backend:
+        image: golang:1.24-alpine3.21
+        volumes:
+            - ./:/app
+        working_dir: /app
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.lcg-dictionary-backend.entrypoints=web
+            - traefik.http.routers.lcg-dictionary-backend.service=lcg-dictionary-backend
+            - traefik.http.routers.lcg-dictionary-backend.rule=Host(`api.lingua-cat-go.localhost`) && PathPrefix(`/dictionary/`)
+            - traefik.http.services.lcg-dictionary-backend.loadbalancer.server.port=80
+        entrypoint: go run app/main.go
+        depends_on:
+            - lcg-dictionary-db
+
+    lcg-dictionary-db:
+        image: postgres:17.2-alpine
+        environment:
+            POSTGRES_USER: dictionary
+            POSTGRES_PASSWORD_FILE: /run/secrets/dictionary_db_password
+            POSTGRES_DB: dictionary
+        volumes:
+            - dictionary-db:/var/lib/postgresql/data
+        secrets:
+            - dictionary_db_password
+        labels:
+            - traefik.enable=true
+            - traefik.tcp.routers.lcg-dictionary-db.entrypoints=postgres
+            - traefik.tcp.routers.lcg-dictionary-db.service=lcg-dictionary-db
+            - traefik.tcp.routers.lcg-dictionary-db.rule=HostSNI(`*`)
+            - traefik.tcp.services.lcg-dictionary-db.loadbalancer.server.port=5432
+volumes:
+    dictionary-db:

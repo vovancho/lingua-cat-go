@@ -1,6 +1,7 @@
 include:
     - backend/keycloak/docker-compose.yml
-    - backend/api/docker-compose.yml
+    - backend/dictionary/docker-compose.yml
+#    - backend/api/docker-compose.yml
 
 services:
     lcg-traefik:
@@ -12,9 +13,11 @@ services:
             --entryPoints.web.address=:80
             --entryPoints.web2.address=:8081
             --entryPoints.web-debug.address=:2345
+            --entryPoints.postgres.address=:54321
         ports:
             - "80:80"
             - "2345:2345"
+            - "54321:54321" # dictionary-db
             - "8080:8080" # traefik dashboard
             - "8081:8081"
         volumes:
@@ -25,3 +28,5 @@ services:
 secrets:
     keycloak_db_password:
         file: ./docker/secrets/backend_keycloak_db_password
+    dictionary_db_password:
+        file: ./docker/secrets/backend_dictionary_db_password

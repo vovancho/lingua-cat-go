@@ -36,6 +36,10 @@ docker run --rm -v .\backend\example:/go golang:1.24-alpine3.21 go -C sync-wait-
 docker run --rm -v .\backend\example:/go golang:1.24-alpine3.21 go -C sync-wait-group run main.go
 docker run --rm -v .\backend\example:/go golang:1.24-alpine3.21 go -C sync-once run main.go
 
+---
+docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/dictionary
+
+
 
 
 
