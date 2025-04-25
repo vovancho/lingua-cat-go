@@ -2,21 +2,21 @@ CREATE TABLE public.dictionary
 (
     id         bigserial
         CONSTRAINT dictionary_pk PRIMARY KEY,
-    name       VARCHAR(255)            NOT NULL,
-    type       SMALLINT                NOT NULL,
-    lang       VARCHAR(2)              NOT NULL,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    lang       VARCHAR(2)              NOT NULL,
+    name       VARCHAR(255)            NOT NULL,
+    type       SMALLINT                NOT NULL
 );
 
 CREATE TABLE public.sentence
 (
     id         bigserial
         CONSTRAINT sentence_pk PRIMARY KEY,
-    text_ru    VARCHAR(255)            NOT NULL,
-    text_en    VARCHAR(255)            NOT NULL,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    text_ru    VARCHAR(255)            NOT NULL,
+    text_en    VARCHAR(255)            NOT NULL
 );
 
 CREATE TABLE public.dictionary_sentence
@@ -33,12 +33,12 @@ CREATE TABLE public.translation
 (
     id             bigserial
         CONSTRAINT translation_pk PRIMARY KEY,
+    created_at     TIMESTAMP DEFAULT NOW() NOT NULL,
+    deleted_at     TIMESTAMP,
     dictionary_id  bigint                  NOT NULL
         CONSTRAINT translation_dictionary_id_fk REFERENCES public.dictionary,
     translation_id bigint                  NOT NULL
         CONSTRAINT translation_dictionary_id_fk_2 REFERENCES public.dictionary,
-    created_at     TIMESTAMP DEFAULT NOW() NOT NULL,
-    deleted_at     TIMESTAMP,
     CONSTRAINT circular_reference_check CHECK (dictionary_id <> translation_id)
 );
 

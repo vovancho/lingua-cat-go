@@ -40,8 +40,10 @@ func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
 		DUseCase: d,
 	}
 
+	router.HandleFunc("GET /dictionary/{id}", handler.GetByID)
 	router.HandleFunc("POST /dictionary", handler.Store)
 	router.HandleFunc("POST /dictionary/{id}/name", handler.ChangeName)
+	router.HandleFunc("DELETE /dictionary/{id}", handler.Delete)
 	router.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
@@ -55,6 +57,35 @@ func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
 			return
 		}
 	})
+}
+
+func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	idString := r.PathValue("id")
+	id, err := strconv.ParseUint(idString, 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	dictionary, err := d.DUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(w, `{"message":"Failed to get dictionary"}`, http.StatusInternalServerError)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"message":    "Dictionary got successfully",
+		"dictionary": dictionary,
+	}); err != nil {
+		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
+
+		return
+	}
 }
 
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
@@ -144,6 +175,32 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(map[string]any{
 		"message": "Dictionary name changed successfully",
+	}); err != nil {
+		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
+
+		return
+	}
+}
+
+func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idString := r.PathValue("id")
+	id, err := strconv.ParseUint(idString, 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := d.DUseCase.Delete(r.Context(), id); err != nil {
+		slog.Error(err.Error())
+		http.Error(w, `{"message":"Failed to delete dictionary"}`, http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"message": "Dictionary deleted successfully",
 	}); err != nil {
 		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
 

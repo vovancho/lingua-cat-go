@@ -94,17 +94,17 @@ Accept: application/json
 
 {
   "lang": "en",
-  "name": "admit",
+  "name": "admit1",
   "type":  1,
   "translations": [
     {
       "lang": "ru",
-      "name": "поперек",
+      "name": "поперек1",
       "type":  1
     },
     {
       "lang": "ru",
-      "name": "сквозь",
+      "name": "сквозь1",
       "type":  1
     }
   ],
@@ -130,6 +130,20 @@ Accept: application/json
 {
   "name": "admitter"
 }
+
+###
+
+// @no-cookie-jar
+DELETE http://api.lingua-cat-go.localhost/dictionary/dictionary/1
+Content-Type: application/json
+Accept: application/json
+
+###
+
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/dictionary/dictionary/4
+Content-Type: application/json
+Accept: application/json
 
 ###
 

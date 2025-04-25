@@ -7,11 +7,10 @@ import (
 
 type Dictionary struct {
 	ID           uint64        `json:"id"`
+	DeletedAt    *time.Time    `json:"-"`
+	Lang         string        `json:"lang"`
 	Name         string        `json:"name"`
 	Type         uint16        `json:"type"`
-	Lang         string        `json:"lang"`
-	CreatedAt    time.Time     `json:"created_at"`
-	DeletedAt    *time.Time    `json:"deleted_at"`
 	Sentences    []Sentence    `json:"sentences"`
 	Translations []Translation `json:"translations"`
 }

@@ -19,8 +19,16 @@ type dictionaryUseCase struct {
 }
 
 func (d dictionaryUseCase) GetByID(ctx context.Context, id uint64) (domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
+	defer cancel()
+
+	dictionary, err := d.dictionaryRepo.GetByID(ctx, id)
+
+	if err != nil {
+		return dictionary, err
+	}
+
+	return dictionary, nil
 }
 
 func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (err error) {
@@ -44,16 +52,6 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id uint64, name strin
 func (d dictionaryUseCase) Delete(ctx context.Context, id uint64) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
-
-	existedDictionary, err := d.dictionaryRepo.GetByID(ctx, id)
-
-	if err != nil {
-		return
-	}
-
-	if existedDictionary.ID != id {
-		return domain.ErrNotFound
-	}
 
 	err = d.dictionaryRepo.Delete(ctx, id)
 
