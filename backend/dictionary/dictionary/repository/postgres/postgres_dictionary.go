@@ -13,6 +13,7 @@ const (
 	queryInsertTranslation        = `INSERT INTO translation (dictionary_id, translation_id) VALUES ($1, $2)`
 	queryInsertSentence           = `INSERT INTO sentence (text_ru, text_en) VALUES ($1, $2) RETURNING id`
 	queryInsertDictionarySentence = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES ($1, $2)`
+	queryUpdateDictionaryName     = `UPDATE dictionary set name = $1 WHERE id = $2 AND deleted_at IS NULL`
 )
 
 type postgresDictionaryRepository struct {
@@ -105,30 +106,12 @@ func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dicti
 }
 
 func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id uint64, name string) (err error) {
-	query := `UPDATE dictionary set name = ? WHERE id = ? AND deleted_at IS NULL`
-
-	stmt, err := p.Conn.PrepareContext(ctx, query)
-	if err != nil {
-		return
+	// Обновление текста словаря
+	if err := p.updateDictionaryName(ctx, p.Conn, id, name); err != nil {
+		return err
 	}
 
-	res, err := stmt.ExecContext(ctx, name, id)
-	if err != nil {
-		return
-	}
-
-	affect, err := res.RowsAffected()
-	if err != nil {
-		return
-	}
-
-	if affect != 1 {
-		err = fmt.Errorf("weird  Behavior. Total Affected: %d", affect)
-
-		return
-	}
-
-	return
+	return nil
 }
 
 func (p postgresDictionaryRepository) Delete(ctx context.Context, id uint64) (err error) {
@@ -228,6 +211,15 @@ func (p postgresDictionaryRepository) insertDictionarySentence(ctx context.Conte
 	if err != nil {
 		slog.Error("failed to insert dictionary_sentence", "error", err)
 		return fmt.Errorf("insert dictionary_sentence: %w", err)
+	}
+	return nil
+}
+
+func (p postgresDictionaryRepository) updateDictionaryName(ctx context.Context, db *sql.DB, dictID uint64, dictName string) error {
+	_, err := db.ExecContext(ctx, queryUpdateDictionaryName, dictName, dictID)
+	if err != nil {
+		slog.Error("failed to update dictionary name", "error", err)
+		return fmt.Errorf("update dictionary name: %w", err)
 	}
 	return nil
 }

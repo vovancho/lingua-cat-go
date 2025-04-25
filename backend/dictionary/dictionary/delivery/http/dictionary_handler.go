@@ -5,6 +5,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"log/slog"
 	"net/http"
+	"strconv"
 )
 
 type ResponseError struct {
@@ -30,12 +31,17 @@ type DictionaryStoreRequest struct {
 	} `json:"sentences"`
 }
 
+type DictionaryChangeNameRequest struct {
+	Name string `json:"name"`
+}
+
 func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
 	handler := &DictionaryHandler{
 		DUseCase: d,
 	}
 
 	router.HandleFunc("POST /dictionary", handler.Store)
+	router.HandleFunc("POST /dictionary/{id}/name", handler.ChangeName)
 	router.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
@@ -101,6 +107,43 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]any{
 		"message":    "Dictionary created successfully",
 		"dictionary": dictionary,
+	}); err != nil {
+		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
+
+		return
+	}
+}
+
+func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
+	var requestBody DictionaryChangeNameRequest
+
+	// Декодируем JSON из тела запроса в структуру
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&requestBody); err != nil {
+		http.Error(w, `{"message":"Invalid JSON format"}`, http.StatusBadRequest)
+
+		return
+	}
+	defer r.Body.Close()
+
+	idString := r.PathValue("id")
+	id, err := strconv.ParseUint(idString, 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := d.DUseCase.ChangeName(r.Context(), id, requestBody.Name); err != nil {
+		slog.Error(err.Error())
+		http.Error(w, `{"message":"Failed to change dictionary name"}`, http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"message": "Dictionary name changed successfully",
 	}); err != nil {
 		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
 

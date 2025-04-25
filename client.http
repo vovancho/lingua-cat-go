@@ -87,7 +87,7 @@ grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPb
 # }
 
 
-
+// @no-cookie-jar
 POST http://api.lingua-cat-go.localhost/dictionary/dictionary
 Content-Type: application/json
 Accept: application/json
@@ -118,6 +118,17 @@ Accept: application/json
       "text_ru": "Мальчик побежал через улицу"
     }
   ]
+}
+
+###
+
+// @no-cookie-jar
+POST http://api.lingua-cat-go.localhost/dictionary/dictionary/1/name
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "admitter"
 }
 
 ###
