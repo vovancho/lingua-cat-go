@@ -20,7 +20,7 @@ const (
 	queryGetTranslationsByDictionaryId           = `SELECT d.id, d.name, d.type, d.lang, d.deleted_at FROM dictionary d INNER JOIN translation t ON t.translation_id = d.id WHERE t.dictionary_id = $1 AND d.deleted_at IS NULL AND t.deleted_at IS NULL`
 	queryGetSentencesByDictionaryIds             = `SELECT s.id, s.text_ru, s.text_en, ds.dictionary_id FROM sentence s INNER JOIN dictionary_sentence ds ON ds.sentence_id = s.id WHERE ds.dictionary_id IN (%s) AND s.deleted_at IS NULL ORDER BY ds.dictionary_id, s.id`
 	queryGetDictionaryIdById                     = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
-	queryGetIdsOfTranslationDictionariesToDelete = `SELECT d.id FROM dictionary d INNER JOIN translation t ON d.id = t.translation_id WHERE t.dictionary_id = $1 AND d.deleted_at IS NULL AND NOT EXISTS ( SELECT 1 FROM translation t2 WHERE t2.translation_id = d.id AND t2.dictionary_id <> $1 AND t2.deleted_at IS NULL)`
+	queryGetIdsOfTranslationDictionariesToDelete = `SELECT d.id FROM dictionary d INNER JOIN translation t ON d.id = t.translation_id WHERE t.dictionary_id = $1 AND d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM translation t2 WHERE t2.translation_id = d.id AND t2.dictionary_id <> $1 AND t2.deleted_at IS NULL)`
 	queryDeleteTranslations                      = `UPDATE translation SET deleted_at = $1 WHERE dictionary_id IN (%s)`
 	queryDeleteSentences                         = `UPDATE sentence s SET deleted_at = $1 FROM dictionary_sentence ds WHERE ds.sentence_id = s.id AND ds.dictionary_id IN (%s)`
 	queryDeleteDictionaries                      = `UPDATE dictionary SET deleted_at = $1 WHERE id IN (%s)`
@@ -158,75 +158,35 @@ func (p postgresDictionaryRepository) Delete(ctx context.Context, id uint64) (er
 			}
 			return
 		}
-
 		if commitErr := tx.Commit(); commitErr != nil {
 			err = fmt.Errorf("failed to commit transaction: %w", commitErr)
 		}
 	}()
 
 	// Проверка существования словаря
-	var dictID uint64
-	err = tx.QueryRowContext(ctx, queryGetDictionaryIdById, id).Scan(&dictID)
-	if err == sql.ErrNoRows {
-		return fmt.Errorf("dictionary with id %d not found", id)
+	if err = p.checkDictionaryExists(ctx, tx, id); err != nil {
+		return err
 	}
+
+	// Получение ID словарей для удаления
+	dictIDs, err := p.getDictionariesToDelete(ctx, tx, id)
 	if err != nil {
-		slog.Error("failed to check dictionary existence", "error", err)
-		return fmt.Errorf("check dictionary existence: %w", err)
+		return err
 	}
 
-	// Получение переводов удаляемого словаря
-	rows, err := tx.QueryContext(ctx, queryGetIdsOfTranslationDictionariesToDelete, id)
-	if err != nil {
-		slog.Error("failed to get translations", "error", err)
-		return fmt.Errorf("get translations: %w", err)
-	}
-	defer rows.Close()
-
-	// Собираем ID словарей (основной + переводы)
-	dictIDs := []uint64{id}
-	for rows.Next() {
-		var transDictID uint64
-		if err := rows.Scan(&transDictID); err != nil {
-			slog.Error("failed to scan translation id", "error", err)
-			return fmt.Errorf("scan translation id: %w", err)
-		}
-		dictIDs = append(dictIDs, transDictID)
+	// Удаление переводов
+	if err = p.deleteTranslations(ctx, tx, dictIDs); err != nil {
+		return err
 	}
 
-	placeholders := make([]string, len(dictIDs))
-	args := make([]any, len(dictIDs)+1)
-	args[0] = time.Now()
-	for i, dictID2 := range dictIDs {
-		placeholders[i] = fmt.Sprintf("$%d", i+2)
-		args[i+1] = dictID2
+	// Удаление предложений
+	if err = p.deleteSentences(ctx, tx, dictIDs); err != nil {
+		return err
 	}
 
-	// Удаление переводов (основной + переводы)
-	query := fmt.Sprintf(queryDeleteTranslations, strings.Join(placeholders, ","))
-
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
-		slog.Error("failed to delete translation", "error", err)
-		return fmt.Errorf("delete translation: %w", err)
-	}
-
-	// Удаление предложений (основной + переводы)
-	query2 := fmt.Sprintf(queryDeleteSentences, strings.Join(placeholders, ","))
-
-	_, err = tx.ExecContext(ctx, query2, args...)
-	if err != nil {
-		slog.Error("failed to delete sentences", "error", err)
-		return fmt.Errorf("delete sentences: %w", err)
-	}
-
-	// Удаление словарей (основной + переводы)
-	query3 := fmt.Sprintf(queryDeleteDictionaries, strings.Join(placeholders, ","))
-
-	_, err = tx.ExecContext(ctx, query3, args...)
-	if err != nil {
-		slog.Error("failed to delete dictionary", "error", err)
-		return fmt.Errorf("delete dictionary: %w", err)
+	// Удаление словарей
+	if err = p.deleteDictionaries(ctx, tx, dictIDs); err != nil {
+		return err
 	}
 
 	return nil
@@ -355,4 +315,105 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 		return nil, fmt.Errorf("iterate sentences rows: %w", err)
 	}
 	return sentencesMap, nil
+}
+
+// checkDictionaryExists проверяет существование словаря
+func (p postgresDictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sql.Tx, id uint64) error {
+	var dictID uint64
+	err := tx.QueryRowContext(ctx, queryGetDictionaryIdById, id).Scan(&dictID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("dictionary with id %d not found", id)
+	}
+	if err != nil {
+		slog.Error("failed to check dictionary existence", "error", err)
+		return fmt.Errorf("check dictionary existence: %w", err)
+	}
+	return nil
+}
+
+// getDictionariesToDelete получает ID словарей для удаления
+func (p postgresDictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sql.Tx, id uint64) ([]uint64, error) {
+	rows, err := tx.QueryContext(ctx, queryGetIdsOfTranslationDictionariesToDelete, id)
+	if err != nil {
+		slog.Error("failed to get translations", "error", err)
+		return nil, fmt.Errorf("get translations: %w", err)
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			slog.Error("failed to close rows", "error", closeErr)
+		}
+	}()
+
+	var dictIDs []uint64
+	for rows.Next() {
+		var transDictID uint64
+		if err := rows.Scan(&transDictID); err != nil {
+			slog.Error("failed to scan translation id", "error", err)
+			return nil, fmt.Errorf("scan translation id: %w", err)
+		}
+		dictIDs = append(dictIDs, transDictID)
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("error iterating rows", "error", err)
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
+	dictIDs = append(dictIDs, id) // Добавляем основной словарь
+	return dictIDs, nil
+}
+
+// deleteTranslations удаляет переводы
+func (p postgresDictionaryRepository) deleteTranslations(ctx context.Context, tx *sql.Tx, dictIDs []uint64) error {
+	if len(dictIDs) == 0 {
+		return nil
+	}
+	placeholders, args := p.preparePlaceholdersAndArgs(dictIDs, time.Now())
+	query := fmt.Sprintf(queryDeleteTranslations, strings.Join(placeholders, ","))
+	_, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		slog.Error("failed to delete translations", "error", err)
+		return fmt.Errorf("delete translations: %w", err)
+	}
+	return nil
+}
+
+// deleteSentences удаляет предложения
+func (p postgresDictionaryRepository) deleteSentences(ctx context.Context, tx *sql.Tx, dictIDs []uint64) error {
+	if len(dictIDs) == 0 {
+		return nil
+	}
+	placeholders, args := p.preparePlaceholdersAndArgs(dictIDs, time.Now())
+	query := fmt.Sprintf(queryDeleteSentences, strings.Join(placeholders, ","))
+	_, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		slog.Error("failed to delete sentences", "error", err)
+		return fmt.Errorf("delete sentences: %w", err)
+	}
+	return nil
+}
+
+// deleteDictionaries удаляет словари
+func (p postgresDictionaryRepository) deleteDictionaries(ctx context.Context, tx *sql.Tx, dictIDs []uint64) error {
+	if len(dictIDs) == 0 {
+		return nil
+	}
+	placeholders, args := p.preparePlaceholdersAndArgs(dictIDs, time.Now())
+	query := fmt.Sprintf(queryDeleteDictionaries, strings.Join(placeholders, ","))
+	_, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		slog.Error("failed to delete dictionaries", "error", err)
+		return fmt.Errorf("delete dictionaries: %w", err)
+	}
+	return nil
+}
+
+// preparePlaceholdersAndArgs подготавливает placeholders и args
+func (p postgresDictionaryRepository) preparePlaceholdersAndArgs(ids []uint64, timestamp time.Time) ([]string, []any) {
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids)+1)
+	args[0] = timestamp
+	for i, id := range ids {
+		placeholders[i] = fmt.Sprintf("$%d", i+2)
+		args[i+1] = id
+	}
+	return placeholders, args
 }

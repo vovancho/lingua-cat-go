@@ -94,17 +94,17 @@ Accept: application/json
 
 {
   "lang": "en",
-  "name": "admit1",
+  "name": "admit",
   "type":  1,
   "translations": [
     {
       "lang": "ru",
-      "name": "поперек1",
+      "name": "поперек",
       "type":  1
     },
     {
       "lang": "ru",
-      "name": "сквозь1",
+      "name": "сквозь",
       "type":  1
     }
   ],
