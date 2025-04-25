@@ -8,6 +8,13 @@ import (
 	"log/slog"
 )
 
+const (
+	queryInsertDictionary         = `INSERT INTO dictionary (lang, name, type) VALUES ($1, $2, $3) RETURNING id`
+	queryInsertTranslation        = `INSERT INTO translation (dictionary_id, translation_id) VALUES ($1, $2)`
+	queryInsertSentence           = `INSERT INTO sentence (text_ru, text_en) VALUES ($1, $2) RETURNING id`
+	queryInsertDictionarySentence = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES ($1, $2)`
+)
+
 type postgresDictionaryRepository struct {
 	Conn *sql.DB
 }
@@ -32,24 +39,67 @@ func (p postgresDictionaryRepository) GetByID(ctx context.Context, id uint64) (r
 }
 
 func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) (err error) {
-	query := `INSERT INTO dictionary (lang, name, type) VALUES ($1, $2, $3) RETURNING id`
-	stmt, err := p.Conn.PrepareContext(ctx, query)
+	tx, err := p.Conn.BeginTx(ctx, nil)
 	if err != nil {
-		slog.Error("Failed to prepare statement", "error", err)
-
-		return
+		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer stmt.Close()
 
-	var lastID int64
-	err = stmt.QueryRowContext(ctx, d.Lang, d.Name, d.Type).Scan(&lastID)
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				err = fmt.Errorf("failed to rollback transaction: %v; original error: %w", rollbackErr, err)
+			}
+			return
+		}
+		// Если ошибок нет, коммитим транзакцию
+		if commitErr := tx.Commit(); commitErr != nil {
+			err = fmt.Errorf("failed to commit transaction: %w", commitErr)
+		}
+	}()
+
+	// Вставка основного словаря
+	dictID, err := p.insertDictionary(ctx, tx, d)
 	if err != nil {
-		slog.Error("Failed to execute query", "error", err)
-
 		return err
 	}
+	d.ID = uint64(dictID)
 
-	d.ID = uint64(lastID)
+	// Вставка переводов
+	for i := range d.Translations {
+		transDictID, err := p.insertDictionary(ctx, tx, &d.Translations[i].Dictionary)
+		if err != nil {
+			return err
+		}
+		d.Translations[i].Dictionary.ID = uint64(transDictID)
+
+		// Вставка связей переводов (в обе стороны)
+		if err := p.insertTranslation(ctx, tx, d.ID, d.Translations[i].Dictionary.ID); err != nil {
+			return err
+		}
+		if err := p.insertTranslation(ctx, tx, d.Translations[i].Dictionary.ID, d.ID); err != nil {
+			return err
+		}
+	}
+
+	// Вставка предложений
+	for i := range d.Sentences {
+		sentenceID, err := p.insertSentence(ctx, tx, &d.Sentences[i])
+		if err != nil {
+			return err
+		}
+
+		// Вставка связей для основного словаря
+		if err := p.insertDictionarySentence(ctx, tx, d.ID, sentenceID); err != nil {
+			return err
+		}
+
+		// Вставка связей для переводов
+		for _, trans := range d.Translations {
+			if err := p.insertDictionarySentence(ctx, tx, trans.Dictionary.ID, sentenceID); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
@@ -142,4 +192,42 @@ func (p postgresDictionaryRepository) fetch(ctx context.Context, query string, a
 	}
 
 	return result, nil
+}
+
+func (p postgresDictionaryRepository) insertDictionary(ctx context.Context, tx *sql.Tx, d *domain.Dictionary) (int64, error) {
+	var id int64
+	err := tx.QueryRowContext(ctx, queryInsertDictionary, d.Lang, d.Name, d.Type).Scan(&id)
+	if err != nil {
+		slog.Error("failed to insert dictionary", "error", err)
+		return 0, fmt.Errorf("insert dictionary: %w", err)
+	}
+	return id, nil
+}
+
+func (p postgresDictionaryRepository) insertTranslation(ctx context.Context, tx *sql.Tx, dictID, transID uint64) error {
+	_, err := tx.ExecContext(ctx, queryInsertTranslation, dictID, transID)
+	if err != nil {
+		slog.Error("failed to insert translation", "error", err)
+		return fmt.Errorf("insert translation: %w", err)
+	}
+	return nil
+}
+
+func (p postgresDictionaryRepository) insertSentence(ctx context.Context, tx *sql.Tx, s *domain.Sentence) (int64, error) {
+	var id int64
+	err := tx.QueryRowContext(ctx, queryInsertSentence, s.TextRU, s.TextEN).Scan(&id)
+	if err != nil {
+		slog.Error("failed to insert sentence", "error", err)
+		return 0, fmt.Errorf("insert sentence: %w", err)
+	}
+	return id, nil
+}
+
+func (p postgresDictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sql.Tx, dictID uint64, sentenceID int64) error {
+	_, err := tx.ExecContext(ctx, queryInsertDictionarySentence, dictID, sentenceID)
+	if err != nil {
+		slog.Error("failed to insert dictionary_sentence", "error", err)
+		return fmt.Errorf("insert dictionary_sentence: %w", err)
+	}
+	return nil
 }

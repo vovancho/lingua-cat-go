@@ -15,6 +15,21 @@ type DictionaryHandler struct {
 	DUseCase domain.DictionaryUseCase
 }
 
+type DictionaryStoreRequest struct {
+	Lang         string `json:"lang"`
+	Name         string `json:"name"`
+	Type         uint16 `json:"type"`
+	Translations []struct {
+		Lang string `json:"lang"`
+		Name string `json:"name"`
+		Type uint16 `json:"type"`
+	} `json:"translations"`
+	Sentences []struct {
+		TextRU string `json:"text_ru"`
+		TextEN string `json:"text_en"`
+	} `json:"sentences"`
+}
+
 func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
 	handler := &DictionaryHandler{
 		DUseCase: d,
@@ -37,16 +52,42 @@ func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
 }
 
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
-	var dictionary domain.Dictionary
+	var requestBody DictionaryStoreRequest
 
 	// Декодируем JSON из тела запроса в структуру
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&dictionary); err != nil {
+	if err := decoder.Decode(&requestBody); err != nil {
 		http.Error(w, `{"message":"Invalid JSON format"}`, http.StatusBadRequest)
 
 		return
 	}
 	defer r.Body.Close()
+
+	dictionary := domain.Dictionary{
+		Name: requestBody.Name,
+		Type: requestBody.Type,
+		Lang: requestBody.Lang,
+	}
+
+	for _, s := range requestBody.Sentences {
+		sentence := domain.Sentence{
+			TextRU: s.TextRU, // Русский перевод
+			TextEN: s.TextEN, // Английский текст
+		}
+		dictionary.Sentences = append(dictionary.Sentences, sentence)
+	}
+
+	for _, t := range requestBody.Translations {
+		transDict := domain.Dictionary{
+			Name: t.Name,
+			Type: t.Type,
+			Lang: t.Lang,
+		}
+		translation := domain.Translation{
+			Dictionary: transDict,
+		}
+		dictionary.Translations = append(dictionary.Translations, translation)
+	}
 
 	if err := d.DUseCase.Store(r.Context(), &dictionary); err != nil {
 		slog.Error(err.Error())

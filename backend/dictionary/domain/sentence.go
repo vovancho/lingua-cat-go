@@ -1,7 +1,7 @@
 package domain
 
 type Sentence struct {
-	id          uint64
-	Text        string `json:"text"`
-	Translation string `json:"translation"`
+	id     uint64
+	TextRU string `json:"text_ru"`
+	TextEN string `json:"text_en"`
 }

@@ -94,8 +94,30 @@ Accept: application/json
 
 {
   "lang": "en",
-  "name": "approve",
-  "type":  1
+  "name": "admit",
+  "type":  1,
+  "translations": [
+    {
+      "lang": "ru",
+      "name": "поперек",
+      "type":  1
+    },
+    {
+      "lang": "ru",
+      "name": "сквозь",
+      "type":  1
+    }
+  ],
+  "sentences": [
+    {
+      "text_en": "There is a forest across the river",
+      "text_ru": "Через реку есть лес"
+    },
+    {
+      "text_en": "The boy ran across the street",
+      "text_ru": "Мальчик побежал через улицу"
+    }
+  ]
 }
 
 ###

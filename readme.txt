@@ -53,6 +53,7 @@ GROK:
 
 
 docker compose restart lcg-dictionary-backend
+docker compose logs -f lcg-dictionary-backend
 
 
 

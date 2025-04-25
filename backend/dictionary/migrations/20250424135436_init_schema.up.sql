@@ -11,14 +11,22 @@ CREATE TABLE public.dictionary
 
 CREATE TABLE public.sentence
 (
-    id            bigserial
+    id         bigserial
         CONSTRAINT sentence_pk PRIMARY KEY,
-    dictionary_id bigint                  NOT NULL
-        CONSTRAINT sentence_dictionary_id_fk REFERENCES public.dictionary,
-    text          VARCHAR(255)            NOT NULL,
-    translation   VARCHAR(255)            NOT NULL,
-    created_at    TIMESTAMP DEFAULT NOW() NOT NULL,
-    deleted_at    TIMESTAMP
+    text_ru    VARCHAR(255)            NOT NULL,
+    text_en    VARCHAR(255)            NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMP
+);
+
+CREATE TABLE public.dictionary_sentence
+(
+    id            bigserial,
+    dictionary_id bigint NOT NULL
+        CONSTRAINT dictionary_sentence_dictionary_id_fk REFERENCES public.dictionary,
+    sentence_id   bigint NOT NULL
+        CONSTRAINT dictionary_sentence_sentence_id_fk REFERENCES public.sentence,
+    CONSTRAINT dictionary_sentence_pk UNIQUE (sentence_id, dictionary_id)
 );
 
 CREATE TABLE public.translation
