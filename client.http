@@ -100,12 +100,12 @@ Accept: application/json
     {
       "lang": "ru",
       "name": "поперек",
-      "type":  12
+      "type":  1
     },
     {
       "lang": "ru",
       "name": "сквозь",
-      "type":  14
+      "type":  1
     }
   ],
   "sentences": [

@@ -10,13 +10,19 @@ import (
 	"strconv"
 )
 
-type ResponseError struct {
-	Message string `json:"message"`
+type APIResponse struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
 }
 
 type ValidationError struct {
 	Message string            `json:"message"`
 	Errors  map[string]string `json:"errors"`
+}
+
+func (ve ValidationError) Error() string {
+	return ve.Message
 }
 
 func newValidationError(err error) ValidationError {
@@ -126,78 +132,30 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
 
-	// Декодируем JSON из тела запроса в структуру
-	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON format", nil)
-		return
-	}
-	defer r.Body.Close()
-
-	validate := validator.New()
-	if err := validate.Struct(requestBody); err != nil {
-		respondWithValidationError(w, newValidationError(err))
+	if err := validateRequest(r, &requestBody); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
 		return
 	}
 
-	dictionary := domain.Dictionary{
-		Name: requestBody.Name,
-		Type: requestBody.Type,
-		Lang: requestBody.Lang,
-	}
+	dictionary := mapStoreRequestToDomain(requestBody)
 
-	for _, s := range requestBody.Sentences {
-		sentence := domain.Sentence{
-			TextRU: s.TextRU, // Русский перевод
-			TextEN: s.TextEN, // Английский текст
-		}
-		dictionary.Sentences = append(dictionary.Sentences, sentence)
-	}
-
-	for _, t := range requestBody.Translations {
-		transDict := domain.Dictionary{
-			Name: t.Name,
-			Type: t.Type,
-			Lang: t.Lang,
-		}
-		translation := domain.Translation{
-			Dictionary: transDict,
-		}
-		dictionary.Translations = append(dictionary.Translations, translation)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
 	if err := d.DUseCase.Store(r.Context(), &dictionary); err != nil {
 		slog.Error(err.Error())
-		http.Error(w, `{"message":"Failed to store dictionary"}`, http.StatusInternalServerError)
-
+		respondWithError(w, http.StatusInternalServerError, "Failed to store dictionary", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-
-	if err := json.NewEncoder(w).Encode(map[string]any{
-		"message":    "Dictionary created successfully",
-		"dictionary": dictionary,
-	}); err != nil {
-		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, APIResponse{
+		Message: "Dictionary created successfully",
+		Data:    dictionary,
+	})
 }
 
 func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryChangeNameRequest
 
-	// Декодируем JSON из тела запроса в структуру
-	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON format", nil)
-		return
-	}
-	defer r.Body.Close()
-
-	validate := validator.New()
-	if err := validate.Struct(requestBody); err != nil {
-		respondWithValidationError(w, newValidationError(err))
+	if err := validateRequest(r, &requestBody); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
 		return
 	}
 
@@ -210,21 +168,13 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 
 	if err := d.DUseCase.ChangeName(r.Context(), domain.DictionaryID(id), requestBody.Name); err != nil {
 		slog.Error(err.Error())
-		http.Error(w, `{"message":"Failed to change dictionary name"}`, http.StatusInternalServerError)
-
+		respondWithError(w, http.StatusInternalServerError, "Failed to change dictionary name", err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(map[string]any{
-		"message": "Dictionary name changed successfully",
-	}); err != nil {
-		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, APIResponse{
+		Message: "Dictionary name changed successfully",
+	})
 }
 
 func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -269,8 +219,54 @@ func respondWithError(w http.ResponseWriter, code int, message string, err error
 	json.NewEncoder(w).Encode(response)
 }
 
-func respondWithValidationError(w http.ResponseWriter, ve ValidationError) {
+func validateRequest[T any](r *http.Request, req *T) error {
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return fmt.Errorf("invalid JSON format: %w", err)
+	}
+	defer r.Body.Close()
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		return newValidationError(err)
+	}
+
+	return nil
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnprocessableEntity)
-	json.NewEncoder(w).Encode(ve)
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
+	}
+}
+
+func mapStoreRequestToDomain(req DictionaryStoreRequest) domain.Dictionary {
+	dictionary := domain.Dictionary{
+		Name: req.Name,
+		Type: req.Type,
+		Lang: req.Lang,
+	}
+
+	for _, s := range req.Sentences {
+		sentence := domain.Sentence{
+			TextRU: s.TextRU, // Русский перевод
+			TextEN: s.TextEN, // Английский текст
+		}
+		dictionary.Sentences = append(dictionary.Sentences, sentence)
+	}
+
+	for _, t := range req.Translations {
+		transDict := domain.Dictionary{
+			Name: t.Name,
+			Type: t.Type,
+			Lang: t.Lang,
+		}
+		translation := domain.Translation{
+			Dictionary: transDict,
+		}
+		dictionary.Translations = append(dictionary.Translations, translation)
+	}
+
+	return dictionary
 }
