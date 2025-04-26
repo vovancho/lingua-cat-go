@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
 	"os"
@@ -50,7 +51,7 @@ func main() {
 
 	timeoutContext := time.Duration(2) * time.Second
 	du := _dictionaryUcase.NewDictionaryUseCase(dictionaryRepo, timeoutContext)
-	_dictionaryHttpDelivery.NewDictionaryHandler(router, du)
+	_dictionaryHttpDelivery.NewDictionaryHandler(router, validator.New(), du)
 
 	server := http.Server{
 		Addr:    ":80",

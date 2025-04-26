@@ -54,7 +54,8 @@ func newValidationError(err error) ValidationError {
 }
 
 type DictionaryHandler struct {
-	DUseCase domain.DictionaryUseCase
+	DUseCase  domain.DictionaryUseCase
+	validator *validator.Validate
 }
 
 type DictionaryStoreRequest struct {
@@ -76,28 +77,16 @@ type DictionaryChangeNameRequest struct {
 	Name string `json:"name" validate:"required,min=2"`
 }
 
-func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
+func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain.DictionaryUseCase) {
 	handler := &DictionaryHandler{
-		DUseCase: d,
+		DUseCase:  d,
+		validator: v,
 	}
 
 	router.HandleFunc("GET /dictionary/{id}", handler.GetByID)
 	router.HandleFunc("POST /dictionary", handler.Store)
 	router.HandleFunc("POST /dictionary/{id}/name", handler.ChangeName)
 	router.HandleFunc("DELETE /dictionary/{id}", handler.Delete)
-	router.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-
-		if err := json.NewEncoder(w).Encode(map[string]any{
-			"message": "success",
-			"host":    r.Host,
-			"path":    r.URL.Path,
-		}); err != nil {
-			http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-
-			return
-		}
-	})
 }
 
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -116,23 +105,16 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(map[string]any{
-		"message":    "Dictionary got successfully",
-		"dictionary": dictionary,
-	}); err != nil {
-		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-
-		return
-	}
+	respondWithJSON(w, http.StatusOK, APIResponse{
+		Message: "Dictionary got successfully",
+		Data:    dictionary,
+	})
 }
 
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
 
-	if err := validateRequest(r, &requestBody); err != nil {
+	if err := d.validateRequest(r, &requestBody); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
 		return
 	}
@@ -154,7 +136,7 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryChangeNameRequest
 
-	if err := validateRequest(r, &requestBody); err != nil {
+	if err := d.validateRequest(r, &requestBody); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
 		return
 	}
@@ -172,7 +154,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, APIResponse{
+	respondWithJSON(w, http.StatusOK, APIResponse{
 		Message: "Dictionary name changed successfully",
 	})
 }
@@ -192,16 +174,9 @@ func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(map[string]any{
-		"message": "Dictionary deleted successfully",
-	}); err != nil {
-		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-
-		return
-	}
+	respondWithJSON(w, http.StatusOK, APIResponse{
+		Message: "Dictionary deleted successfully",
+	})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string, err error) {
@@ -219,21 +194,20 @@ func respondWithError(w http.ResponseWriter, code int, message string, err error
 	json.NewEncoder(w).Encode(response)
 }
 
-func validateRequest[T any](r *http.Request, req *T) error {
+func (d *DictionaryHandler) validateRequest(r *http.Request, req any) error {
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return fmt.Errorf("invalid JSON format: %w", err)
 	}
 	defer r.Body.Close()
 
-	validate := validator.New()
-	if err := validate.Struct(req); err != nil {
+	if err := d.validator.Struct(req); err != nil {
 		return newValidationError(err)
 	}
 
 	return nil
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
