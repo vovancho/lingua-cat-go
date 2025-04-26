@@ -10,22 +10,6 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 
-const (
-	queryInsertDictionary                        = `INSERT INTO dictionary (lang, name, type) VALUES (:lang, :name, :type) RETURNING id`
-	queryInsertTranslation                       = `INSERT INTO translation (dictionary_id, translation_id) VALUES (:dictionary_id, :translation_id)`
-	queryInsertSentence                          = `INSERT INTO sentence (text_ru, text_en) VALUES (:text_ru, :text_en) RETURNING id`
-	queryInsertDictionarySentence                = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES (:dictionary_id, :sentence_id)`
-	queryUpdateDictionaryName                    = `UPDATE dictionary SET name = :name WHERE id = :id AND deleted_at IS NULL`
-	queryGetDictionaryById                       = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
-	queryGetTranslationsByDictionaryId           = `SELECT t.id, t.deleted_at, d.id AS "dictionary.id", d.name AS "dictionary.name", d.type AS "dictionary.type", d.lang AS "dictionary.lang", d.deleted_at AS "dictionary.deleted_at" FROM dictionary d INNER JOIN translation t ON t.translation_id = d.id WHERE t.dictionary_id = $1 AND d.deleted_at IS NULL AND t.deleted_at IS NULL`
-	queryGetSentencesByDictionaryIds             = `SELECT s.id, s.text_ru, s.text_en, ds.dictionary_id FROM sentence s INNER JOIN dictionary_sentence ds ON ds.sentence_id = s.id WHERE ds.dictionary_id IN (?) AND s.deleted_at IS NULL ORDER BY ds.dictionary_id, s.id`
-	queryGetDictionaryIdById                     = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
-	queryGetIdsOfTranslationDictionariesToDelete = `SELECT d.id FROM dictionary d INNER JOIN translation t ON d.id = t.translation_id WHERE t.dictionary_id = $1 AND d.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM translation t2 WHERE t2.translation_id = d.id AND t2.dictionary_id <> $1 AND t2.deleted_at IS NULL)`
-	queryDeleteTranslations                      = `UPDATE translation SET deleted_at = ? WHERE dictionary_id IN (?)`
-	queryDeleteSentences                         = `UPDATE sentence s SET deleted_at = ? FROM dictionary_sentence ds WHERE ds.sentence_id = s.id AND ds.dictionary_id IN (?)`
-	queryDeleteDictionaries                      = `UPDATE dictionary SET deleted_at = ? WHERE id IN (?)`
-)
-
 type postgresDictionaryRepository struct {
 	Conn *sqlx.DB
 }
@@ -37,6 +21,7 @@ func NewPostgresDictionaryRepository(conn *sqlx.DB) domain.DictionaryRepository 
 // GetByID возвращает словарь по ID с переводами и предложениями
 func (p postgresDictionaryRepository) GetByID(ctx context.Context, id uint64) (dict domain.Dictionary, err error) {
 	// Получаем основной словарь
+	const queryGetDictionaryById = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
 	if err = p.Conn.GetContext(ctx, &dict, queryGetDictionaryById, id); err != nil {
 		if err == sql.ErrNoRows {
 			return domain.Dictionary{}, fmt.Errorf("dictionary not found: %w", err)
@@ -46,7 +31,21 @@ func (p postgresDictionaryRepository) GetByID(ctx context.Context, id uint64) (d
 
 	// Получаем переводы
 	var translations []domain.Translation
-	if err = p.Conn.SelectContext(ctx, &translations, queryGetTranslationsByDictionaryId, id); err != nil {
+	const queryTranslationsByDictId = `
+		SELECT t.id,
+		       t.deleted_at,
+		       d.id   AS "dictionary.id",
+		       d.name AS "dictionary.name",
+		       d.type AS "dictionary.type",
+		       d.lang AS "dictionary.lang",
+		       d.deleted_at AS "dictionary.deleted_at"
+		FROM dictionary d
+		INNER JOIN translation t ON t.translation_id = d.id
+		WHERE t.dictionary_id = $1
+		  AND d.deleted_at IS NULL
+		  AND t.deleted_at IS NULL`
+
+	if err = p.Conn.SelectContext(ctx, &translations, queryTranslationsByDictId, id); err != nil {
 		return domain.Dictionary{}, fmt.Errorf("get translations: %w", err)
 	}
 	dict.Translations = translations
@@ -140,6 +139,7 @@ func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dicti
 }
 
 func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id uint64, name string) (err error) {
+	const queryUpdateDictionaryName = `UPDATE dictionary SET name = :name WHERE id = :id AND deleted_at IS NULL`
 	_, err = p.Conn.NamedExecContext(ctx, queryUpdateDictionaryName, map[string]any{
 		"id":   id,
 		"name": name,
@@ -201,6 +201,7 @@ func (p postgresDictionaryRepository) Delete(ctx context.Context, id uint64) (er
 
 func (p postgresDictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (int64, error) {
 	var id int64
+	const queryInsertDictionary = `INSERT INTO dictionary (lang, name, type) VALUES (:lang, :name, :type) RETURNING id`
 	nstmt, err := tx.PrepareNamed(queryInsertDictionary)
 	if err != nil {
 		return 0, fmt.Errorf("prepare named query: %w", err)
@@ -213,6 +214,7 @@ func (p postgresDictionaryRepository) insertDictionary(ctx context.Context, tx *
 }
 
 func (p postgresDictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID uint64) error {
+	const queryInsertTranslation = `INSERT INTO translation (dictionary_id, translation_id) VALUES (:dictionary_id, :translation_id)`
 	_, err := tx.NamedExecContext(ctx, queryInsertTranslation, map[string]any{
 		"dictionary_id":  dictID,
 		"translation_id": transID,
@@ -225,6 +227,7 @@ func (p postgresDictionaryRepository) insertTranslation(ctx context.Context, tx 
 
 func (p postgresDictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
 	var id int64
+	const queryInsertSentence = `INSERT INTO sentence (text_ru, text_en) VALUES (:text_ru, :text_en) RETURNING id`
 	nstmt, err := tx.PrepareNamed(queryInsertSentence)
 	if err != nil {
 		return 0, fmt.Errorf("prepare named query: %w", err)
@@ -237,6 +240,7 @@ func (p postgresDictionaryRepository) insertSentence(ctx context.Context, tx *sq
 }
 
 func (p postgresDictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID uint64, sentenceID int64) error {
+	const queryInsertDictionarySentence = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES (:dictionary_id, :sentence_id)`
 	_, err := tx.NamedExecContext(ctx, queryInsertDictionarySentence, map[string]any{
 		"dictionary_id": dictID,
 		"sentence_id":   sentenceID,
@@ -253,7 +257,17 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 		return make(map[uint64][]domain.Sentence), nil
 	}
 
-	query, args, err := sqlx.In(queryGetSentencesByDictionaryIds, dictIDs)
+	const querySentencesByDictIds = `
+		SELECT s.id,
+		       s.text_ru,
+		       s.text_en,
+		       ds.dictionary_id
+		FROM sentence s
+		INNER JOIN dictionary_sentence ds ON ds.sentence_id = s.id
+		WHERE ds.dictionary_id IN (?)
+		  AND s.deleted_at IS NULL
+		ORDER BY ds.dictionary_id, s.id`
+	query, args, err := sqlx.In(querySentencesByDictIds, dictIDs)
 	if err != nil {
 		return nil, fmt.Errorf("prepare IN query: %w", err)
 	}
@@ -277,6 +291,7 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 // checkDictionaryExists проверяет существование словаря
 func (p postgresDictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id uint64) error {
 	var dictID uint64
+	const queryGetDictionaryIdById = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
 	err := tx.GetContext(ctx, &dictID, queryGetDictionaryIdById, id)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("dictionary with id %d not found", id)
@@ -290,7 +305,21 @@ func (p postgresDictionaryRepository) checkDictionaryExists(ctx context.Context,
 // getDictionariesToDelete получает ID словарей для удаления
 func (p postgresDictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id uint64) ([]uint64, error) {
 	var dictIDs []uint64
-	if err := tx.SelectContext(ctx, &dictIDs, queryGetIdsOfTranslationDictionariesToDelete, id); err != nil {
+	const queryTranslationDictIDsToDelete = `
+		SELECT d.id
+		FROM dictionary d
+		INNER JOIN translation t ON d.id = t.translation_id
+		WHERE t.dictionary_id = $1
+		  AND d.deleted_at IS NULL
+		  AND NOT EXISTS (
+			SELECT 1
+			FROM translation t2
+			WHERE t2.translation_id = d.id
+			  AND t2.dictionary_id <> $1
+			  AND t2.deleted_at IS NULL
+		  )`
+
+	if err := tx.SelectContext(ctx, &dictIDs, queryTranslationDictIDsToDelete, id); err != nil {
 		return nil, fmt.Errorf("get translations: %w", err)
 	}
 	dictIDs = append(dictIDs, id) // Добавляем основной словарь
@@ -302,6 +331,7 @@ func (p postgresDictionaryRepository) deleteTranslations(ctx context.Context, tx
 	if len(dictIDs) == 0 {
 		return nil
 	}
+	const queryDeleteTranslations = `UPDATE translation SET deleted_at = ? WHERE dictionary_id IN (?)`
 	query, args, err := sqlx.In(queryDeleteTranslations, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
@@ -319,6 +349,7 @@ func (p postgresDictionaryRepository) deleteSentences(ctx context.Context, tx *s
 	if len(dictIDs) == 0 {
 		return nil
 	}
+	const queryDeleteSentences = `UPDATE sentence s SET deleted_at = ? FROM dictionary_sentence ds WHERE ds.sentence_id = s.id AND ds.dictionary_id IN (?)`
 	query, args, err := sqlx.In(queryDeleteSentences, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
@@ -336,6 +367,7 @@ func (p postgresDictionaryRepository) deleteDictionaries(ctx context.Context, tx
 	if len(dictIDs) == 0 {
 		return nil
 	}
+	const queryDeleteDictionaries = `UPDATE dictionary SET deleted_at = ? WHERE id IN (?)`
 	query, args, err := sqlx.In(queryDeleteDictionaries, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
