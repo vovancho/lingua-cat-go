@@ -2,6 +2,8 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"log/slog"
 	"net/http"
@@ -12,27 +14,60 @@ type ResponseError struct {
 	Message string `json:"message"`
 }
 
+type ValidationError struct {
+	Message string            `json:"message"`
+	Errors  map[string]string `json:"errors"`
+}
+
+func newValidationError(err error) ValidationError {
+	ve := ValidationError{
+		Message: "Validation error",
+		Errors:  make(map[string]string),
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		for _, fe := range validationErrors {
+			field := fe.StructField()
+			tag := fe.Tag()
+
+			// Кастомные сообщения для разных тегов
+			switch tag {
+			case "required":
+				ve.Errors[field] = "This field is required"
+			case "min":
+				ve.Errors[field] = fmt.Sprintf("Minimum length is %s", fe.Param())
+			case "len":
+				ve.Errors[field] = fmt.Sprintf("Must be exactly %s characters", fe.Param())
+			default:
+				ve.Errors[field] = fmt.Sprintf("Field validation failed: %s", tag)
+			}
+		}
+	}
+
+	return ve
+}
+
 type DictionaryHandler struct {
 	DUseCase domain.DictionaryUseCase
 }
 
 type DictionaryStoreRequest struct {
-	Lang         string `json:"lang"`
-	Name         string `json:"name"`
-	Type         uint16 `json:"type"`
+	Lang         string `json:"lang" validate:"required,len=2"`
+	Name         string `json:"name" validate:"required,min=2"`
+	Type         uint16 `json:"type" validate:"required,oneof=1 2 3"`
 	Translations []struct {
-		Lang string `json:"lang"`
-		Name string `json:"name"`
-		Type uint16 `json:"type"`
+		Lang string `json:"lang" validate:"required,len=2"`
+		Name string `json:"name" validate:"required,min=2"`
+		Type uint16 `json:"type" validate:"required,oneof=1 2 3"`
 	} `json:"translations"`
 	Sentences []struct {
-		TextRU string `json:"text_ru"`
-		TextEN string `json:"text_en"`
+		TextRU string `json:"text_ru" validate:"required,min=5"`
+		TextEN string `json:"text_en" validate:"required,min=5"`
 	} `json:"sentences"`
 }
 
 type DictionaryChangeNameRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=2"`
 }
 
 func NewDictionaryHandler(router *http.ServeMux, d domain.DictionaryUseCase) {
@@ -100,6 +135,12 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	validate := validator.New()
+	if err := validate.Struct(requestBody); err != nil {
+		respondWithValidationError(w, newValidationError(err))
+		return
+	}
+
 	dictionary := domain.Dictionary{
 		Name: requestBody.Name,
 		Type: requestBody.Type,
@@ -126,6 +167,7 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 		dictionary.Translations = append(dictionary.Translations, translation)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := d.DUseCase.Store(r.Context(), &dictionary); err != nil {
 		slog.Error(err.Error())
 		http.Error(w, `{"message":"Failed to store dictionary"}`, http.StatusInternalServerError)
@@ -157,6 +199,12 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	validate := validator.New()
+	if err := validate.Struct(requestBody); err != nil {
+		respondWithValidationError(w, newValidationError(err))
+		return
+	}
+
 	idString := r.PathValue("id")
 	id, err := strconv.ParseUint(idString, 10, 64)
 	if err != nil {
@@ -171,6 +219,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(map[string]any{
@@ -197,6 +246,7 @@ func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(map[string]any{
@@ -206,4 +256,25 @@ func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+}
+
+func respondWithError(w http.ResponseWriter, code int, message string, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+
+	response := map[string]interface{}{
+		"message": message,
+	}
+
+	if err != nil {
+		response["error"] = err.Error()
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func respondWithValidationError(w http.ResponseWriter, ve ValidationError) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	json.NewEncoder(w).Encode(ve)
 }
