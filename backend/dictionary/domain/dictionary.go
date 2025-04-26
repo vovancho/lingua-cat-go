@@ -6,13 +6,13 @@ import (
 )
 
 type Dictionary struct {
-	ID           uint64        `json:"id"`
-	DeletedAt    *time.Time    `json:"-"`
-	Lang         string        `json:"lang"`
-	Name         string        `json:"name"`
-	Type         uint16        `json:"type"`
-	Sentences    []Sentence    `json:"sentences"`
-	Translations []Translation `json:"translations"`
+	ID           uint64        `json:"id" db:"id"`
+	DeletedAt    *time.Time    `json:"-" db:"deleted_at"`
+	Lang         string        `json:"lang" db:"lang"`
+	Name         string        `json:"name" db:"name"`
+	Type         uint16        `json:"type" db:"type"`
+	Sentences    []Sentence    `json:"sentences" db:"-"`
+	Translations []Translation `json:"translations" db:"-"`
 }
 
 type DictionaryUseCase interface {

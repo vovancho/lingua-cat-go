@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2025-04-25T12:37:25.271Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="LtipyG6tEqzyCfum-oOO" version="21.6.8" type="device">
+<mxfile host="Electron" modified="2025-04-25T15:32:07.615Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="_7XAtksJGM-hM3Oe42xy" version="21.6.8" type="device">
   <diagram name="Page-1" id="UlOoKLjMKQyOIYjccCiV">
     <mxGraphModel dx="1434" dy="17" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -228,8 +228,10 @@
         <mxCell id="K0bMWCn7lL2bXNIeZDvH-26" value="Exercise Service" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="2780" y="1530" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="K0bMWCn7lL2bXNIeZDvH-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" parent="1" source="K0bMWCn7lL2bXNIeZDvH-12" target="K0bMWCn7lL2bXNIeZDvH-35" edge="1">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="K0bMWCn7lL2bXNIeZDvH-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="K0bMWCn7lL2bXNIeZDvH-12" target="K0bMWCn7lL2bXNIeZDvH-35" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2730" y="1230" as="sourcePoint" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="K0bMWCn7lL2bXNIeZDvH-29" value="Получить статистику&lt;br&gt;по упражнениям" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="K0bMWCn7lL2bXNIeZDvH-28" vertex="1" connectable="0">
           <mxGeometry x="0.3904" y="-4" relative="1" as="geometry">
@@ -293,13 +295,13 @@
         <mxCell id="K0bMWCn7lL2bXNIeZDvH-54" value="&lt;span style=&quot;font-size: 10px; font-family: &amp;quot;Lucida Console&amp;quot;; background-color: initial;&quot;&gt;{&lt;/span&gt;&lt;br&gt;&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 10px;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;nbsp; &quot;user_id&quot;: &quot;&quot;,&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;nbsp; &quot;exercise_id&quot;: 0,&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;nbsp; &quot;spent_time&quot;: 0,&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;nbsp; &quot;words_count&quot;: 0,&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&amp;nbsp; &quot;words_corrected_count&quot;: 0&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" parent="1" vertex="1">
           <mxGeometry x="2565.2799999999997" y="1595" width="190" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="K0bMWCn7lL2bXNIeZDvH-55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="K0bMWCn7lL2bXNIeZDvH-35" target="K0bMWCn7lL2bXNIeZDvH-12" edge="1">
+        <mxCell id="K0bMWCn7lL2bXNIeZDvH-55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="K0bMWCn7lL2bXNIeZDvH-35" target="K0bMWCn7lL2bXNIeZDvH-57" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="2910" y="1570" as="sourcePoint" />
             <mxPoint x="3150" y="1570" as="targetPoint" />
             <Array as="points">
               <mxPoint x="2330" y="1560" />
-              <mxPoint x="2330" y="1190" />
+              <mxPoint x="2330" y="1133" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -309,7 +311,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="K0bMWCn7lL2bXNIeZDvH-57" value="Keycloak" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="3280" y="1277.27" width="120" height="60" as="geometry" />
+          <mxGeometry x="2620" y="1103" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="vOYtiE0OMvcrNdlqcH3A-1" value="&lt;div style=&quot;box-sizing:border-box;width:100%;background:#e4e4e4;padding:2px;&quot;&gt;sentence&lt;/div&gt;&lt;table style=&quot;width:100%;font-size:1em;&quot; cellpadding=&quot;2&quot; cellspacing=&quot;0&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;PK&lt;/td&gt;&lt;td&gt;id BIGINT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;br&gt;&lt;/td&gt;&lt;td&gt;created_at TIMESTAMP&lt;br&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;br&gt;&lt;/td&gt;&lt;td&gt;deleted_at TIMESTAMP NULL&lt;br&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;br&gt;&lt;/td&gt;&lt;td&gt;text_ru VARCHAR(255)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;br&gt;&lt;/td&gt;&lt;td&gt;text_en VARCHAR(255)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBorderColor=default;strokeColor=none;" vertex="1" parent="1">
           <mxGeometry x="4002" y="1622.84" width="208" height="127.16" as="geometry" />

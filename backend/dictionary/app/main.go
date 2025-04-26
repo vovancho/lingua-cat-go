@@ -1,16 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
-	_dictionaryHttpDelivery "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
-	_dictionaryRepo "github.com/vovancho/lingua-cat-go/dictionary/dictionary/repository/postgres"
-	_dictionaryUcase "github.com/vovancho/lingua-cat-go/dictionary/dictionary/usecase"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
+	_dictionaryHttpDelivery "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+	_dictionaryRepo "github.com/vovancho/lingua-cat-go/dictionary/dictionary/repository/postgres"
+	_dictionaryUcase "github.com/vovancho/lingua-cat-go/dictionary/dictionary/usecase"
 
 	_ "github.com/lib/pq"
 )
@@ -27,7 +28,7 @@ func main() {
 
 	slog.Warn("DB_DSN: ", "dbDsn", dbDsn)
 
-	dbConn, err := sql.Open(`postgres`, dbDsn)
+	dbConn, err := sqlx.Open("postgres", dbDsn)
 	if err != nil {
 		slog.Error(err.Error())
 	}
