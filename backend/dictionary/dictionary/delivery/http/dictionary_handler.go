@@ -127,10 +127,8 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
 
 	// Декодируем JSON из тела запроса в структуру
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&requestBody); err != nil {
-		http.Error(w, `{"message":"Invalid JSON format"}`, http.StatusBadRequest)
-
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format", nil)
 		return
 	}
 	defer r.Body.Close()
@@ -191,10 +189,8 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryChangeNameRequest
 
 	// Декодируем JSON из тела запроса в структуру
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&requestBody); err != nil {
-		http.Error(w, `{"message":"Invalid JSON format"}`, http.StatusBadRequest)
-
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON format", nil)
 		return
 	}
 	defer r.Body.Close()
