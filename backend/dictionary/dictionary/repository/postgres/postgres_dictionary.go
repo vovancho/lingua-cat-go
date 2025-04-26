@@ -73,23 +73,6 @@ func (p postgresDictionaryRepository) GetByID(ctx context.Context, id uint64) (d
 
 func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) (err error) {
 	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
-		tx, err := p.Conn.BeginTxx(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("failed to begin transaction: %w", err)
-		}
-
-		defer func() {
-			if err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					err = fmt.Errorf("failed to rollback transaction: %v; original error: %w", rollbackErr, err)
-				}
-				return
-			}
-			if commitErr := tx.Commit(); commitErr != nil {
-				err = fmt.Errorf("failed to commit transaction: %w", commitErr)
-			}
-		}()
-
 		// Вставка основного словаря
 		dictID, err := p.insertDictionary(ctx, tx, d)
 		if err != nil {
@@ -152,23 +135,6 @@ func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id uint64,
 
 func (p postgresDictionaryRepository) Delete(ctx context.Context, id uint64) (err error) {
 	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
-		tx, err := p.Conn.BeginTxx(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("failed to begin transaction: %w", err)
-		}
-
-		defer func() {
-			if err != nil {
-				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					err = fmt.Errorf("failed to rollback transaction: %v; original error: %w", rollbackErr, err)
-				}
-				return
-			}
-			if commitErr := tx.Commit(); commitErr != nil {
-				err = fmt.Errorf("failed to commit transaction: %w", commitErr)
-			}
-		}()
-
 		// Проверка существования словаря
 		if err = p.checkDictionaryExists(ctx, tx, id); err != nil {
 			return err
