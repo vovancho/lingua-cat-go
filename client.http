@@ -123,7 +123,7 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/dictionary/dictionary/14/name
+POST http://api.lingua-cat-go.localhost/dictionary/dictionary/17/name
 Content-Type: application/json
 Accept: application/json
 
@@ -134,14 +134,14 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-DELETE http://api.lingua-cat-go.localhost/dictionary/dictionary/14
+DELETE http://api.lingua-cat-go.localhost/dictionary/dictionary/17
 Content-Type: application/json
 Accept: application/json
 
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/dictionary/14
+GET http://api.lingua-cat-go.localhost/dictionary/dictionary/17
 Content-Type: application/json
 Accept: application/json
 

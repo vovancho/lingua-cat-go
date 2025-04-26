@@ -18,7 +18,7 @@ type dictionaryUseCase struct {
 	contextTimeout time.Duration
 }
 
-func (d dictionaryUseCase) GetByID(ctx context.Context, id uint64) (domain.Dictionary, error) {
+func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) (domain.Dictionary, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -40,7 +40,7 @@ func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (
 	return
 }
 
-func (d dictionaryUseCase) ChangeName(ctx context.Context, id uint64, name string) (err error) {
+func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryID, name string) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -49,7 +49,7 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id uint64, name strin
 	return
 }
 
-func (d dictionaryUseCase) Delete(ctx context.Context, id uint64) (err error) {
+func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 

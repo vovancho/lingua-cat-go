@@ -67,7 +67,7 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dictionary, err := d.DUseCase.GetByID(r.Context(), id)
+	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
 	if err != nil {
 		slog.Error(err.Error())
 		http.Error(w, `{"message":"Failed to get dictionary"}`, http.StatusInternalServerError)
@@ -164,7 +164,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := d.DUseCase.ChangeName(r.Context(), id, requestBody.Name); err != nil {
+	if err := d.DUseCase.ChangeName(r.Context(), domain.DictionaryID(id), requestBody.Name); err != nil {
 		slog.Error(err.Error())
 		http.Error(w, `{"message":"Failed to change dictionary name"}`, http.StatusInternalServerError)
 
@@ -190,7 +190,7 @@ func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := d.DUseCase.Delete(r.Context(), id); err != nil {
+	if err := d.DUseCase.Delete(r.Context(), domain.DictionaryID(id)); err != nil {
 		slog.Error(err.Error())
 		http.Error(w, `{"message":"Failed to delete dictionary"}`, http.StatusInternalServerError)
 

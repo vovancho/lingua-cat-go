@@ -5,8 +5,10 @@ import (
 	"time"
 )
 
+type DictionaryID uint64
+
 type Dictionary struct {
-	ID           uint64        `json:"id" db:"id"`
+	ID           DictionaryID  `json:"id" db:"id"`
 	DeletedAt    *time.Time    `json:"-" db:"deleted_at"`
 	Lang         string        `json:"lang" db:"lang"`
 	Name         string        `json:"name" db:"name"`
@@ -16,15 +18,15 @@ type Dictionary struct {
 }
 
 type DictionaryUseCase interface {
-	GetByID(ctx context.Context, id uint64) (Dictionary, error)
+	GetByID(ctx context.Context, id DictionaryID) (Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
-	ChangeName(ctx context.Context, id uint64, name string) error
-	Delete(ctx context.Context, id uint64) error
+	ChangeName(ctx context.Context, id DictionaryID, name string) error
+	Delete(ctx context.Context, id DictionaryID) error
 }
 
 type DictionaryRepository interface {
-	GetByID(ctx context.Context, id uint64) (Dictionary, error)
+	GetByID(ctx context.Context, id DictionaryID) (Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
-	ChangeName(ctx context.Context, id uint64, name string) error
-	Delete(ctx context.Context, id uint64) error
+	ChangeName(ctx context.Context, id DictionaryID, name string) error
+	Delete(ctx context.Context, id DictionaryID) error
 }
