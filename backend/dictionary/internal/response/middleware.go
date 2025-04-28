@@ -6,6 +6,7 @@ import (
 	_internalError "github.com/vovancho/lingua-cat-go/dictionary/internal/error"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type ValidationErrorItem struct {
@@ -27,7 +28,7 @@ func ErrorMiddleware(next http.Handler, trans ut.Translator) http.Handler {
 				var details []ValidationErrorItem
 				for _, ei := range e {
 					details = append(details, ValidationErrorItem{
-						Field:   ei.Field(),
+						Field:   formatFieldName(ei.Namespace()),
 						Message: ei.Translate(trans),
 					})
 				}
@@ -50,4 +51,12 @@ func ErrorMiddleware(next http.Handler, trans ut.Translator) http.Handler {
 			}
 		}
 	})
+}
+
+func formatFieldName(namespace string) string {
+	parts := strings.SplitN(namespace, ".", 2)
+	if len(parts) < 2 {
+		return namespace // Если нет точек, возвращаем как есть
+	}
+	return parts[1]
 }
