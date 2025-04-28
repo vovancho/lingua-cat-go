@@ -10,14 +10,14 @@ import (
 )
 
 type DictionaryStoreRequest struct {
-	Lang         string `json:"lang" validate:"required,len=2"`
-	Name         string `json:"name" validate:"required,min=2"`
-	Type         uint16 `json:"type" validate:"required,oneof=1 2 3"`
+	Lang         domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
+	Name         string                `json:"name" validate:"required,min=2"`
+	Type         domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
 	Translations []struct {
-		Lang string `json:"lang" validate:"required,len=2"`
-		Name string `json:"name" validate:"required,min=2"`
-		Type uint16 `json:"type" validate:"required,oneof=1 2 3"`
-	} `json:"translations" validate:"dive"`
+		Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
+		Name string                `json:"name" validate:"required,min=2"`
+		Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
+	} `json:"translations" validate:"required,dive"`
 	Sentences []struct {
 		TextRU string `json:"text_ru" validate:"required,min=5"`
 		TextEN string `json:"text_en" validate:"required,min=5"`

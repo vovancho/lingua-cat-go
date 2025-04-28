@@ -6,6 +6,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	rutranslations "github.com/go-playground/validator/v10/translations/ru"
+	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
 	"log/slog"
 	"net/http"
@@ -39,8 +40,8 @@ func main() {
 		}
 	}()
 
-	validate := validator.New()
-	trans := initTranslator(validate)
+	trans := initTranslator()
+	validate := initValidator(trans)
 
 	router := http.NewServeMux()
 
@@ -71,15 +72,39 @@ func initDbConn(dsn string) *sqlx.DB {
 	return dbConn
 }
 
-func initTranslator(v *validator.Validate) ut.Translator {
+func initTranslator() ut.Translator {
 	ruLocale := ru.New()
 	uni := ut.New(ruLocale, ruLocale)
 	trans, ok := uni.GetTranslator("ru")
 	if !ok {
 		panic("не удалось получить переводчик для ru")
 	}
-	if err := rutranslations.RegisterDefaultTranslations(v, trans); err != nil {
+	return trans
+}
+
+func initValidator(trans ut.Translator) *validator.Validate {
+	validate := validator.New()
+
+	validate.RegisterTranslation("valid_dictionary_type", trans, func(ut ut.Translator) error {
+		return ut.Add("valid_dictionary_type", "{0} должен быть валидным типом", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("valid_dictionary_type", fe.Field())
+		return t
+	})
+	if err := domain.RegisterDictionaryTypeValidation(validate); err != nil {
+		panic(fmt.Errorf("failed to register dictionary type validation: %w", err))
+	}
+	validate.RegisterTranslation("valid_dictionary_lang", trans, func(ut ut.Translator) error {
+		return ut.Add("valid_dictionary_lang", "{0} должен быть валидным языком", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("valid_dictionary_lang", fe.Field())
+		return t
+	})
+	if err := domain.RegisterDictionaryLangValidation(validate); err != nil {
+		panic(fmt.Errorf("failed to register dictionary lang validation: %w", err))
+	}
+	if err := rutranslations.RegisterDefaultTranslations(validate, trans); err != nil {
 		panic("не удалось зарегистрировать русские переводы: " + err.Error())
 	}
-	return trans
+	return validate
 }

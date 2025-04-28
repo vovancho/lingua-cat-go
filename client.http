@@ -95,10 +95,10 @@ Accept: application/json
 {
   "lang": "en",
   "name": "admit",
-  "type":  1,
+  "type":  999,
   "translations": [
     {
-      "lang": "ru",
+      "lang": "es",
       "name": "поперек",
       "type":  1
     },
