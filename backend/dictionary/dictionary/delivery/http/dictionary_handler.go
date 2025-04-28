@@ -48,7 +48,8 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
 	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
 	if err != nil {
-		response.Error(err, r)
+		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
+		response.Error(appError, r)
 		return
 	}
 

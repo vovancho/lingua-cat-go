@@ -41,14 +41,14 @@ type Dictionary struct {
 }
 
 type DictionaryUseCase interface {
-	GetByID(ctx context.Context, id DictionaryID) (Dictionary, error)
+	GetByID(ctx context.Context, id DictionaryID) (*Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
 	ChangeName(ctx context.Context, id DictionaryID, name string) error
 	Delete(ctx context.Context, id DictionaryID) error
 }
 
 type DictionaryRepository interface {
-	GetByID(ctx context.Context, id DictionaryID) (Dictionary, error)
+	GetByID(ctx context.Context, id DictionaryID) (*Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
 	ChangeName(ctx context.Context, id DictionaryID, name string) error
 	Delete(ctx context.Context, id DictionaryID) error

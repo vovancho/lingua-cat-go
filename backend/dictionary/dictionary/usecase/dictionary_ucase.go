@@ -18,14 +18,14 @@ type dictionaryUseCase struct {
 	contextTimeout time.Duration
 }
 
-func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) (domain.Dictionary, error) {
+func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
 	dictionary, err := d.dictionaryRepo.GetByID(ctx, id)
-
 	if err != nil {
-		return dictionary, err
+		errDict := domain.DictNotFoundError
+		return nil, errDict
 	}
 
 	return dictionary, nil

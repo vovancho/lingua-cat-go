@@ -27,17 +27,20 @@ func NewPostgresDictionaryRepository(conn DB) domain.DictionaryRepository {
 }
 
 // GetByID возвращает словарь по ID с переводами и предложениями
-func (p postgresDictionaryRepository) GetByID(ctx context.Context, id domain.DictionaryID) (domain.Dictionary, error) {
+func (p postgresDictionaryRepository) GetByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
 	// Получаем основной словарь
 	dict, err := p.getDictionaryByID(ctx, id)
 	if err != nil {
-		return domain.Dictionary{}, err
+		return nil, err
 	}
 
 	// Получаем переводы
 	translations, err := p.getTranslationsByDictionaryID(ctx, id)
 	if err != nil {
-		return domain.Dictionary{}, err
+		return nil, err
+	}
+	if len(translations) == 0 {
+		return nil, fmt.Errorf("translations not found")
 	}
 	dict.Translations = translations
 
@@ -50,13 +53,15 @@ func (p postgresDictionaryRepository) GetByID(ctx context.Context, id domain.Dic
 	// Получаем предложения для всех словарей
 	sentencesMap, err := p.getSentencesByDictionaryIDs(ctx, dictIDs)
 	if err != nil {
-		return domain.Dictionary{}, err
+		return nil, err
 	}
 
 	// Распределяем предложения по словарям
-	dict.Sentences = sentencesMap[dict.ID]
-	for i := range dict.Translations {
-		dict.Translations[i].Dictionary.Sentences = sentencesMap[dict.Translations[i].Dictionary.ID]
+	if len(sentencesMap) > 0 {
+		dict.Sentences = sentencesMap[dict.ID]
+		for i := range dict.Translations {
+			dict.Translations[i].Dictionary.Sentences = sentencesMap[dict.Translations[i].Dictionary.ID]
+		}
 	}
 
 	return dict, nil
@@ -357,16 +362,16 @@ func (p postgresDictionaryRepository) withTransaction(ctx context.Context, callb
 	return nil
 }
 
-func (p postgresDictionaryRepository) getDictionaryByID(ctx context.Context, id domain.DictionaryID) (domain.Dictionary, error) {
+func (p postgresDictionaryRepository) getDictionaryByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
 	var dict domain.Dictionary
 	if err := p.Conn.GetContext(ctx, &dict, query, id); err != nil {
 		if err == sql.ErrNoRows {
-			return domain.Dictionary{}, fmt.Errorf("dictionary not found: %w", err)
+			return nil, fmt.Errorf("dictionary not found: %w", err)
 		}
-		return domain.Dictionary{}, fmt.Errorf("get dictionary: %w", err)
+		return nil, fmt.Errorf("get dictionary: %w", err)
 	}
-	return dict, nil
+	return &dict, nil
 }
 
 func (p postgresDictionaryRepository) getTranslationsByDictionaryID(ctx context.Context, id domain.DictionaryID) ([]domain.Translation, error) {

@@ -141,7 +141,7 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/dictionary/26
+GET http://api.lingua-cat-go.localhost/dictionary/dictionary/260
 Content-Type: application/json
 Accept: application/json
 
