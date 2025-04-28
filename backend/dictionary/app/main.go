@@ -40,8 +40,10 @@ func main() {
 		}
 	}()
 
-	trans := initTranslator()
-	validate := initValidator(trans)
+	validate, trans, err := initValidator()
+	if err != nil {
+		panic(err)
+	}
 
 	router := http.NewServeMux()
 
@@ -72,39 +74,18 @@ func initDbConn(dsn string) *sqlx.DB {
 	return dbConn
 }
 
-func initTranslator() ut.Translator {
-	ruLocale := ru.New()
-	uni := ut.New(ruLocale, ruLocale)
-	trans, ok := uni.GetTranslator("ru")
-	if !ok {
-		panic("не удалось получить переводчик для ru")
-	}
-	return trans
-}
-
-func initValidator(trans ut.Translator) *validator.Validate {
+func initValidator() (*validator.Validate, ut.Translator, error) {
 	validate := validator.New()
+	uni := ut.New(ru.New(), ru.New())
+	trans, _ := uni.GetTranslator("ru")
 
-	validate.RegisterTranslation("valid_dictionary_type", trans, func(ut ut.Translator) error {
-		return ut.Add("valid_dictionary_type", "{0} должен быть валидным типом", true)
-	}, func(ut ut.Translator, fe validator.FieldError) string {
-		t, _ := ut.T("valid_dictionary_type", fe.Field())
-		return t
-	})
-	if err := domain.RegisterDictionaryTypeValidation(validate); err != nil {
-		panic(fmt.Errorf("failed to register dictionary type validation: %w", err))
-	}
-	validate.RegisterTranslation("valid_dictionary_lang", trans, func(ut ut.Translator) error {
-		return ut.Add("valid_dictionary_lang", "{0} должен быть валидным языком", true)
-	}, func(ut ut.Translator, fe validator.FieldError) string {
-		t, _ := ut.T("valid_dictionary_lang", fe.Field())
-		return t
-	})
-	if err := domain.RegisterDictionaryLangValidation(validate); err != nil {
-		panic(fmt.Errorf("failed to register dictionary lang validation: %w", err))
-	}
 	if err := rutranslations.RegisterDefaultTranslations(validate, trans); err != nil {
-		panic("не удалось зарегистрировать русские переводы: " + err.Error())
+		return nil, nil, fmt.Errorf("failed to register default translations: %w", err)
 	}
-	return validate
+
+	if err := domain.RegisterAll(validate, trans); err != nil {
+		return nil, nil, fmt.Errorf("failed to register domain validations: %w", err)
+	}
+
+	return validate, trans, nil
 }
