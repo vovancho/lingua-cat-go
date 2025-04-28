@@ -128,7 +128,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "a",
+  "name": "admitter"
 }
 
 ###
@@ -141,7 +141,7 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/dictionary/17
+GET http://api.lingua-cat-go.localhost/dictionary/dictionary/26
 Content-Type: application/json
 Accept: application/json
 

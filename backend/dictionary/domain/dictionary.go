@@ -14,7 +14,7 @@ type Dictionary struct {
 	Name         string        `json:"name" db:"name"`
 	Type         uint16        `json:"type" db:"type"`
 	Sentences    []Sentence    `json:"sentences" db:"-"`
-	Translations []Translation `json:"translations" db:"-"`
+	Translations []Translation `json:"translations,omitempty" db:"-"`
 }
 
 type DictionaryUseCase interface {

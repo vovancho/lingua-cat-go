@@ -17,11 +17,11 @@ type DictionaryStoreRequest struct {
 		Lang string `json:"lang" validate:"required,len=2"`
 		Name string `json:"name" validate:"required,min=2"`
 		Type uint16 `json:"type" validate:"required,oneof=1 2 3"`
-	} `json:"translations"`
+	} `json:"translations" validate:"dive"`
 	Sentences []struct {
 		TextRU string `json:"text_ru" validate:"required,min=5"`
 		TextEN string `json:"text_en" validate:"required,min=5"`
-	} `json:"sentences"`
+	} `json:"sentences" validate:"dive"`
 }
 
 type DictionaryChangeNameRequest struct {
@@ -53,8 +53,9 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 	}
 
 	response.JSON(w, http.StatusOK, response.APIResponse{
-		Message: "Dictionary got successfully",
-		Data:    dictionary,
+		Data: map[string]any{
+			"dictionary": dictionary,
+		},
 	})
 }
 
@@ -72,8 +73,9 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, response.APIResponse{
-		Message: "Dictionary created successfully",
-		Data:    dictionary,
+		Data: map[string]any{
+			"dictionary": dictionary,
+		},
 	})
 }
 
@@ -89,8 +91,16 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 		return
 	}
 
+	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
+	if err != nil {
+		response.Error(err, r)
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.APIResponse{
-		Message: "Dictionary name changed successfully",
+		Data: map[string]any{
+			"dictionary": dictionary,
+		},
 	})
 }
 
@@ -100,9 +110,7 @@ func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request, id ui
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Message: "Dictionary deleted successfully",
-	})
+	response.JSON(w, http.StatusNoContent, response.APIResponse{})
 }
 
 func (d *DictionaryHandler) validateRequest(r *http.Request, req any) error {
