@@ -17,7 +17,7 @@ type DictionaryStoreRequest struct {
 		Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
 		Name string                `json:"name" validate:"required,min=2"`
 		Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-	} `json:"translations" validate:"required,dive"`
+	} `json:"translations" validate:"required,min=1,dive"`
 	Sentences []struct {
 		TextRU string `json:"text_ru" validate:"required,min=5"`
 		TextEN string `json:"text_en" validate:"required,min=5"`
