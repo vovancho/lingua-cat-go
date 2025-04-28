@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-playground/locales/ru"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	rutranslations "github.com/go-playground/validator/v10/translations/ru"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
 	"log/slog"
 	"net/http"
 	"os"
@@ -26,17 +30,7 @@ func init() {
 
 func main() {
 	dbDsn := os.Getenv("DB_DSN")
-
-	slog.Warn("DB_DSN: ", "dbDsn", dbDsn)
-
-	dbConn, err := sqlx.Open("postgres", dbDsn)
-	if err != nil {
-		slog.Error(err.Error())
-	}
-	err = dbConn.Ping()
-	if err != nil {
-		slog.Error(err.Error())
-	}
+	dbConn := initDbConn(dbDsn)
 
 	defer func() {
 		err := dbConn.Close()
@@ -45,18 +39,47 @@ func main() {
 		}
 	}()
 
+	validate := validator.New()
+	trans := initTranslator(validate)
+
 	router := http.NewServeMux()
 
 	dictionaryRepo := _dictionaryRepo.NewPostgresDictionaryRepository(dbConn)
 
 	timeoutContext := time.Duration(2) * time.Second
 	du := _dictionaryUcase.NewDictionaryUseCase(dictionaryRepo, timeoutContext)
-	_dictionaryHttpDelivery.NewDictionaryHandler(router, validator.New(), du)
+	_dictionaryHttpDelivery.NewDictionaryHandler(router, validate, du)
 
 	server := http.Server{
 		Addr:    ":80",
-		Handler: router,
+		Handler: response.ErrorMiddleware(router, trans),
 	}
 	fmt.Println("Server is listening on port 80")
 	server.ListenAndServe()
+}
+
+func initDbConn(dsn string) *sqlx.DB {
+	dbConn, err := sqlx.Open("postgres", dsn)
+	if err != nil {
+		panic("не удалось сконфигурировать подключение к БД")
+	}
+
+	if err = dbConn.Ping(); err != nil {
+		panic("не удалось подключиться к серверу БД")
+	}
+
+	return dbConn
+}
+
+func initTranslator(v *validator.Validate) ut.Translator {
+	ruLocale := ru.New()
+	uni := ut.New(ruLocale, ruLocale)
+	trans, ok := uni.GetTranslator("ru")
+	if !ok {
+		panic("не удалось получить переводчик для ru")
+	}
+	if err := rutranslations.RegisterDefaultTranslations(v, trans); err != nil {
+		panic("не удалось зарегистрировать русские переводы: " + err.Error())
+	}
+	return trans
 }

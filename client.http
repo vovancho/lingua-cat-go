@@ -95,7 +95,7 @@ Accept: application/json
 {
   "lang": "en",
   "name": "admit",
-  "type":  10,
+  "type":  1,
   "translations": [
     {
       "lang": "ru",
@@ -123,12 +123,12 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/dictionary/dictionary/17/name
+POST http://api.lingua-cat-go.localhost/dictionary/dictionary/26/name
 Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "admitter"
+  "name": "a",
 }
 
 ###
@@ -151,6 +151,17 @@ GET http://api.lingua-cat-go.localhost/dictionary/
 
 ###
 
+// @no-cookie-jar
+POST http://api.lingua-cat-go.localhost/dictionary/example1/12
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "a",
+  "age": 180
+}
+
+###
 
 
 

@@ -1,62 +1,13 @@
 package http
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
-	"log/slog"
+	_internalError "github.com/vovancho/lingua-cat-go/dictionary/internal/error"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/request"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
 	"net/http"
-	"strconv"
 )
-
-type APIResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
-}
-
-type ValidationError struct {
-	Message string            `json:"message"`
-	Errors  map[string]string `json:"errors"`
-}
-
-func (ve ValidationError) Error() string {
-	return ve.Message
-}
-
-func newValidationError(err error) ValidationError {
-	ve := ValidationError{
-		Message: "Validation error",
-		Errors:  make(map[string]string),
-	}
-
-	if validationErrors, ok := err.(validator.ValidationErrors); ok {
-		for _, fe := range validationErrors {
-			field := fe.StructField()
-			tag := fe.Tag()
-
-			// Кастомные сообщения для разных тегов
-			switch tag {
-			case "required":
-				ve.Errors[field] = "This field is required"
-			case "min":
-				ve.Errors[field] = fmt.Sprintf("Minimum length is %s", fe.Param())
-			case "len":
-				ve.Errors[field] = fmt.Sprintf("Must be exactly %s characters", fe.Param())
-			default:
-				ve.Errors[field] = fmt.Sprintf("Field validation failed: %s", tag)
-			}
-		}
-	}
-
-	return ve
-}
-
-type DictionaryHandler struct {
-	DUseCase  domain.DictionaryUseCase
-	validator *validator.Validate
-}
 
 type DictionaryStoreRequest struct {
 	Lang         string `json:"lang" validate:"required,len=2"`
@@ -77,35 +28,31 @@ type DictionaryChangeNameRequest struct {
 	Name string `json:"name" validate:"required,min=2"`
 }
 
-func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain.DictionaryUseCase) {
-	handler := &DictionaryHandler{
-		DUseCase:  d,
-		validator: v,
-	}
-
-	router.HandleFunc("GET /dictionary/{id}", handler.GetByID)
-	router.HandleFunc("POST /dictionary", handler.Store)
-	router.HandleFunc("POST /dictionary/{id}/name", handler.ChangeName)
-	router.HandleFunc("DELETE /dictionary/{id}", handler.Delete)
+type DictionaryHandler struct {
+	DUseCase domain.DictionaryUseCase
+	validate *validator.Validate
 }
 
-func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idString := r.PathValue("id")
-	id, err := strconv.ParseUint(idString, 10, 64)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain.DictionaryUseCase) {
+	handler := &DictionaryHandler{
+		DUseCase: d,
+		validate: v,
 	}
 
+	router.HandleFunc("GET /dictionary/{id}", request.WithID(handler.GetByID))
+	router.HandleFunc("POST /dictionary", handler.Store)
+	router.HandleFunc("POST /dictionary/{id}/name", request.WithID(handler.ChangeName))
+	router.HandleFunc("DELETE /dictionary/{id}", request.WithID(handler.Delete))
+}
+
+func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
 	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
 	if err != nil {
-		slog.Error(err.Error())
-		http.Error(w, `{"message":"Failed to get dictionary"}`, http.StatusInternalServerError)
-
+		response.Error(err, r)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, APIResponse{
+	response.JSON(w, http.StatusOK, response.APIResponse{
 		Message: "Dictionary got successfully",
 		Data:    dictionary,
 	})
@@ -113,109 +60,64 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
-
 	if err := d.validateRequest(r, &requestBody); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
+		response.Error(err, r)
 		return
 	}
 
-	dictionary := mapStoreRequestToDomain(requestBody)
-
+	dictionary := newDictionaryByRequest(requestBody)
 	if err := d.DUseCase.Store(r.Context(), &dictionary); err != nil {
-		slog.Error(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Failed to store dictionary", err)
+		response.Error(err, r)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, APIResponse{
+	response.JSON(w, http.StatusCreated, response.APIResponse{
 		Message: "Dictionary created successfully",
 		Data:    dictionary,
 	})
 }
 
-func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request) {
+func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, id uint64) {
 	var requestBody DictionaryChangeNameRequest
-
 	if err := d.validateRequest(r, &requestBody); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Validation failed", err)
-		return
-	}
-
-	idString := r.PathValue("id")
-	id, err := strconv.ParseUint(idString, 10, 64)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(err, r)
 		return
 	}
 
 	if err := d.DUseCase.ChangeName(r.Context(), domain.DictionaryID(id), requestBody.Name); err != nil {
-		slog.Error(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Failed to change dictionary name", err)
+		response.Error(err, r)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, APIResponse{
+	response.JSON(w, http.StatusOK, response.APIResponse{
 		Message: "Dictionary name changed successfully",
 	})
 }
 
-func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idString := r.PathValue("id")
-	id, err := strconv.ParseUint(idString, 10, 64)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
+func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	if err := d.DUseCase.Delete(r.Context(), domain.DictionaryID(id)); err != nil {
-		slog.Error(err.Error())
-		http.Error(w, `{"message":"Failed to delete dictionary"}`, http.StatusInternalServerError)
-
+		response.Error(err, r)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, APIResponse{
+	response.JSON(w, http.StatusOK, response.APIResponse{
 		Message: "Dictionary deleted successfully",
 	})
 }
 
-func respondWithError(w http.ResponseWriter, code int, message string, err error) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	response := map[string]interface{}{
-		"message": message,
-	}
-
-	if err != nil {
-		response["error"] = err.Error()
-	}
-
-	json.NewEncoder(w).Encode(response)
-}
-
 func (d *DictionaryHandler) validateRequest(r *http.Request, req any) error {
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		return fmt.Errorf("invalid JSON format: %w", err)
+	if err := request.FromJSON(r, req); err != nil {
+		return _internalError.NewAppError(http.StatusBadRequest, "Некорректный синтаксис JSON", _internalError.InvalidDecodeJsonError)
 	}
-	defer r.Body.Close()
 
-	if err := d.validator.Struct(req); err != nil {
-		return newValidationError(err)
+	if err := d.validate.Struct(req); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		http.Error(w, `{"message":"Failed to encode response"}`, http.StatusInternalServerError)
-	}
-}
-
-func mapStoreRequestToDomain(req DictionaryStoreRequest) domain.Dictionary {
+func newDictionaryByRequest(req DictionaryStoreRequest) domain.Dictionary {
 	dictionary := domain.Dictionary{
 		Name: req.Name,
 		Type: req.Type,
