@@ -98,6 +98,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 	}
 
 	if err := d.DUseCase.ChangeName(r.Context(), domain.DictionaryID(id), requestBody.Name); err != nil {
+		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка сохранения словаря", err)
 		response.Error(err, r)
 		return
 	}
@@ -117,6 +118,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 
 func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	if err := d.DUseCase.Delete(r.Context(), domain.DictionaryID(id)); err != nil {
+		err = _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
 		response.Error(err, r)
 		return
 	}

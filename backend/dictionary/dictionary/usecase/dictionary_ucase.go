@@ -61,7 +61,7 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 	return dicts, nil
 }
 
-func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (err error) {
+func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) error {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -79,7 +79,7 @@ func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (
 		}
 	}
 
-	if err = d.validate.Struct(dict); err != nil {
+	if err := d.validate.Struct(dict); err != nil {
 		return err
 	}
 
@@ -101,32 +101,58 @@ func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (
 		}
 	}
 
-	err = d.dictionaryRepo.Store(ctx, dict)
+	if err = d.dictionaryRepo.Store(ctx, dict); err != nil {
+		return err
+	}
 
-	return
+	return nil
 }
 
-func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryID, name string) (err error) {
+func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	// имя в нижний регистр
-	// проверить что сущность существует
-	// изменить имя сущности и валидировать ее
-	// проверить новое слово на существование (уникальность)
+	dict, err := d.dictionaryRepo.GetByID(ctx, id)
+	if err != nil {
+		return domain.DictNotFoundError
+	}
 
-	err = d.dictionaryRepo.ChangeName(ctx, id, name)
+	newDictName := strings.ToLower(strings.TrimSpace(name))
+	if newDictName == dict.Name {
+		return nil
+	}
+	dict.Name = newDictName
 
-	return
+	if err = d.validate.StructPartial(dict, "Name"); err != nil {
+		return err
+	}
+
+	isExists, err := d.dictionaryRepo.IsExistsByNameAndLang(ctx, dict.Name, dict.Lang)
+	if err != nil {
+		return err
+	}
+	if isExists {
+		return domain.DictExistsError
+	}
+
+	if err = d.dictionaryRepo.ChangeName(ctx, id, name); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) (err error) {
+func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) error {
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	// проверить что сущность существует
+	if _, err := d.dictionaryRepo.GetByID(ctx, id); err != nil {
+		return domain.DictNotFoundError
+	}
 
-	err = d.dictionaryRepo.Delete(ctx, id)
+	if err := d.dictionaryRepo.Delete(ctx, id); err != nil {
+		return err
+	}
 
-	return
+	return nil
 }
