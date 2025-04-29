@@ -42,6 +42,7 @@ type Dictionary struct {
 
 type DictionaryUseCase interface {
 	GetByID(ctx context.Context, id DictionaryID) (*Dictionary, error)
+	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, count uint8) ([]Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
 	ChangeName(ctx context.Context, id DictionaryID, name string) error
 	Delete(ctx context.Context, id DictionaryID) error
@@ -49,6 +50,7 @@ type DictionaryUseCase interface {
 
 type DictionaryRepository interface {
 	GetByID(ctx context.Context, id DictionaryID) (*Dictionary, error)
+	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, count uint8) ([]Dictionary, error)
 	Store(ctx context.Context, d *Dictionary) error
 	ChangeName(ctx context.Context, id DictionaryID, name string) error
 	Delete(ctx context.Context, id DictionaryID) error
