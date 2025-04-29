@@ -39,8 +39,8 @@ func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) 
 	return dictionary, nil
 }
 
-func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
-	if count < 4 || count > 8 {
+func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+	if limit < 4 || limit > 8 {
 		err := DictsRandomCountError
 		return nil, err
 	}
@@ -50,11 +50,11 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 		return nil, err
 	}
 
-	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, count)
+	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
 		return nil, domain.DictsNotFoundError
 	}
-	if len(dicts) != int(count) {
+	if len(dicts) != int(limit) {
 		return nil, domain.DictsNotFoundError
 	}
 

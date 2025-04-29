@@ -83,9 +83,9 @@ func (p postgresDictionaryRepository) IsExistsByNameAndLang(ctx context.Context,
 }
 
 // GetRandomDictionaries возвращает случайный набор словарей по определенному языку с переводами и предложениями
-func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
+func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
 	// Получаем набор случайных словарей
-	dicts, err := p.getDictionariesByLangAndRandomIDs(ctx, lang, count)
+	dicts, err := p.getDictionariesByLangAndRandomIDs(ctx, lang, limit)
 	if err != nil {
 		return nil, err
 	}

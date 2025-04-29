@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package dictionary;
+
+option go_package = "./gen;dictionary"; // Путь для сгенерированного Go-кода
+
+// Сервис для работы со словарями
+service DictionaryService {
+  // Метод для получения случайных словарей
+  rpc GetRandomDictionaries (GetRandomDictionariesRequest) returns (GetRandomDictionariesResponse);
+}
+
+// Запрос для получения случайных словарей
+message GetRandomDictionariesRequest {
+  int32 limit = 1; // Количество возвращаемых словарей
+  string lang = 2; // Язык словарей (например, "en", "ru")
+}
+
+// Ответ с массивом словарей
+message GetRandomDictionariesResponse {
+  repeated Dictionary dictionaries = 1; // Список словарей
+}
+
+// Структура словаря
+message Dictionary {
+  int64 id = 1;               // Идентификатор словаря
+  string lang = 2;            // Язык словаря (например, "en", "ru")
+  string name = 3;            // Название словаря
+  int32 type = 4;            // Тип словаря (например, "noun", "verb")
+  repeated Translation translations = 5; // Список переводов
+  repeated Sentence sentences = 6;      // Список предложений
+}
+
+// Структура перевода
+message Translation {
+  string lang = 1;            // Язык перевода (например, "en", "ru")
+  string name = 2;            // Название перевода
+  int32 type = 3;            // Тип перевода (например, "noun", "verb")
+}
+
+// Структура предложения
+message Sentence {
+  string text_ru = 1;         // Текст на русском
+  string text_en = 2;         // Текст на английском
+}

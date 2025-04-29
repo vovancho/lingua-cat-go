@@ -6,9 +6,13 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	rutranslations "github.com/go-playground/validator/v10/translations/ru"
+	_dictionaryGrpc "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc"
+	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
+	"google.golang.org/grpc"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -57,6 +61,25 @@ func main() {
 		Addr:    ":80",
 		Handler: response.ErrorMiddleware(router, trans),
 	}
+
+	// gRPC-сервер
+	grpcServer := grpc.NewServer()
+	dictionaryHandler := _dictionaryGrpc.NewDictionaryHandler(validate, du)
+	pb.RegisterDictionaryServiceServer(grpcServer, dictionaryHandler)
+	// Запуск gRPC-сервера в отдельной горутине
+	go func() {
+		lis, err := net.Listen("tcp", ":50051")
+		if err != nil {
+			slog.Error("Failed to listen for gRPC", "error", err)
+			panic(err)
+		}
+		slog.Info("gRPC server is listening on :50051")
+		if err := grpcServer.Serve(lis); err != nil {
+			slog.Error("Failed to serve gRPC", "error", err)
+			panic(err)
+		}
+	}()
+
 	fmt.Println("Server is listening on port 80")
 	server.ListenAndServe()
 }

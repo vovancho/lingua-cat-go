@@ -14,12 +14,14 @@ services:
             --entryPoints.web2.address=:8081
             --entryPoints.web-debug.address=:2345
             --entryPoints.postgres.address=:54321
+            --entryPoints.dictionary-grpc.address=:50051
         ports:
             - "80:80"
             - "2345:2345"
             - "54321:54321" # dictionary-db
             - "8080:8080" # traefik dashboard
             - "8081:8081"
+            - "50051:50051" # dictionary-grpc
         volumes:
             - //var/run/docker.sock:/var/run/docker.sock:ro
         labels:
