@@ -67,9 +67,9 @@ docker run --rm --network host -v .\backend\dictionary\dictionary\delivery\grpc\
 Measure-Command { docker run --rm --network host -v .\backend\dictionary\dictionary\delivery\grpc\proto:/proto fullstorydev/grpcurl:latest -plaintext -import-path /proto -proto /proto/dictionary.proto -d '{\"limit\": 4, \"lang\": \"en\"}' api.lingua-cat-go.localhost:50051 dictionary.DictionaryService/GetRandomDictionaries } | % { Write-Host "Execution time: $($_.TotalMilliseconds) ms" }
 
 
+docker run --rm -v .\backend\dictionary\internal\misc:/keystore openjdk:17-alpine keytool -list -rfc -keystore /keystore/keystore.jks -storepass 241186
 
-
-
+docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go run cmd/jwk_from_pem.go
 
 
 
