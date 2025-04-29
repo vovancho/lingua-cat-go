@@ -10,6 +10,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	rutranslations "github.com/go-playground/validator/v10/translations/ru"
+	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	_dictionaryGrpc "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc"
@@ -178,7 +179,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse([]byte(tokenStr), jwt.WithKeySet(cachedJWK))
+		key, ok := cachedJWK.Get(0)
+		var rsaPubKey rsa.PublicKey
+		key.Raw(&rsaPubKey)
+
+		token, err := jwt.Parse(
+			[]byte(tokenStr),
+			jwt.WithVerify(jwa.RS256, rsaPubKey),
+			jwt.WithValidate(true),
+		)
 		if err != nil {
 			http.Error(w, "Неверный токен", http.StatusUnauthorized)
 			return
@@ -211,7 +220,15 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		return nil, status.Error(codes.Unauthenticated, "Неверный формат заголовка Authorization")
 	}
 
-	token, err := jwt.Parse([]byte(tokenStr), jwt.WithKeySet(cachedJWK))
+	key, ok := cachedJWK.Get(0)
+	var rsaPubKey rsa.PublicKey
+	key.Raw(&rsaPubKey)
+
+	token, err := jwt.Parse(
+		[]byte(tokenStr),
+		jwt.WithVerify(jwa.RS256, rsaPubKey),
+		jwt.WithValidate(true),
+	)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "Неверный токен")
 	}

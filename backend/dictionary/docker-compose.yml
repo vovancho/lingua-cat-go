@@ -3,6 +3,7 @@ services:
         image: golang:1.24-alpine3.21
         volumes:
             - ./:/app
+            - dictionary-backend-pkg-mod:/go/pkg/mod
         working_dir: /app
         labels:
             - traefik.enable=true
@@ -39,3 +40,4 @@ services:
             - traefik.tcp.services.lcg-dictionary-db.loadbalancer.server.port=5432
 volumes:
     dictionary-db:
+    dictionary-backend-pkg-mod:
