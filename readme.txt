@@ -62,7 +62,7 @@ docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs 
 
 grpcurl -plaintext -d '{"limit": 4, "lang": "en"}' api.lingua-cat-go.localhost:50051 dictionary.DictionaryService/GetRandomDictionaries
 
-docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc\proto:/proto fullstorydev/grpcurl:latest -plaintext -import-path /proto -proto /proto/dictionary.proto -d '{"limit": 4, "lang": "en"}' api.lingua-cat-go.localhost:50051 dictionary.DictionaryService/GetRandomDictionaries
+docker run --rm --network host -v .\backend\dictionary\dictionary\delivery\grpc\proto:/proto fullstorydev/grpcurl:latest -plaintext -import-path /proto -proto /proto/dictionary.proto -d '{\"limit\": 4, \"lang\": \"en\"}' api.lingua-cat-go.localhost:50051 dictionary.DictionaryService/GetRandomDictionaries
 
 
 

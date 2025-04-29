@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"strings"
@@ -52,9 +53,11 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 
 	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
+		fmt.Println("err", err)
 		return nil, domain.DictsNotFoundError
 	}
 	if len(dicts) != int(limit) {
+		fmt.Println("not eq", dicts, limit)
 		return nil, domain.DictsNotFoundError
 	}
 

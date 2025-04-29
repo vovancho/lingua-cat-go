@@ -449,7 +449,7 @@ func (p postgresDictionaryRepository) getDictionariesByLangAndRandomIDs(ctx cont
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE lang = $1 AND deleted_at IS NULL ORDER BY RANDOM() LIMIT $2`
 	var dicts []domain.Dictionary
 
-	if err := p.Conn.GetContext(ctx, &dicts, query, lang, count); err != nil {
+	if err := p.Conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("dictionaries not found: %w", err)
 		}
