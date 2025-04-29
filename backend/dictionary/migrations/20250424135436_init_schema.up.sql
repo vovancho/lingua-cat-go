@@ -9,6 +9,8 @@ CREATE TABLE public.dictionary
     type       SMALLINT                NOT NULL
 );
 
+CREATE UNIQUE INDEX dictionary_name_lang_uniq ON public.dictionary (name, lang) WHERE (deleted_at IS NULL);
+
 CREATE TABLE public.sentence
 (
     id         bigserial

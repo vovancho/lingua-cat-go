@@ -3,7 +3,9 @@ package usecase
 import (
 	"context"
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
+	"strings"
 	"time"
 )
 
@@ -11,15 +13,17 @@ var (
 	DictsRandomCountError = errors.New("DICTIONARY_RANDOM_COUNT_INVALID")
 )
 
-func NewDictionaryUseCase(dr domain.DictionaryRepository, timeout time.Duration) domain.DictionaryUseCase {
+func NewDictionaryUseCase(dr domain.DictionaryRepository, v *validator.Validate, timeout time.Duration) domain.DictionaryUseCase {
 	return &dictionaryUseCase{
 		dictionaryRepo: dr,
+		validate:       v,
 		contextTimeout: timeout,
 	}
 }
 
 type dictionaryUseCase struct {
 	dictionaryRepo domain.DictionaryRepository
+	validate       *validator.Validate
 	contextTimeout time.Duration
 }
 
@@ -61,8 +65,41 @@ func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) (
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	// валидировать сущность (+проверить что переводы другого языка)
-	// проверить слово на существование (уникальность)
+	dict.Name = strings.ToLower(strings.TrimSpace(dict.Name))
+
+	if len(dict.Translations) == 0 {
+		return domain.DictTranslationRequiredError
+	}
+
+	for i, t := range dict.Translations {
+		dict.Translations[i].Dictionary.Name = strings.ToLower(strings.TrimSpace(dict.Translations[i].Dictionary.Name))
+
+		if t.Dictionary.Lang == dict.Lang {
+			return domain.DictTranslationLangInvalidError
+		}
+	}
+
+	if err = d.validate.Struct(dict); err != nil {
+		return err
+	}
+
+	isExists, err := d.dictionaryRepo.IsExistsByNameAndLang(ctx, dict.Name, dict.Lang)
+	if err != nil {
+		return err
+	}
+	if isExists {
+		return domain.DictExistsError
+	}
+
+	for _, t := range dict.Translations {
+		isExists, err = d.dictionaryRepo.IsExistsByNameAndLang(ctx, t.Dictionary.Name, t.Dictionary.Lang)
+		if err != nil {
+			return err
+		}
+		if isExists {
+			return domain.DictExistsError
+		}
+	}
 
 	err = d.dictionaryRepo.Store(ctx, dict)
 
@@ -73,6 +110,7 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
+	// имя в нижний регистр
 	// проверить что сущность существует
 	// изменить имя сущности и валидировать ее
 	// проверить новое слово на существование (уникальность)

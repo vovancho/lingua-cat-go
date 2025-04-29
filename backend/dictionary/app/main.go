@@ -50,7 +50,7 @@ func main() {
 	dictionaryRepo := _dictionaryRepo.NewPostgresDictionaryRepository(dbConn)
 
 	timeoutContext := time.Duration(2) * time.Second
-	du := _dictionaryUcase.NewDictionaryUseCase(dictionaryRepo, timeoutContext)
+	du := _dictionaryUcase.NewDictionaryUseCase(dictionaryRepo, validate, timeoutContext)
 	_dictionaryHttpDelivery.NewDictionaryHandler(router, validate, du)
 
 	server := http.Server{

@@ -33,11 +33,11 @@ func (l DictionaryLang) IsValid() bool {
 type Dictionary struct {
 	ID           DictionaryID   `json:"id" db:"id"`
 	DeletedAt    *time.Time     `json:"-" db:"deleted_at"`
-	Lang         DictionaryLang `json:"lang" db:"lang"`
-	Name         string         `json:"name" db:"name"`
-	Type         DictionaryType `json:"type" db:"type"`
-	Sentences    []Sentence     `json:"sentences" db:"-"`
-	Translations []Translation  `json:"translations,omitempty" db:"-"`
+	Lang         DictionaryLang `json:"lang" db:"lang" validate:"required,valid_dictionary_lang"`
+	Name         string         `json:"name" db:"name" validate:"required,min=2"`
+	Type         DictionaryType `json:"type" db:"type" validate:"required,valid_dictionary_type"`
+	Translations []Translation  `json:"translations,omitempty" db:"-" validate:"dive"`
+	Sentences    []Sentence     `json:"sentences" db:"-" validate:"dive"`
 }
 
 type DictionaryUseCase interface {
@@ -51,6 +51,7 @@ type DictionaryUseCase interface {
 type DictionaryRepository interface {
 	GetByID(ctx context.Context, id DictionaryID) (*Dictionary, error)
 	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, count uint8) ([]Dictionary, error)
+	IsExistsByNameAndLang(ctx context.Context, name string, lang DictionaryLang) (bool, error)
 	Store(ctx context.Context, d *Dictionary) error
 	ChangeName(ctx context.Context, id DictionaryID, name string) error
 	Delete(ctx context.Context, id DictionaryID) error

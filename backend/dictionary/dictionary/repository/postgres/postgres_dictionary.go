@@ -67,6 +67,21 @@ func (p postgresDictionaryRepository) GetByID(ctx context.Context, id domain.Dic
 	return dict, nil
 }
 
+func (p postgresDictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
+	const query = `SELECT id FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL`
+
+	var id domain.DictionaryID
+	err := p.Conn.GetContext(ctx, &id, query, name, lang)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // GetRandomDictionaries возвращает случайный набор словарей по определенному языку с переводами и предложениями
 func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
 	// Получаем набор случайных словарей
