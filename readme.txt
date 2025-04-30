@@ -80,5 +80,21 @@ docker run --rm -v .\backend\dictionary\example:/app -v pkgmod:/go/pkg/mod -w /a
 
 
 
-
+Конфиг slog:
+```
+func init() {
+	// Настройка структурированного логирования
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: false,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{Key: slog.TimeKey, Value: slog.StringValue(a.Value.Time().UTC().Format(time.RFC3339Nano))}
+			}
+			return a
+		},
+	})
+	slog.SetDefault(slog.New(handler))
+}
+```
 
