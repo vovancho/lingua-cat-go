@@ -48,17 +48,6 @@ func (m *MockDictionaryRepository) Delete(ctx context.Context, id domain.Diction
 }
 
 func TestDictionaryUseCase_GetByID(t *testing.T) {
-	// Инициализация
-	validate := validator.New()
-	validate.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
-		lang := domain.DictionaryLang(fl.Field().String())
-		return lang.IsValid()
-	})
-	validate.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
-		dictType := domain.DictionaryType(fl.Field().Uint())
-		return dictType.IsValid()
-	})
-
 	ctx := context.Background()
 	dictID := domain.DictionaryID(1)
 	expectedDict := &domain.Dictionary{
@@ -70,8 +59,7 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).Return(expectedDict, nil).Once()
 
@@ -83,8 +71,7 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 
 	// Подтест NotFound
 	t.Run("NotFound", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).Return((*domain.Dictionary)(nil), errors.New("not found")).Once()
 
@@ -96,8 +83,7 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 
 	// Подтест Timeout
 	t.Run("Timeout", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 1*time.Millisecond)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		// Создаём контекст с уже истёкшим дедлайном
 		ctx, cancel := context.WithTimeout(context.Background(), 0)
@@ -114,8 +100,7 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 	})
 
 	t.Run("InternalTimeout", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 1*time.Millisecond)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		ctx := context.Background()
 		mockRepo.On("GetByID", mock.Anything, dictID).Return((*domain.Dictionary)(nil), context.DeadlineExceeded).Once()
@@ -129,17 +114,6 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 }
 
 func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
-	// Инициализация
-	validate := validator.New()
-	validate.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
-		lang := domain.DictionaryLang(fl.Field().String())
-		return lang.IsValid()
-	})
-	validate.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
-		dictType := domain.DictionaryType(fl.Field().Uint())
-		return dictType.IsValid()
-	})
-
 	ctx := context.Background()
 	lang := domain.EnDictionary
 	limit := uint8(4)
@@ -152,8 +126,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetRandomDictionaries", mock.Anything, lang, limit).Return(dicts, nil).Once()
 
@@ -165,8 +138,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест InvalidLimit_LessThan4
 	t.Run("InvalidLimit_LessThan4", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		result, err := uc.GetRandomDictionaries(ctx, lang, 3)
 		assert.ErrorIs(t, err, DictsRandomCountError)
@@ -176,8 +148,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест InvalidLimit_MoreThan8
 	t.Run("InvalidLimit_MoreThan8", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		result, err := uc.GetRandomDictionaries(ctx, lang, 9)
 		assert.ErrorIs(t, err, DictsRandomCountError)
@@ -187,8 +158,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест InvalidLang
 	t.Run("InvalidLang", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		result, err := uc.GetRandomDictionaries(ctx, "invalid", limit)
 		assert.ErrorIs(t, err, domain.DictLangInvalidError)
@@ -198,8 +168,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест RepositoryError
 	t.Run("RepositoryError", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetRandomDictionaries", mock.Anything, lang, limit).Return([]domain.Dictionary{}, errors.New("repo error")).Once()
 
@@ -211,8 +180,7 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 
 	// Подтест NotEnoughDictionaries
 	t.Run("NotEnoughDictionaries", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		insufficientDictionaries := dicts[:2] // Только 2 словаря вместо 4
 		mockRepo.On("GetRandomDictionaries", mock.Anything, lang, limit).Return(insufficientDictionaries, nil).Once()
@@ -225,17 +193,6 @@ func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
 }
 
 func TestDictionaryUseCase_Store(t *testing.T) {
-	// Инициализация
-	validate := validator.New()
-	validate.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
-		lang := domain.DictionaryLang(fl.Field().String())
-		return lang.IsValid()
-	})
-	validate.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
-		dictType := domain.DictionaryType(fl.Field().Uint())
-		return dictType.IsValid()
-	})
-
 	ctx := context.Background()
 	dict := &domain.Dictionary{
 		Lang: domain.EnDictionary,
@@ -257,8 +214,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "test", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "тест", domain.RuDictionary).Return(false, nil).Once()
@@ -272,8 +228,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест NoTranslations
 	t.Run("NoTranslations", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -289,8 +244,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест InvalidTranslationLang
 	t.Run("InvalidTranslationLang", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -315,8 +269,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест InvalidStruct
 	t.Run("InvalidStruct", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -342,8 +295,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест DictionaryExists
 	t.Run("DictionaryExists", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "test", domain.EnDictionary).Return(true, nil).Once()
 
@@ -355,8 +307,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест TranslationExists
 	t.Run("TranslationExists", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "test", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "тест", domain.RuDictionary).Return(true, nil).Once()
@@ -369,8 +320,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест RepositoryError
 	t.Run("RepositoryError", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "test", domain.EnDictionary).Return(false, errors.New("repo error")).Once()
 
@@ -383,8 +333,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест MissingLang
 	t.Run("MissingLang", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Name: "test",
@@ -412,8 +361,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест MissingName
 	t.Run("MissingName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -441,8 +389,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест MissingType
 	t.Run("MissingType", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -470,8 +417,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест InvalidLang
 	t.Run("InvalidLang", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: "invalid",
@@ -500,8 +446,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест InvalidType
 	t.Run("InvalidType", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		invalidDict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -530,8 +475,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест LowercaseName
 	t.Run("LowercaseName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		dict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -561,8 +505,7 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 
 	// Подтест TrimSpaces
 	t.Run("TrimSpaces", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		dict := &domain.Dictionary{
 			Lang: domain.EnDictionary,
@@ -592,25 +535,13 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 }
 
 func TestDictionaryUseCase_ChangeName(t *testing.T) {
-	// Инициализация
-	validate := validator.New()
-	validate.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
-		lang := domain.DictionaryLang(fl.Field().String())
-		return lang.IsValid()
-	})
-	validate.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
-		dictType := domain.DictionaryType(fl.Field().Uint())
-		return dictType.IsValid()
-	})
-
 	ctx := context.Background()
 	dictID := domain.DictionaryID(1)
 	newName := "newname"
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -631,8 +562,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест NotFound
 	t.Run("NotFound", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).Return((*domain.Dictionary)(nil), errors.New("not found")).Once()
 
@@ -645,8 +575,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест SameName
 	t.Run("SameName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -666,8 +595,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест InvalidName
 	t.Run("InvalidName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -688,8 +616,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест NameExists
 	t.Run("NameExists", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -710,8 +637,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест RepositoryError
 	t.Run("RepositoryError", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -733,8 +659,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест EmptyName
 	t.Run("EmptyName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -758,8 +683,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест LowercaseName
 	t.Run("LowercaseName", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -780,8 +704,7 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 
 	// Подтест TrimSpaces
 	t.Run("TrimSpaces", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -802,24 +725,12 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 }
 
 func TestDictionaryUseCase_Delete(t *testing.T) {
-	// Инициализация
-	validate := validator.New()
-	validate.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
-		lang := domain.DictionaryLang(fl.Field().String())
-		return lang.IsValid()
-	})
-	validate.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
-		dictType := domain.DictionaryType(fl.Field().Uint())
-		return dictType.IsValid()
-	})
-
 	ctx := context.Background()
 	dictID := domain.DictionaryID(1)
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -838,8 +749,7 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 
 	// Подтест NotFound
 	t.Run("NotFound", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).Return((*domain.Dictionary)(nil), errors.New("not found")).Once()
 
@@ -851,8 +761,7 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 
 	// Подтест RepositoryError
 	t.Run("RepositoryError", func(t *testing.T) {
-		mockRepo := new(MockDictionaryRepository)
-		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
 		mockRepo.On("GetByID", mock.Anything, dictID).
 			Return(&domain.Dictionary{
@@ -869,4 +778,21 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 		assert.EqualError(t, err, "repo error")
 		mockRepo.AssertExpectations(t)
 	})
+}
+
+func newValidator() *validator.Validate {
+	v := validator.New()
+	v.RegisterValidation("valid_dictionary_lang", func(fl validator.FieldLevel) bool {
+		return domain.DictionaryLang(fl.Field().String()).IsValid()
+	})
+	v.RegisterValidation("valid_dictionary_type", func(fl validator.FieldLevel) bool {
+		return domain.DictionaryType(fl.Field().Uint()).IsValid()
+	})
+	return v
+}
+
+func newUseCaseWithMock(timeout time.Duration) (domain.DictionaryUseCase, *MockDictionaryRepository) {
+	repo := new(MockDictionaryRepository)
+	uc := NewDictionaryUseCase(repo, newValidator(), timeout).(domain.DictionaryUseCase)
+	return uc, repo
 }
