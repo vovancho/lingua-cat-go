@@ -112,6 +112,20 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 		assert.Nil(t, result)
 		mockRepo.AssertNotCalled(t, "GetByID")
 	})
+
+	t.Run("InternalTimeout", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 1*time.Millisecond)
+
+		ctx := context.Background()
+		mockRepo.On("GetByID", mock.Anything, dictID).Return((*domain.Dictionary)(nil), context.DeadlineExceeded).Once()
+
+		result, err := uc.GetByID(ctx, dictID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "context deadline exceeded")
+		assert.Nil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
 }
 
 func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {

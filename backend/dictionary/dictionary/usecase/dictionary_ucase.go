@@ -36,6 +36,11 @@ func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) 
 
 	dictionary, err := d.dictionaryRepo.GetByID(ctx, id)
 	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
 		return nil, domain.DictNotFoundError
 	}
 
@@ -61,6 +66,11 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 
 	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
 		return nil, domain.DictsNotFoundError
 	}
 	if len(dicts) != int(limit) {
@@ -129,6 +139,10 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 
 	dict, err := d.dictionaryRepo.GetByID(ctx, id)
 	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return err
+		}
 		return domain.DictNotFoundError
 	}
 
@@ -165,6 +179,10 @@ func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) e
 	defer cancel()
 
 	if _, err := d.dictionaryRepo.GetByID(ctx, id); err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return err
+		}
 		return domain.DictNotFoundError
 	}
 
