@@ -30,6 +30,7 @@ func WithID(h HandlerFuncWithID) http.HandlerFunc {
 			response.Error(appErr, r)
 			return
 		}
+
 		h(w, r, id)
 	}
 }
