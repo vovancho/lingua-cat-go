@@ -543,14 +543,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "newname", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("ChangeName", mock.Anything, dictID, newName).Return(nil).Once()
@@ -577,14 +571,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("SameName", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		err := uc.ChangeName(ctx, dictID, "oldname")
 		assert.NoError(t, err)
@@ -597,14 +585,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("InvalidName", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		err := uc.ChangeName(ctx, dictID, "n") // Слишком короткое
 		assert.Error(t, err)
@@ -618,14 +600,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("NameExists", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "newname", domain.EnDictionary).Return(true, nil).Once()
 
@@ -639,14 +615,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("RepositoryError", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "newname", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("ChangeName", mock.Anything, dictID, newName).Return(errors.New("repo error")).Once()
@@ -661,14 +631,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("EmptyName", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		err := uc.ChangeName(ctx, dictID, "")
 		assert.Error(t, err)
@@ -685,14 +649,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("LowercaseName", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "newname", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("ChangeName", mock.Anything, dictID, "newname").Return(nil).Once()
@@ -706,14 +664,8 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 	t.Run("TrimSpaces", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "oldname",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "oldname", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 
 		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "new name", domain.EnDictionary).Return(false, nil).Once()
 		mockRepo.On("ChangeName", mock.Anything, dictID, "new name").Return(nil).Once()
@@ -732,14 +684,8 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "test",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "test", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 		mockRepo.On("Delete", mock.Anything, dictID).Return(nil).Once()
 
 		err := uc.Delete(ctx, dictID)
@@ -763,14 +709,8 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 	t.Run("RepositoryError", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock(5 * time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).
-			Return(&domain.Dictionary{
-				ID:   dictID,
-				Lang: domain.EnDictionary,
-				Name: "test",
-				Type: domain.SimpleDictionary,
-			}, nil).
-			Once()
+		expected := makeDict(dictID, "test", domain.EnDictionary)
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expected, nil).Once()
 		mockRepo.On("Delete", mock.Anything, dictID).Return(errors.New("repo error")).Once()
 
 		err := uc.Delete(ctx, dictID)
@@ -795,4 +735,13 @@ func newUseCaseWithMock(timeout time.Duration) (domain.DictionaryUseCase, *MockD
 	repo := new(MockDictionaryRepository)
 	uc := NewDictionaryUseCase(repo, newValidator(), timeout).(domain.DictionaryUseCase)
 	return uc, repo
+}
+
+func makeDict(id domain.DictionaryID, name string, lang domain.DictionaryLang) *domain.Dictionary {
+	return &domain.Dictionary{
+		ID:   id,
+		Name: name,
+		Lang: lang,
+		Type: domain.SimpleDictionary,
+	}
 }
