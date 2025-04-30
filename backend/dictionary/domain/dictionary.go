@@ -10,9 +10,9 @@ type DictionaryType uint16
 
 const (
 	SimpleDictionary        DictionaryType = 1
-	PhrasalVerbDictionary                  = 2
-	IrregularVerbDictionary                = 3
-	PhraseDictionary                       = 4
+	PhrasalVerbDictionary   DictionaryType = 2
+	IrregularVerbDictionary DictionaryType = 3
+	PhraseDictionary        DictionaryType = 4
 )
 
 func (t DictionaryType) IsValid() bool {
@@ -23,7 +23,7 @@ type DictionaryLang string
 
 const (
 	RuDictionary DictionaryLang = "ru"
-	EnDictionary                = "en"
+	EnDictionary DictionaryLang = "en"
 )
 
 func (l DictionaryLang) IsValid() bool {
