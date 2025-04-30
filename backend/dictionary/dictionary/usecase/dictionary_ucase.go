@@ -164,7 +164,7 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 		return domain.DictExistsError
 	}
 
-	if err = d.dictionaryRepo.ChangeName(ctx, id, name); err != nil {
+	if err = d.dictionaryRepo.ChangeName(ctx, id, dict.Name); err != nil {
 		return err
 	}
 

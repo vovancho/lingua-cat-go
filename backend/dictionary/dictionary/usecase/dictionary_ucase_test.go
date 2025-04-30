@@ -380,6 +380,215 @@ func TestDictionaryUseCase_Store(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 		mockRepo.AssertNotCalled(t, "Store")
 	})
+
+	// Подтест MissingLang
+	t.Run("MissingLang", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		invalidDict := &domain.Dictionary{
+			Name: "test",
+			Type: domain.SimpleDictionary,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "тест",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		err := uc.Store(ctx, invalidDict)
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Lang", validationErrors[0].Field())
+		assert.Equal(t, "required", validationErrors[0].Tag())
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "Store")
+	})
+
+	// Подтест MissingName
+	t.Run("MissingName", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		invalidDict := &domain.Dictionary{
+			Lang: domain.EnDictionary,
+			Type: domain.SimpleDictionary,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "тест",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		err := uc.Store(ctx, invalidDict)
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Name", validationErrors[0].Field())
+		assert.Equal(t, "required", validationErrors[0].Tag())
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "Store")
+	})
+
+	// Подтест MissingType
+	t.Run("MissingType", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		invalidDict := &domain.Dictionary{
+			Lang: domain.EnDictionary,
+			Name: "test",
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "тест",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		err := uc.Store(ctx, invalidDict)
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Type", validationErrors[0].Field())
+		assert.Equal(t, "required", validationErrors[0].Tag())
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "Store")
+	})
+
+	// Подтест InvalidLang
+	t.Run("InvalidLang", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		invalidDict := &domain.Dictionary{
+			Lang: "invalid",
+			Name: "test",
+			Type: domain.SimpleDictionary,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "тест",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		err := uc.Store(ctx, invalidDict)
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Lang", validationErrors[0].Field())
+		assert.Equal(t, "valid_dictionary_lang", validationErrors[0].Tag())
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "Store")
+	})
+
+	// Подтест InvalidType
+	t.Run("InvalidType", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		invalidDict := &domain.Dictionary{
+			Lang: domain.EnDictionary,
+			Name: "test",
+			Type: 999,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "тест",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		err := uc.Store(ctx, invalidDict)
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Type", validationErrors[0].Field())
+		assert.Equal(t, "valid_dictionary_type", validationErrors[0].Tag())
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "Store")
+	})
+
+	// Подтест LowercaseName
+	t.Run("LowercaseName", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		dict := &domain.Dictionary{
+			Lang: domain.EnDictionary,
+			Name: "TestName",
+			Type: domain.SimpleDictionary,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "ТестИмя",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "testname", domain.EnDictionary).Return(false, nil).Once()
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "тестимя", domain.RuDictionary).Return(false, nil).Once()
+		mockRepo.On("Store", mock.Anything, dict).Return(nil).Once()
+
+		err := uc.Store(ctx, dict)
+		assert.NoError(t, err)
+		assert.Equal(t, "testname", dict.Name)
+		assert.Equal(t, "тестимя", dict.Translations[0].Dictionary.Name)
+		mockRepo.AssertExpectations(t)
+	})
+
+	// Подтест TrimSpaces
+	t.Run("TrimSpaces", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		dict := &domain.Dictionary{
+			Lang: domain.EnDictionary,
+			Name: "  test name  ",
+			Type: domain.SimpleDictionary,
+			Translations: []domain.Translation{
+				{
+					Dictionary: domain.Dictionary{
+						Lang: domain.RuDictionary,
+						Name: "  тест имя  ",
+						Type: domain.SimpleDictionary,
+					},
+				},
+			},
+		}
+
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "test name", domain.EnDictionary).Return(false, nil).Once()
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "тест имя", domain.RuDictionary).Return(false, nil).Once()
+		mockRepo.On("Store", mock.Anything, dict).Return(nil).Once()
+
+		err := uc.Store(ctx, dict)
+		assert.NoError(t, err)
+		assert.Equal(t, "test name", dict.Name)
+		assert.Equal(t, "тест имя", dict.Translations[0].Dictionary.Name)
+		mockRepo.AssertExpectations(t)
+	})
 }
 
 func TestDictionaryUseCase_ChangeName(t *testing.T) {
@@ -519,6 +728,75 @@ func TestDictionaryUseCase_ChangeName(t *testing.T) {
 		err := uc.ChangeName(ctx, dictID, newName)
 		assert.Error(t, err)
 		assert.EqualError(t, err, "repo error")
+		mockRepo.AssertExpectations(t)
+	})
+
+	// Подтест EmptyName
+	t.Run("EmptyName", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		mockRepo.On("GetByID", mock.Anything, dictID).
+			Return(&domain.Dictionary{
+				ID:   dictID,
+				Lang: domain.EnDictionary,
+				Name: "oldname",
+				Type: domain.SimpleDictionary,
+			}, nil).
+			Once()
+
+		err := uc.ChangeName(ctx, dictID, "")
+		assert.Error(t, err)
+		assert.IsType(t, validator.ValidationErrors{}, err)
+		validationErrors := err.(validator.ValidationErrors)
+		assert.Equal(t, "Name", validationErrors[0].Field())
+		assert.Equal(t, "required", validationErrors[0].Tag())
+		mockRepo.AssertExpectations(t)
+		mockRepo.AssertNotCalled(t, "IsExistsByNameAndLang")
+		mockRepo.AssertNotCalled(t, "ChangeName")
+	})
+
+	// Подтест LowercaseName
+	t.Run("LowercaseName", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		mockRepo.On("GetByID", mock.Anything, dictID).
+			Return(&domain.Dictionary{
+				ID:   dictID,
+				Lang: domain.EnDictionary,
+				Name: "oldname",
+				Type: domain.SimpleDictionary,
+			}, nil).
+			Once()
+
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "newname", domain.EnDictionary).Return(false, nil).Once()
+		mockRepo.On("ChangeName", mock.Anything, dictID, "newname").Return(nil).Once()
+
+		err := uc.ChangeName(ctx, dictID, "NewName")
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	// Подтест TrimSpaces
+	t.Run("TrimSpaces", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
+
+		mockRepo.On("GetByID", mock.Anything, dictID).
+			Return(&domain.Dictionary{
+				ID:   dictID,
+				Lang: domain.EnDictionary,
+				Name: "oldname",
+				Type: domain.SimpleDictionary,
+			}, nil).
+			Once()
+
+		mockRepo.On("IsExistsByNameAndLang", mock.Anything, "new name", domain.EnDictionary).Return(false, nil).Once()
+		mockRepo.On("ChangeName", mock.Anything, dictID, "new name").Return(nil).Once()
+
+		err := uc.ChangeName(ctx, dictID, "  new name  ")
+		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
 	})
 }
