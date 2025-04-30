@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	"os"
+	"os/signal"
+	"syscall"
 
 	_dictionaryGrpc "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc"
 	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
@@ -59,6 +63,9 @@ func main() {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authService.AuthInterceptor))
 	pb.RegisterDictionaryServiceServer(grpcServer, _dictionaryGrpc.NewDictionaryHandler(validate, dictionaryUcase))
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	go func() {
 		lis, err := net.Listen("tcp", cfg.GRPCPort)
 		if err != nil {
@@ -72,9 +79,28 @@ func main() {
 		}
 	}()
 
-	slog.Info("HTTP server is listening", "port", cfg.HTTPPort)
-	if err := httpServer.ListenAndServe(); err != nil {
-		slog.Error("Failed to serve HTTP", "error", err)
-		panic(err)
+	// Start HTTP server
+	go func() {
+		slog.Info("HTTP server is listening", "port", cfg.HTTPPort)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Failed to serve HTTP", "error", err)
+		}
+	}()
+
+	// Handle graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	<-sigChan
+	slog.Info("Shutting down servers...")
+
+	// Shutdown HTTP server
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := httpServer.Shutdown(ctx); err != nil {
+		slog.Error("Failed to shutdown HTTP server", "error", err)
 	}
+
+	// Shutdown gRPC server
+	grpcServer.GracefulStop()
+	slog.Info("Servers stopped")
 }
