@@ -93,6 +93,25 @@ func TestDictionaryUseCase_GetByID(t *testing.T) {
 		assert.Nil(t, result)
 		mockRepo.AssertExpectations(t)
 	})
+
+	// Подтест Timeout
+	t.Run("Timeout", func(t *testing.T) {
+		mockRepo := new(MockDictionaryRepository)
+		uc := NewDictionaryUseCase(mockRepo, validate, 1*time.Millisecond)
+
+		// Создаём контекст с уже истёкшим дедлайном
+		ctx, cancel := context.WithTimeout(context.Background(), 0)
+		defer cancel()
+
+		mockRepo.On("GetByID", mock.Anything, dictID).Return(expectedDict, nil).Once()
+
+		// Вызываем GetByID с истёкшим контекстом
+		result, err := uc.GetByID(ctx, dictID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "context deadline exceeded")
+		assert.Nil(t, result)
+		mockRepo.AssertNotCalled(t, "GetByID")
+	})
 }
 
 func TestDictionaryUseCase_GetRandomDictionaries(t *testing.T) {
@@ -504,19 +523,20 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 
 	ctx := context.Background()
 	dictID := domain.DictionaryID(1)
-	existingDict := &domain.Dictionary{
-		ID:   dictID,
-		Lang: domain.EnDictionary,
-		Name: "test",
-		Type: domain.SimpleDictionary,
-	}
 
 	// Подтест Success
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := new(MockDictionaryRepository)
 		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).Return(existingDict, nil).Once()
+		mockRepo.On("GetByID", mock.Anything, dictID).
+			Return(&domain.Dictionary{
+				ID:   dictID,
+				Lang: domain.EnDictionary,
+				Name: "test",
+				Type: domain.SimpleDictionary,
+			}, nil).
+			Once()
 		mockRepo.On("Delete", mock.Anything, dictID).Return(nil).Once()
 
 		err := uc.Delete(ctx, dictID)
@@ -542,7 +562,14 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 		mockRepo := new(MockDictionaryRepository)
 		uc := NewDictionaryUseCase(mockRepo, validate, 5*time.Second)
 
-		mockRepo.On("GetByID", mock.Anything, dictID).Return(existingDict, nil).Once()
+		mockRepo.On("GetByID", mock.Anything, dictID).
+			Return(&domain.Dictionary{
+				ID:   dictID,
+				Lang: domain.EnDictionary,
+				Name: "test",
+				Type: domain.SimpleDictionary,
+			}, nil).
+			Once()
 		mockRepo.On("Delete", mock.Anything, dictID).Return(errors.New("repo error")).Once()
 
 		err := uc.Delete(ctx, dictID)

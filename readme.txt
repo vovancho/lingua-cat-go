@@ -103,7 +103,7 @@ docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app/inter
 
 
 docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase
-
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase -run TestDictionaryUseCase_GetByID/Timeout
 
 
 

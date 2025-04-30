@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"strings"
@@ -29,6 +28,9 @@ type dictionaryUseCase struct {
 }
 
 func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -41,6 +43,12 @@ func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) 
 }
 
 func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
+	defer cancel()
+
 	if limit < 4 || limit > 8 {
 		err := DictsRandomCountError
 		return nil, err
@@ -53,11 +61,9 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 
 	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
-		fmt.Println("err", err)
 		return nil, domain.DictsNotFoundError
 	}
 	if len(dicts) != int(limit) {
-		fmt.Println("not eq", dicts, limit)
 		return nil, domain.DictsNotFoundError
 	}
 
@@ -65,6 +71,9 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 }
 
 func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -112,6 +121,9 @@ func (d dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) e
 }
 
 func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
@@ -146,6 +158,9 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 }
 
 func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
