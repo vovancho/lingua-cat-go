@@ -71,6 +71,7 @@ Measure-Command { docker run --rm --network host -v .\backend\dictionary\diction
 docker run --rm -v .\backend\dictionary\internal\misc:/keystore openjdk:17-alpine keytool -list -rfc -keystore /keystore/keystore.jks -storepass 241186
 
 docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go run cmd/jwk_from_pem.go
+docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go get github.com/google/wire@v0.6.0
 
 
 
@@ -97,4 +98,26 @@ func init() {
 	slog.SetDefault(slog.New(handler))
 }
 ```
+
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
