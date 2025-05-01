@@ -4,25 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 
-type DB interface {
-	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
-	Rebind(query string) string
-}
-
 type postgresDictionaryRepository struct {
-	Conn DB
+	Conn db.DB
 }
 
-func NewPostgresDictionaryRepository(conn DB) domain.DictionaryRepository {
+func NewPostgresDictionaryRepository(conn db.DB) domain.DictionaryRepository {
 	return &postgresDictionaryRepository{conn}
 }
 

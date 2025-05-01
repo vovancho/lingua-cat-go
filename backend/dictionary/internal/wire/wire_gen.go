@@ -52,8 +52,8 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	postgresDB := getPostgresDB(sqlxDB)
-	dictionaryRepository := postgres.NewPostgresDictionaryRepository(postgresDB)
+	dbDB := getPostgresDB(sqlxDB)
+	dictionaryRepository := postgres.NewPostgresDictionaryRepository(dbDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
@@ -90,8 +90,8 @@ func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
 }
 
-// getPostgresDB возвращает *sqlx.DB как postgres.DB
-func getPostgresDB(db2 *sqlx.DB) postgres.DB {
+// getPostgresDB возвращает *sqlx.DB как db.DB
+func getPostgresDB(db2 *sqlx.DB) db.DB {
 	return db2
 }
 

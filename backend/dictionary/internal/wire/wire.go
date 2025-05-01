@@ -90,8 +90,8 @@ func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
 }
 
-// getPostgresDB возвращает *sqlx.DB как postgres.DB
-func getPostgresDB(db *sqlx.DB) postgres.DB {
+// getPostgresDB возвращает *sqlx.DB как db.DB
+func getPostgresDB(db *sqlx.DB) db.DB {
 	return db
 }
 
