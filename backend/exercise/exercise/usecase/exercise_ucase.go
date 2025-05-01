@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
 	"time"
 )
 
@@ -23,8 +25,38 @@ type exerciseUseCase struct {
 }
 
 func (e exerciseUseCase) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
-	//TODO implement me
-	panic("implement me")
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, e.contextTimeout)
+	defer cancel()
+
+	exercise, err := e.exerciseRepo.GetByID(ctx, id)
+	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
+		return nil, domain.ExerciseNotFoundError
+	}
+
+	return exercise, nil
+}
+
+func (e exerciseUseCase) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, e.contextTimeout)
+	defer cancel()
+
+	ok, err := e.exerciseRepo.IsExerciseOwner(ctx, exerciseID, userID)
+	if err != nil {
+		return false, err
+	}
+
+	return ok, nil
 }
 
 func (e exerciseUseCase) Store(ctx context.Context, exercise *domain.Exercise) error {

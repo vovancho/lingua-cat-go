@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/exercise/internal/error"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/request"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
@@ -13,17 +14,27 @@ import (
 
 type TaskHandler struct {
 	TUseCase domain.TaskUseCase
+	EUseCase domain.ExerciseUseCase
 	validate *validator.Validate
+	auth     *auth.AuthService
 }
 
-func NewTaskHandler(router *http.ServeMux, v *validator.Validate, t domain.TaskUseCase) {
+func NewTaskHandler(
+	router *http.ServeMux,
+	v *validator.Validate,
+	auth *auth.AuthService,
+	t domain.TaskUseCase,
+	e domain.ExerciseUseCase,
+) {
 	handler := &TaskHandler{
 		TUseCase: t,
+		EUseCase: e,
 		validate: v,
+		auth:     auth,
 	}
 
 	router.HandleFunc("GET /v1/exercise/{id}/task/{taskId}", request.WithID(withTaskID(handler.GetByID)))
-	router.HandleFunc("POST /v1/exercise/{id}/task", request.WithID(handler.Store))
+	router.HandleFunc("POST /v1/exercise/{id}/task", request.WithID(handler.Create))
 	router.HandleFunc("POST /v1/exercise/{id}/task/{taskId}/word-selected", request.WithID(withTaskID(handler.SelectWord)))
 }
 
@@ -42,12 +53,31 @@ func (t *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request, exerciseID
 	})
 }
 
-func (d *TaskHandler) Store(w http.ResponseWriter, r *http.Request, id uint64) {
+func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request, id uint64) {
 	exerciseID := domain.ExerciseID(id)
+	userID, err := t.auth.GetUserID(r.Context())
+	if err != nil {
+		err = _internalError.NewAppError(http.StatusUnauthorized, "Не удалось получить userID", err)
+		response.Error(err, r)
+		return
+	}
+
+	if ok, err := t.EUseCase.IsExerciseOwner(r.Context(), exerciseID, *userID); !ok {
+		err = _internalError.NewAppError(http.StatusForbidden, "Только автор упражнения может получить задачу", err)
+		response.Error(err, r)
+		return
+	}
+
+	task, err := t.TUseCase.Create(r.Context(), exerciseID)
+	if err != nil {
+		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка генерации задачи", err)
+		response.Error(err, r)
+		return
+	}
 
 	response.JSON(w, http.StatusCreated, response.APIResponse{
 		Data: map[string]any{
-			"task": exerciseID,
+			"task": task,
 		},
 	})
 }

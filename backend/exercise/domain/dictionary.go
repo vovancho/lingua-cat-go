@@ -28,6 +28,11 @@ type Dictionary struct {
 	Sentences    []Sentence     `json:"sentences"`
 }
 
+type DictionaryUseCase interface {
+	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, limit uint8) ([]Dictionary, error)
+	GetDictionaryByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)
+}
+
 type DictionaryRepository interface {
 	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, limit uint8) ([]Dictionary, error)
 	GetDictionaryByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)

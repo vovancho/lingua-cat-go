@@ -32,10 +32,12 @@ type Exercise struct {
 
 type ExerciseUseCase interface {
 	GetByID(ctx context.Context, id ExerciseID) (*Exercise, error)
+	IsExerciseOwner(ctx context.Context, exerciseID ExerciseID, userID auth.UserID) (bool, error)
 	Store(ctx context.Context, exercise *Exercise) error
 }
 
 type ExerciseRepository interface {
 	GetByID(ctx context.Context, id ExerciseID) (*Exercise, error)
+	IsExerciseOwner(ctx context.Context, exerciseID ExerciseID, userID auth.UserID) (bool, error)
 	Store(ctx context.Context, exercise *Exercise) error
 }

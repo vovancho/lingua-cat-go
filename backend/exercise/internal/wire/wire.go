@@ -68,6 +68,7 @@ func InitializeApp() (*App, error) {
 		ProvideUseCaseTimeout,
 		usecase.NewExerciseUseCase,
 		usecase.NewTaskUseCase,
+		usecase.NewDictionaryUseCase,
 
 		// HTTP Delivery
 		newHTTPServer,
@@ -107,7 +108,7 @@ func newHTTPServer(
 ) *http.Server {
 	router := http.NewServeMux()
 	_internalHttp.NewExerciseHandler(router, validate, authService, exerciseUcase)
-	_internalHttp.NewTaskHandler(router, validate, taskUcase)
+	_internalHttp.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),

@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2025-05-01T10:45:41.207Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="5itIOmimJ5Khdei5NlYf" version="21.6.8" type="device">
+<mxfile host="Electron" modified="2025-05-01T15:56:40.554Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="Zp3yDsjWtYdKVx0Km36k" version="21.6.8" type="device">
   <diagram name="Page-1" id="UlOoKLjMKQyOIYjccCiV">
     <mxGraphModel dx="1434" dy="17" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -286,7 +286,7 @@
             <mxPoint x="3490" y="1646.5" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="K0bMWCn7lL2bXNIeZDvH-52" value="&lt;font style=&quot;font-size: 10px;&quot; face=&quot;Lucida Console&quot;&gt;POST /v1/exercise&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;GET&amp;nbsp; /v1/exercise/{id}&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;POST /v1/exercise/{id}/task&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;GET&amp;nbsp; /v1/exercise/{id}/task&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;POST /v1/exercise/{exer_id}/task/{task_id}/word-selected&lt;/span&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" parent="1" vertex="1">
+        <mxCell id="K0bMWCn7lL2bXNIeZDvH-52" value="&lt;font style=&quot;font-size: 10px;&quot; face=&quot;Lucida Console&quot;&gt;POST /v1/exercise&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;GET&amp;nbsp; /v1/exercise/{id}&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;POST /v1/exercise/{exer_id}/task&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;GET&amp;nbsp; /v1/exercise/{exer_id}/task/{task_id}&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;POST /v1/exercise/{exer_id}/task/{task_id}/word-selected&lt;/span&gt;&lt;span style=&quot;font-size: 10px;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" parent="1" vertex="1">
           <mxGeometry x="2925.96" y="1017" width="354.04" height="93" as="geometry" />
         </mxCell>
         <mxCell id="K0bMWCn7lL2bXNIeZDvH-53" value="&lt;font style=&quot;font-size: 10px;&quot; face=&quot;Lucida Console&quot;&gt;GET /v1/analytycs/user/{id}&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" parent="1" vertex="1">
