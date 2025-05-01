@@ -39,10 +39,10 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 		validate: v,
 	}
 
-	router.HandleFunc("GET /dictionary/{id}", request.WithID(handler.GetByID))
-	router.HandleFunc("POST /dictionary", handler.Store)
-	router.HandleFunc("POST /dictionary/{id}/name", request.WithID(handler.ChangeName))
-	router.HandleFunc("DELETE /dictionary/{id}", request.WithID(handler.Delete))
+	router.HandleFunc("GET /v1/dictionary/{id}", request.WithID(handler.GetByID))
+	router.HandleFunc("POST /v1/dictionary", handler.Store)
+	router.HandleFunc("POST /v1/dictionary/{id}/name", request.WithID(handler.ChangeName))
+	router.HandleFunc("DELETE /v1/dictionary/{id}", request.WithID(handler.Delete))
 }
 
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {

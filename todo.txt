@@ -1,0 +1,20 @@
+
+
+
+
+
+
+
+
+
+
+grpc-gateway
+consul
+outbox/inbox pattern
+
+
+
+swagger:
+https://chatgpt.com/share/6813011e-287c-8013-b8a3-d2de0e7054f8
+https://chat.deepseek.com/a/chat/s/7f2199e3-2135-4ad2-813a-32f42a717562 (Swagger для Go)
+https://grok.com/share/c2hhcmQtMg%3D%3D_146b8aea-d572-4ad5-b2fb-1467b177bc45

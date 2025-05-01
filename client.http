@@ -88,7 +88,7 @@ grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPb
 
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/dictionary/dictionary
+POST http://api.lingua-cat-go.localhost/dictionary/v1/dictionary
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -124,7 +124,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/dictionary/dictionary/1/name
+POST http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/1/name
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -136,21 +136,21 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-DELETE http://api.lingua-cat-go.localhost/dictionary/dictionary/17
+DELETE http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/17
 Content-Type: application/json
 Accept: application/json
 
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/dictionary/1
+GET http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/1
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 ###
 
-POST http://api.lingua-cat-go.localhost/dictionary/dictionary/12/test
+POST http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/12/test
 Authorization: Bearer {{token}}
 
 ###
