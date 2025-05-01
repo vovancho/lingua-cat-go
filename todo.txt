@@ -11,6 +11,7 @@
 grpc-gateway
 consul
 outbox/inbox pattern
+console command
 
 
 

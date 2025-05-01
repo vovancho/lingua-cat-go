@@ -36,17 +36,6 @@ services:
             - traefik.enable=true
             - traefik.http.routers.keycloak.entrypoints=web
             - traefik.http.routers.keycloak.rule=Host(`keycloak.localhost`)
-#            - traefik.http.routers.keycloak.rule=Host(`localhost`) && PathPrefix(`/keycloak`)
-#            - traefik.http.middlewares.keycloak-redirect.replacePath.path=/
-#            - traefik.http.middlewares.keycloak-redirect.replacePathRegex.regex=^/keycloak/(.*)
-#            - traefik.http.middlewares.keycloak-redirect.replacePathRegex.replacement=/$${1}
-#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.regex=^(https?://)localhost/keycloak/(.*)$$
-#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.replacement=$${1}localhost/$${2}
-#            - traefik.http.middlewares.keycloak-redirect.redirectRegex.permanent=true
-#            - traefik.http.routers.keycloak.middlewares=keycloak-redirect
-#            - traefik.http.middlewares.keycloak-strip.stripprefix.prefixes=/keycloak
-#            - traefik.http.routers.keycloak.middlewares=keycloak-strip
-#            - traefik.http.services.keycloak.loadbalancer.server.url=http://lcg-keycloak/
             - traefik.http.services.keycloak.loadbalancer.server.port=80
 
 volumes:
