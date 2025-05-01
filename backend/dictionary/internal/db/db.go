@@ -6,8 +6,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewDB(dsn string) (*sqlx.DB, error) {
-	dbConn, err := sqlx.Open("postgres", dsn)
+type DSN string
+
+func NewDB(dsn DSN) (*sqlx.DB, error) {
+	dbConn, err := sqlx.Open("postgres", string(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure database connection: %w", err)
 	}

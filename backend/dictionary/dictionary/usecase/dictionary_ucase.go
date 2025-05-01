@@ -13,11 +13,13 @@ var (
 	DictsRandomCountError = errors.New("DICTIONARY_RANDOM_COUNT_INVALID")
 )
 
-func NewDictionaryUseCase(dr domain.DictionaryRepository, v *validator.Validate, timeout time.Duration) domain.DictionaryUseCase {
+type Timeout time.Duration
+
+func NewDictionaryUseCase(dr domain.DictionaryRepository, v *validator.Validate, timeout Timeout) domain.DictionaryUseCase {
 	return &dictionaryUseCase{
 		dictionaryRepo: dr,
 		validate:       v,
-		contextTimeout: timeout,
+		contextTimeout: time.Duration(timeout),
 	}
 }
 

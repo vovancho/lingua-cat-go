@@ -12,17 +12,19 @@ import (
 	"os"
 )
 
-type AuthService struct {
-	key jwk.RSAPublicKey
-}
+type PublicKeyPath string
 
-func NewAuthService(jwkPath string) (*AuthService, error) {
-	RSAPublicKey, err := loadRSAPublicKeyFromPEM(jwkPath)
+func NewAuthService(publicKeyPath PublicKeyPath) (*AuthService, error) {
+	RSAPublicKey, err := loadRSAPublicKeyFromPEM(string(publicKeyPath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load JWK: %w", err)
 	}
 	slog.Info("JWK loaded successfully")
 	return &AuthService{key: RSAPublicKey}, nil
+}
+
+type AuthService struct {
+	key jwk.RSAPublicKey
 }
 
 func (s *AuthService) VerifyToken(tokenStr string) (string, error) {
