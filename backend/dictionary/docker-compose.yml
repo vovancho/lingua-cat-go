@@ -33,7 +33,7 @@ services:
             - dictionary_db_password
         labels:
             - traefik.enable=true
-            - traefik.tcp.routers.lcg-dictionary-db.entrypoints=postgres
+            - traefik.tcp.routers.lcg-dictionary-db.entrypoints=dictionary-db
             - traefik.tcp.routers.lcg-dictionary-db.service=lcg-dictionary-db
             - traefik.tcp.routers.lcg-dictionary-db.rule=HostSNI(`*`)
             - traefik.tcp.services.lcg-dictionary-db.loadbalancer.server.port=5432

@@ -1,6 +1,7 @@
 include:
     - backend/keycloak/docker-compose.yml
     - backend/dictionary/docker-compose.yml
+    - backend/exercise/docker-compose.yml
 #    - backend/api/docker-compose.yml
 
 services:
@@ -11,16 +12,16 @@ services:
             --providers.docker=true
             --providers.docker.exposedByDefault=false
             --entryPoints.web.address=:80
-            --entryPoints.web2.address=:8081
             --entryPoints.web-debug.address=:2345
-            --entryPoints.postgres.address=:54321
+            --entryPoints.dictionary-db.address=:54321
+            --entryPoints.exercise-db.address=:54322
             --entryPoints.dictionary-grpc.address=:50051
         ports:
             - "80:80"
-            - "2345:2345"
+            - "2345:2345" # golang delve debug
             - "54321:54321" # dictionary-db
+            - "54322:54322" # exercise-db
             - "8080:8080" # traefik dashboard
-            - "8081:8081"
             - "50051:50051" # dictionary-grpc
         volumes:
             - //var/run/docker.sock:/var/run/docker.sock:ro
@@ -32,3 +33,5 @@ secrets:
         file: ./docker/secrets/backend_keycloak_db_password
     dictionary_db_password:
         file: ./docker/secrets/backend_dictionary_db_password
+    exercise_db_password:
+        file: ./docker/secrets/backend_exercise_db_password

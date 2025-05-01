@@ -41,11 +41,20 @@ docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go m
 docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go run app/main.go
 docker compose run lcg-dictionary-backend go run app/main.go
 
-migrations:
+docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/exercise
+docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
+
+dictionary migrations:
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable create -ext sql -dir /migrations init_schema
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable up
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable down 1
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable drop -f
+
+exercise migrations:
+docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable create -ext sql -dir /migrations init_schema
+docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable up
+docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable down 1
+docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable drop -f
 
 
 
