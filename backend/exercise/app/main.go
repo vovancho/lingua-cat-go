@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/google/wire"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/wire"
 	"log/slog"
 	"net/http"
 	"os"

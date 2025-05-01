@@ -168,6 +168,27 @@ Accept: application/json
 ###
 
 
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+// @no-cookie-jar
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "lang":  "en",
+  "task_amount": 2
+}
+
+###
+
 
 
 

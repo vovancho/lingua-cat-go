@@ -30,6 +30,6 @@ func (s *AuthService) AuthInterceptor(ctx context.Context, req any, info *grpc.U
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
-	ctx = context.WithValue(ctx, "userID", userID)
+	ctx = s.withUserID(ctx, userID)
 	return handler(ctx, req)
 }

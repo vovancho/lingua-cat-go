@@ -2,12 +2,11 @@ package domain
 
 import (
 	"context"
-	"github.com/google/uuid"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
 	"time"
 )
 
 type ExerciseID uint64
-type UserID uuid.UUID
 type ExerciseLang string
 
 const (
@@ -15,21 +14,25 @@ const (
 	EnExercise ExerciseLang = "en"
 )
 
+func (l ExerciseLang) IsValid() bool {
+	return l == RuExercise || l == EnExercise
+}
+
 type Exercise struct {
-	ID               ExerciseID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	UserID           UserID
-	ExerciseLang     ExerciseLang
-	TaskAmount       uint16
-	ProcessedCounter uint16
-	SelectedCounter  uint16
-	CorrectedCounter uint16
+	ID               ExerciseID   `json:"id" db:"id"`
+	CreatedAt        time.Time    `json:"-" db:"created_at"`
+	UpdatedAt        time.Time    `json:"-" db:"updated_at"`
+	UserID           auth.UserID  `json:"user_id" db:"user_id" validate:"required"`
+	Lang             ExerciseLang `json:"lang" db:"lang" validate:"required,valid_exercise_lang"`
+	TaskAmount       uint16       `json:"task_amount" db:"task_amount" validate:"required,min=1,max=100"`
+	ProcessedCounter uint16       `json:"processed_counter" db:"processed_counter"`
+	SelectedCounter  uint16       `json:"selected_counter" db:"selected_counter"`
+	CorrectedCounter uint16       `json:"corrected_counter" db:"corrected_counter"`
 }
 
 type ExerciseUseCase interface {
 	GetByID(ctx context.Context, id ExerciseID) (*Exercise, error)
-	Create(ctx context.Context, userId UserID, exerciseLang ExerciseLang, taskAmount uint16) (Exercise, error)
+	Store(ctx context.Context, exercise *Exercise) error
 }
 
 type ExerciseRepository interface {

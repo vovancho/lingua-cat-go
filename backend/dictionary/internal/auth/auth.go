@@ -1,10 +1,14 @@
 package auth
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"database/sql/driver"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -12,7 +16,22 @@ import (
 	"os"
 )
 
+type userKey struct{}
 type PublicKeyPath string
+
+type UserID uuid.UUID
+
+func (id UserID) Value() (driver.Value, error) {
+	return uuid.UUID(id).Value()
+}
+
+func (id *UserID) Scan(src interface{}) error {
+	return (*uuid.UUID)(id).Scan(src)
+}
+
+func (id UserID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uuid.UUID(id).String())
+}
 
 func NewAuthService(publicKeyPath PublicKeyPath) (*AuthService, error) {
 	RSAPublicKey, err := loadRSAPublicKeyFromPEM(string(publicKeyPath))
@@ -25,6 +44,25 @@ func NewAuthService(publicKeyPath PublicKeyPath) (*AuthService, error) {
 
 type AuthService struct {
 	key jwk.RSAPublicKey
+}
+
+func (s *AuthService) withUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, userKey{}, userID)
+}
+
+func (s *AuthService) GetUserID(ctx context.Context) (*UserID, error) {
+	userIDStr, ok := ctx.Value(userKey{}).(string)
+	if !ok {
+		return nil, fmt.Errorf("UserID not found in context")
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("UserID not parsed: %w", err)
+	}
+
+	uid := UserID(userID)
+	return &uid, nil
 }
 
 func (s *AuthService) VerifyToken(tokenStr string) (string, error) {

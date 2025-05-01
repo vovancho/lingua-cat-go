@@ -63,7 +63,8 @@ GROK:
 
 
 docker compose restart lcg-dictionary-backend
-docker compose logs -f lcg-dictionary-backend
+docker compose restart lcg-exercise-backend
+docker compose logs -f lcg-dictionary-backend lcg-exercise-backend
 
 docker run --rm -v .\backend\example\grpc:/defs namely/protoc-all:1.51_2 -f dictionary.proto -l go -o /defs/gen
 docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs

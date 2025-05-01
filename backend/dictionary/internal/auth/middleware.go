@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 	"strings"
 )
@@ -26,7 +25,7 @@ func (s *AuthService) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := s.withUserID(r.Context(), userID)
 		*r = *r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
