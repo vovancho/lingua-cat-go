@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
 	"log/slog"
 	"os"
@@ -39,7 +40,13 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	validate, trans, err := validator.NewValidator()
+	trans, err := translator.NewTranslator()
+	if err != nil {
+		slog.Error("Failed to initialize translator", "error", err)
+		os.Exit(1)
+	}
+
+	validate, err := validator.NewValidator(trans)
 	if err != nil {
 		slog.Error("Failed to initialize validator", "error", err)
 		os.Exit(1)

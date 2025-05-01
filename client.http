@@ -99,7 +99,7 @@ Authorization: Bearer {{token}}
   "type":  1999,
   "translations": [
     {
-      "lang": "ru",
+      "lang": "en",
       "name": "поперек",
       "type":  1
     },
