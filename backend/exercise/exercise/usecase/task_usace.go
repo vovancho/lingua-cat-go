@@ -71,7 +71,7 @@ func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (
 	// проверить, что словари правильного языка
 	for _, dict := range dictionaries {
 		if dict.Lang != lang {
-			return nil, domain.DictionariesLangIncorrectError
+			return nil, domain.DictionaryLangIncorrectError
 		}
 	}
 

@@ -29,6 +29,10 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
+	if limit < 4 || limit > 8 {
+		return nil, domain.DictionariesLimitError
+	}
+
 	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
 		// Если это таймаут — не затираем ошибку

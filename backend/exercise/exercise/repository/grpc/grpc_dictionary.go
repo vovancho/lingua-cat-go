@@ -36,8 +36,19 @@ func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lan
 		return nil, err
 	}
 
+	dictionaries := d.newDictionariesByGrpcResponse(resp.Dictionaries)
+
+	return dictionaries, nil
+}
+
+func (p grpcDictionaryRepository) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*pb.Dictionary) []domain.Dictionary {
 	var dictionaries []domain.Dictionary
-	for _, dt := range resp.Dictionaries {
+	for _, dt := range dicts {
 		dict := domain.Dictionary{
 			ID:   domain.DictionaryID(dt.Id),
 			Lang: domain.DictionaryLang(dt.Lang),
@@ -75,10 +86,5 @@ func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lan
 		dictionaries = append(dictionaries, dict)
 	}
 
-	return dictionaries, nil
-}
-
-func (p grpcDictionaryRepository) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+	return dictionaries
 }
