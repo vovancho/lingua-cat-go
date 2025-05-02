@@ -3,6 +3,7 @@ include:
     - backend/kafka/docker-compose.yml
     - backend/dictionary/docker-compose.yml
     - backend/exercise/docker-compose.yml
+#    - backend/analytics/docker-compose.yml
 #    - backend/api/docker-compose.yml
 
 services:
@@ -16,12 +17,14 @@ services:
             --entryPoints.web-debug.address=:2345
             --entryPoints.dictionary-db.address=:54321
             --entryPoints.exercise-db.address=:54322
+            --entryPoints.analytics-db.address=:59000
             --entryPoints.dictionary-grpc.address=:50051
         ports:
             - "80:80"
             - "2345:2345" # golang delve debug
             - "54321:54321" # dictionary-db
             - "54322:54322" # exercise-db
+            - "59000:59000" # analytics-db
             - "8080:8080" # traefik dashboard
             - "50051:50051" # dictionary-grpc
         volumes:
@@ -36,3 +39,5 @@ secrets:
         file: ./docker/secrets/backend_dictionary_db_password
     exercise_db_password:
         file: ./docker/secrets/backend_exercise_db_password
+    analytics_db_password:
+        file: ./docker/secrets/backend_analytics_db_password

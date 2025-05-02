@@ -44,6 +44,9 @@ docker compose run lcg-dictionary-backend go run app/main.go
 docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/exercise
 docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
 
+docker run --rm -v .\backend\analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/analytics
+docker run --rm -v .\backend\analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
+
 dictionary migrations:
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable create -ext sql -dir /migrations init_schema
 docker run --rm -v .\backend\dictionary\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://dictionary:secret@localhost:54321/dictionary?sslmode=disable up

@@ -33,6 +33,7 @@ services:
             - traefik.tcp.routers.lcg-exercise-db.service=lcg-exercise-db
             - traefik.tcp.routers.lcg-exercise-db.rule=HostSNI(`*`)
             - traefik.tcp.services.lcg-exercise-db.loadbalancer.server.port=5432
+
 volumes:
     exercise-db:
     exercise-backend-pkg-mod:

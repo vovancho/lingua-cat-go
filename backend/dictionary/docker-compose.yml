@@ -37,6 +37,7 @@ services:
             - traefik.tcp.routers.lcg-dictionary-db.service=lcg-dictionary-db
             - traefik.tcp.routers.lcg-dictionary-db.rule=HostSNI(`*`)
             - traefik.tcp.services.lcg-dictionary-db.loadbalancer.server.port=5432
+
 volumes:
     dictionary-db:
     dictionary-backend-pkg-mod:
