@@ -169,14 +169,6 @@ Accept: application/json
 
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/4
-Content-Type: application/json
-Accept: application/json
-Authorization: Bearer {{token}}
-
-###
-
-// @no-cookie-jar
 POST http://api.lingua-cat-go.localhost/exercise/v1/exercise
 Content-Type: application/json
 Accept: application/json
@@ -190,7 +182,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task/4
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/5
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -198,7 +190,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/5/task
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -206,13 +198,21 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task/4/word-selected
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/5/task/5
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+// @no-cookie-jar
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/5/task/6/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "word_select": 47
+  "word_select": 40
 }
 
 ###

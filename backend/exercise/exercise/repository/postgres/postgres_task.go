@@ -134,7 +134,7 @@ func (p postgresTaskRepository) SetWordSelected(ctx context.Context, task *domai
 		// инкрементировать selected_counter в exercise
 		err = tx.GetContext(
 			ctx, &task.Exercise.SelectedCounter,
-			`UPDATE exercise SET selected_counter = selected_counter + 1 WHERE id = $1 RETURNING selected_counter`,
+			`UPDATE exercise SET selected_counter = selected_counter + 1, updated_at = NOW() WHERE id = $1 RETURNING selected_counter`,
 			task.Exercise.ID,
 		)
 		if err != nil {
