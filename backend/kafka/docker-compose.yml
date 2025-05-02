@@ -1,0 +1,45 @@
+services:
+  lcg-kafka:
+    image: apache/kafka:3.7.2
+    volumes:
+      - kafka-storage:/var/lib/kafka/data
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19091
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://lcg-kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@lcg-kafka:19091"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+
+  # инициализируем топик lcg_exercise_topic
+  lcg-kafka-init:
+    image: apache/kafka:3.7.2
+    depends_on:
+      - lcg-kafka
+    command: >
+      bash -c "
+      until /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server lcg-kafka:9092; do
+          echo 'Waiting for Kafka to be ready...';
+          sleep 5;
+      done;
+      /opt/kafka/bin/kafka-topics.sh --create --topic lcg_exercise_topic --bootstrap-server lcg-kafka:9092 --partitions 1 --replication-factor 1 --if-not-exists
+      "
+    restart: "no"
+
+  lcg-kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: lcg-kafka:9092
+      SERVER_PORT: 80
+    depends_on:
+      - lcg-kafka
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.kafka-ui.entrypoints=web
+      - traefik.http.routers.kafka-ui.rule=Host(`kafka-ui.localhost`)
+      - traefik.http.services.kafka-ui.loadbalancer.server.port=80
+
+volumes:
+  kafka-storage:
