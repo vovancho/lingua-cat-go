@@ -31,5 +31,7 @@ func (s *AuthService) AuthInterceptor(ctx context.Context, req any, info *grpc.U
 	}
 
 	ctx = s.withUserID(ctx, userID)
+	ctx = s.withJWTToken(ctx, tokenStr)
+
 	return handler(ctx, req)
 }

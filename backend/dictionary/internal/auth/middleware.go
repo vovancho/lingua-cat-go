@@ -26,6 +26,7 @@ func (s *AuthService) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := s.withUserID(r.Context(), userID)
+		ctx = s.withJWTToken(ctx, tokenStr)
 		*r = *r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
