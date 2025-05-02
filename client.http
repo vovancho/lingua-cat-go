@@ -190,6 +190,14 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/1/task/1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+// @no-cookie-jar
 POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/2/task
 Content-Type: application/json
 Accept: application/json

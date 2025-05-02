@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"math/rand"
@@ -33,8 +35,54 @@ type taskUseCase struct {
 }
 
 func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Task, error) {
-	//TODO implement me
-	panic("implement me")
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, t.contextTimeout)
+	defer cancel()
+
+	task, wordIDs, wordCorrectID, wordSelectedID, err := t.taskRepo.GetByID(ctx, id)
+	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
+		fmt.Println(err)
+
+		return nil, domain.TaskNotFoundError
+	}
+
+	// получить словари в dictionaryService по ID
+	dictionaries, err := t.dUseCase.GetDictionariesByIds(ctx, wordIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		wordCorrect  *domain.Dictionary
+		wordSelected *domain.Dictionary
+	)
+
+	for _, dict := range dictionaries {
+		if dict.ID == wordCorrectID {
+			wordCorrect = &dict
+		}
+		if dict.ID == wordSelectedID {
+			// так как wordSelected может быть nil, проверим, что ID задан
+			wordSelected = &dict
+		}
+	}
+
+	if wordCorrect == nil {
+		return nil, fmt.Errorf("не найден словарь с ID wordCorrect = %d", wordCorrectID)
+	}
+
+	task.Words = dictionaries
+	task.WordCorrect = *wordCorrect
+	task.WordSelected = wordSelected
+
+	return task, nil
 }
 
 func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (*domain.Task, error) {
@@ -82,9 +130,9 @@ func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (
 
 	// собрать готовую сущность задачи со словарями и упражнением
 	task := domain.Task{
-		Words:           dictionaries,
-		WordIDCorrected: randomDictionary.ID,
-		Exercise:        *exercise,
+		Words:       dictionaries,
+		WordCorrect: randomDictionary,
+		Exercise:    *exercise,
 	}
 
 	// сохранить сущность задачи + увеличить счетчик обработанных задач
@@ -118,6 +166,15 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 	defer cancel()
 
 	// получить задачу со словарями
+	//dictionaries, err := t.dUseCase.GetDictionariesByIds(ctx, limit)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if len(dictionaries) == 0 {
+	//	return nil, domain.DictionariesNotFoundError
+	//}
+
 	// проверить, что задача принадлежит упражнению
 	// проверить, что dictId есть в Words
 	// принять выбранное слово SetWordSelected

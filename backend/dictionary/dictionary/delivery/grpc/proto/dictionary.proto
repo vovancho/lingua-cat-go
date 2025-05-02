@@ -2,12 +2,15 @@ syntax = "proto3";
 
 package dictionary;
 
-option go_package = "./gen;dictionary"; // Путь для сгенерированного Go-кода
+option go_package = "./gen;dictionary";
 
 // Сервис для работы со словарями
 service DictionaryService {
   // Метод для получения случайных словарей
   rpc GetRandomDictionaries (GetRandomDictionariesRequest) returns (GetRandomDictionariesResponse);
+
+  // Метод для получения словарей по ID
+  rpc GetDictionaries (GetDictionariesRequest) returns (GetDictionariesResponse);
 }
 
 // Запрос для получения случайных словарей
@@ -21,12 +24,22 @@ message GetRandomDictionariesResponse {
   repeated Dictionary dictionaries = 1; // Список словарей
 }
 
+// Запрос на получение словарей по ID
+message GetDictionariesRequest {
+  repeated int64 ids = 1;    // Список ID словарей
+}
+
+// Ответ с массивом словарей
+message GetDictionariesResponse {
+  repeated Dictionary dictionaries = 1; // Список словарей
+}
+
 // Структура словаря
 message Dictionary {
   int64 id = 1;               // Идентификатор словаря
   string lang = 2;            // Язык словаря (например, "en", "ru")
   string name = 3;            // Название словаря
-  int32 type = 4;            // Тип словаря (например, "noun", "verb")
+  int32 type = 4;             // Тип словаря (например, "noun", "verb")
   repeated Translation translations = 5; // Список переводов
   repeated Sentence sentences = 6;      // Список предложений
 }
@@ -36,7 +49,7 @@ message Translation {
   int64 id = 1;               // Идентификатор словаря
   string lang = 2;            // Язык перевода (например, "en", "ru")
   string name = 3;            // Название перевода
-  int32 type = 4;            // Тип перевода (например, "noun", "verb")
+  int32 type = 4;             // Тип перевода (например, "noun", "verb")
   repeated Sentence sentences = 5; // Список предложений
 }
 

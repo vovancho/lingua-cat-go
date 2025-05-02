@@ -7,11 +7,11 @@ import (
 type TaskID uint64
 
 type Task struct {
-	ID              TaskID        `json:"id"`
-	Words           []Dictionary  `json:"words"`
-	WordIDCorrected DictionaryID  `json:"word_corrected"`
-	WordIDSelected  *DictionaryID `json:"word_selected"`
-	Exercise        Exercise      `json:"exercise"`
+	ID           TaskID       `json:"id" db:"id"`
+	Words        []Dictionary `json:"words" db:"-"`
+	WordCorrect  Dictionary   `json:"word_correct" db:"-"`
+	WordSelected *Dictionary  `json:"word_selected" db:"-"`
+	Exercise     Exercise     `json:"exercise" db:"exercise"`
 }
 
 type TaskUseCase interface {
@@ -22,7 +22,7 @@ type TaskUseCase interface {
 }
 
 type TaskRepository interface {
-	GetByID(ctx context.Context, id TaskID) (*Task, error)
+	GetByID(ctx context.Context, id TaskID) (*Task, []DictionaryID, DictionaryID, DictionaryID, error)
 	IsTaskOwnerExercise(ctx context.Context, exerciseID ExerciseID, taskID TaskID) (bool, error)
 	Store(ctx context.Context, task *Task) error
 	SetWordSelected(ctx context.Context, task *Task, dictId DictionaryID) error

@@ -46,7 +46,22 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 	return dicts, nil
 }
 
-func (d dictionaryUseCase) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+func (d dictionaryUseCase) GetDictionariesByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
+	defer cancel()
+
+	dicts, err := d.dictionaryRepo.GetDictionariesByIds(ctx, dictIds)
+	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
+		return nil, domain.DictionariesNotFoundError
+	}
+
+	return dicts, nil
 }

@@ -46,12 +46,19 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 }
 
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
-	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
+	dictID := domain.DictionaryID(id)
+	dictionaries, err := d.DUseCase.GetByIDs(r.Context(), []domain.DictionaryID{dictID})
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
 		response.Error(appError, r)
 		return
 	}
+	if len(dictionaries) == 0 {
+		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", domain.DictNotFoundError)
+		response.Error(appError, r)
+		return
+	}
+	dictionary := dictionaries[0]
 
 	response.JSON(w, http.StatusOK, response.APIResponse{
 		Data: map[string]any{
@@ -103,11 +110,18 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 		return
 	}
 
-	dictionary, err := d.DUseCase.GetByID(r.Context(), domain.DictionaryID(id))
+	dictID := domain.DictionaryID(id)
+	dictionaries, err := d.DUseCase.GetByIDs(r.Context(), []domain.DictionaryID{dictID})
 	if err != nil {
 		response.Error(err, r)
 		return
 	}
+	if len(dictionaries) == 0 {
+		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", domain.DictNotFoundError)
+		response.Error(appError, r)
+		return
+	}
+	dictionary := dictionaries[0]
 
 	response.JSON(w, http.StatusOK, response.APIResponse{
 		Data: map[string]any{

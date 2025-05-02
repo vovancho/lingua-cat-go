@@ -30,10 +30,10 @@ type Dictionary struct {
 
 type DictionaryUseCase interface {
 	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, limit uint8) ([]Dictionary, error)
-	GetDictionaryByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)
+	GetDictionariesByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)
 }
 
 type DictionaryRepository interface {
 	GetRandomDictionaries(ctx context.Context, lang DictionaryLang, limit uint8) ([]Dictionary, error)
-	GetDictionaryByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)
+	GetDictionariesByIds(ctx context.Context, dictIds []DictionaryID) ([]Dictionary, error)
 }

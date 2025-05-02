@@ -38,9 +38,14 @@ func ErrorMiddleware(next http.Handler, trans ut.Translator) http.Handler {
 					Data:    details,
 				})
 			case _internalError.AppErrorInterface:
+				var unwrapped string
+				if errUnwrapped := e.Unwrap(); errUnwrapped != nil {
+					unwrapped = errUnwrapped.Error()
+				}
+
 				JSON(w, e.StatusCode(), APIResponse{
 					Message: e.Error(),
-					Error:   e.Unwrap().Error(),
+					Error:   unwrapped,
 				})
 			case error:
 				slog.Error("unhandled error", "error", e)

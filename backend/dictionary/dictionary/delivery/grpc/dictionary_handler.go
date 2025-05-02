@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+
 	"github.com/go-playground/validator/v10"
 	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
@@ -28,6 +29,34 @@ func (d *DictionaryHandler) GetRandomDictionaries(ctx context.Context, req *pb.G
 		return nil, err
 	}
 
+	protoDictionaries := buildProtoDictionaries(dictionaries)
+
+	return &pb.GetRandomDictionariesResponse{
+		Dictionaries: protoDictionaries,
+	}, nil
+}
+
+func (d *DictionaryHandler) GetDictionaries(ctx context.Context, req *pb.GetDictionariesRequest) (*pb.GetDictionariesResponse, error) {
+	rawIds := req.GetIds()
+	dictionaryIds := make([]domain.DictionaryID, len(rawIds))
+	for i, id := range rawIds {
+		dictionaryIds[i] = domain.DictionaryID(id)
+	}
+
+	dictionaries, err := d.DUseCase.GetByIDs(ctx, dictionaryIds)
+	if err != nil {
+		return nil, err
+	}
+
+	protoDictionaries := buildProtoDictionaries(dictionaries)
+
+	return &pb.GetDictionariesResponse{
+		Dictionaries: protoDictionaries,
+	}, nil
+}
+
+// Вспомогательная функция для сборки protobuf-словарей из доменных
+func buildProtoDictionaries(dictionaries []domain.Dictionary) []*pb.Dictionary {
 	protoDictionaries := make([]*pb.Dictionary, len(dictionaries))
 	for i, dict := range dictionaries {
 		translations := make([]*pb.Translation, len(dict.Translations))
@@ -66,8 +95,5 @@ func (d *DictionaryHandler) GetRandomDictionaries(ctx context.Context, req *pb.G
 			Sentences:    sentences,
 		}
 	}
-
-	return &pb.GetRandomDictionariesResponse{
-		Dictionaries: protoDictionaries,
-	}, nil
+	return protoDictionaries
 }

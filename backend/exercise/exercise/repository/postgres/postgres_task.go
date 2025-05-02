@@ -18,9 +18,64 @@ func NewPostgresTaskRepository(conn db.DB) domain.TaskRepository {
 	return &postgresTaskRepository{conn}
 }
 
-func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (*domain.Task, error) {
-	//TODO implement me
-	panic("implement me")
+func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
+	*domain.Task,
+	[]domain.DictionaryID,
+	domain.DictionaryID,
+	domain.DictionaryID,
+	error,
+) {
+	const query = `
+		SELECT t.id,
+		       e.id AS "exercise.id",
+		       e.created_at AS "exercise.created_at",
+		       e.updated_at AS "exercise.updated_at",
+		       e.user_id AS "exercise.user_id",
+		       e.lang AS "exercise.lang",
+		       e.task_amount AS "exercise.task_amount",
+		       e.processed_counter AS "exercise.processed_counter",
+		       e.selected_counter AS "exercise.selected_counter",
+		       e.corrected_counter AS "exercise.corrected_counter",
+		       t.word_correct,
+		       t.word_selected,
+		       t.words AS word_ids
+		FROM task t
+		INNER JOIN exercise e ON e.id = t.exercise_id
+		WHERE t.id = $1`
+
+	var raw struct {
+		ID             domain.TaskID        `db:"id"`
+		Exercise       domain.Exercise      `db:"exercise"`
+		WordIDs        pq.Int64Array        `db:"word_ids"`
+		WordCorrectID  domain.DictionaryID  `db:"word_correct"`
+		WordSelectedID *domain.DictionaryID `db:"word_selected"`
+	}
+
+	if err := p.Conn.GetContext(ctx, &raw, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil, 0, 0, fmt.Errorf("task not found: %w", err)
+		}
+		return nil, nil, 0, 0, fmt.Errorf("get task by id: %w", err)
+	}
+
+	wordIDs := make([]domain.DictionaryID, len(raw.WordIDs))
+	for i, id := range raw.WordIDs {
+		wordIDs[i] = domain.DictionaryID(id)
+	}
+
+	// Для удобства возвращаем значение даже если WordSelectedID == nil
+	var wordSelectedID domain.DictionaryID
+	if raw.WordSelectedID != nil {
+		wordSelectedID = *raw.WordSelectedID
+	}
+
+	task := &domain.Task{
+		ID:       raw.ID,
+		Exercise: raw.Exercise,
+		// Words, WordCorrect, WordSelected будут заполняться на уровне usecase, когда подгружаются словари по ID
+	}
+
+	return task, wordIDs, raw.WordCorrectID, wordSelectedID, nil
 }
 
 func (p postgresTaskRepository) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.ExerciseID, taskID domain.TaskID) (bool, error) {
@@ -99,7 +154,7 @@ func (p postgresTaskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *
 	dto := map[string]any{
 		"exercise_id":  t.Exercise.ID,
 		"words":        pq.Array(wordIDs),
-		"word_correct": t.WordIDCorrected,
+		"word_correct": t.WordCorrect.ID,
 	}
 
 	const query = `

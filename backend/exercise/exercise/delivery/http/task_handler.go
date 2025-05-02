@@ -44,8 +44,13 @@ func NewTaskHandler(
 
 func (t *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request, exerciseID domain.ExerciseID, taskID *domain.TaskID) {
 	task, err := t.TUseCase.GetByID(r.Context(), *taskID)
-	if err != nil || task.Exercise.ID != exerciseID {
+	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Задача не найдена", err)
+		response.Error(appError, r)
+		return
+	}
+	if task.Exercise.ID != exerciseID {
+		appError := _internalError.NewAppError(http.StatusNotFound, "Задача не найдена", domain.TaskNotFoundError)
 		response.Error(appError, r)
 		return
 	}

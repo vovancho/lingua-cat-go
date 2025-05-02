@@ -41,12 +41,31 @@ func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lan
 	return dictionaries, nil
 }
 
-func (p grpcDictionaryRepository) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+func (d grpcDictionaryRepository) GetDictionariesByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
+	token, err := d.auth.GetJWTToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+
+	intIDs := make([]int64, len(dictIds))
+	for i, id := range dictIds {
+		intIDs[i] = int64(id)
+	}
+
+	resp, err := d.client.GetDictionaries(ctx, &pb.GetDictionariesRequest{
+		Ids: intIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dictionaries := d.newDictionariesByGrpcResponse(resp.Dictionaries)
+
+	return dictionaries, nil
 }
 
-func (p grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*pb.Dictionary) []domain.Dictionary {
+func (d grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*pb.Dictionary) []domain.Dictionary {
 	var dictionaries []domain.Dictionary
 	for _, dt := range dicts {
 		dict := domain.Dictionary{

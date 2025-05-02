@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
 	"time"
 
@@ -19,45 +20,63 @@ func NewPostgresDictionaryRepository(conn db.DB) domain.DictionaryRepository {
 	return &postgresDictionaryRepository{conn}
 }
 
-// GetByID возвращает словарь по ID с переводами и предложениями
-func (p postgresDictionaryRepository) GetByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
-	// Получаем основной словарь
-	dict, err := p.getDictionaryByID(ctx, id)
+// GetByIDs возвращает словари по множеству ID с переводами и предложениями
+func (p postgresDictionaryRepository) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	// Получаем основные словари
+	dictionaries, err := p.getDictionariesByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 
-	// Получаем переводы
-	translationsMap, err := p.getTranslationsByDictionariesIDs(ctx, []domain.DictionaryID{id})
-	if err != nil {
-		return nil, err
-	}
-	if len(translationsMap) == 0 {
-		return nil, fmt.Errorf("translations not found")
-	}
-	dict.Translations = translationsMap[dict.ID]
-
-	// Собираем ID словарей (основной + переводы)
-	dictIDs := []domain.DictionaryID{dict.ID}
-	for transDictId := range translationsMap {
-		dictIDs = append(dictIDs, transDictId)
+	// Составим карту словарей для быстрого доступа
+	dictMap := make(map[domain.DictionaryID]*domain.Dictionary, len(dictionaries))
+	var allDictIDs []domain.DictionaryID
+	for _, dict := range dictionaries {
+		dictMap[dict.ID] = dict
+		allDictIDs = append(allDictIDs, dict.ID)
 	}
 
-	// Получаем предложения для всех словарей
-	sentencesMap, err := p.getSentencesByDictionaryIDs(ctx, dictIDs)
+	// Получаем переводы для всех словарей
+	translationsMap, err := p.getTranslationsByDictionariesIDs(ctx, allDictIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	// Распределяем предложения по словарям
-	if len(sentencesMap) > 0 {
+	// Добавляем переводы в словари и собираем все ID (основные и переводов)
+	for dictID, translations := range translationsMap {
+		if dict, ok := dictMap[dictID]; ok {
+			dict.Translations = translations
+			for _, t := range translations {
+				allDictIDs = append(allDictIDs, t.Dictionary.ID)
+			}
+		}
+	}
+
+	// Получаем предложения
+	sentencesMap, err := p.getSentencesByDictionaryIDs(ctx, allDictIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Добавляем предложения в основные словари и их переводы
+	for _, dict := range dictMap {
 		dict.Sentences = sentencesMap[dict.ID]
 		for i := range dict.Translations {
 			dict.Translations[i].Dictionary.Sentences = sentencesMap[dict.Translations[i].Dictionary.ID]
 		}
 	}
 
-	return dict, nil
+	// Преобразуем карту обратно в слайс
+	result := make([]domain.Dictionary, 0, len(dictMap))
+	for _, dict := range dictMap {
+		result = append(result, *dict)
+	}
+
+	return result, nil
 }
 
 func (p postgresDictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
@@ -426,16 +445,23 @@ func (p postgresDictionaryRepository) withTransaction(ctx context.Context, callb
 	return nil
 }
 
-func (p postgresDictionaryRepository) getDictionaryByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
-	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
-	var dict domain.Dictionary
-	if err := p.Conn.GetContext(ctx, &dict, query, id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("dictionary not found: %w", err)
-		}
-		return nil, fmt.Errorf("get dictionary: %w", err)
+func (p postgresDictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []domain.DictionaryID) ([]*domain.Dictionary, error) {
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("dictionaries not found")
 	}
-	return &dict, nil
+
+	const query = `
+		SELECT id, name, type, lang, deleted_at
+		FROM dictionary
+		WHERE id = ANY($1) AND deleted_at IS NULL
+	`
+
+	var dictionaries []*domain.Dictionary
+	if err := p.Conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
+		return nil, fmt.Errorf("get dictionaries: %w", err)
+	}
+
+	return dictionaries, nil
 }
 
 func (p postgresDictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {

@@ -29,14 +29,14 @@ type dictionaryUseCase struct {
 	contextTimeout time.Duration
 }
 
-func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) (*domain.Dictionary, error) {
+func (d dictionaryUseCase) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	dictionary, err := d.dictionaryRepo.GetByID(ctx, id)
+	dictionaries, err := d.dictionaryRepo.GetByIDs(ctx, ids)
 	if err != nil {
 		// Если это таймаут — не затираем ошибку
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
@@ -46,7 +46,7 @@ func (d dictionaryUseCase) GetByID(ctx context.Context, id domain.DictionaryID) 
 		return nil, domain.DictNotFoundError
 	}
 
-	return dictionary, nil
+	return dictionaries, nil
 }
 
 func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
@@ -139,7 +139,7 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	dict, err := d.dictionaryRepo.GetByID(ctx, id)
+	dictionaries, err := d.dictionaryRepo.GetByIDs(ctx, []domain.DictionaryID{id})
 	if err != nil {
 		// Если это таймаут — не затираем ошибку
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
@@ -147,6 +147,10 @@ func (d dictionaryUseCase) ChangeName(ctx context.Context, id domain.DictionaryI
 		}
 		return domain.DictNotFoundError
 	}
+	if len(dictionaries) == 0 {
+		return domain.DictNotFoundError
+	}
+	dict := dictionaries[0]
 
 	newDictName := strings.ToLower(strings.TrimSpace(name))
 	if newDictName == dict.Name {
@@ -180,11 +184,17 @@ func (d dictionaryUseCase) Delete(ctx context.Context, id domain.DictionaryID) e
 	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
 	defer cancel()
 
-	if _, err := d.dictionaryRepo.GetByID(ctx, id); err != nil {
+	// Получаем словарь по ID с использованием GetByIDs
+	dictionaries, err := d.dictionaryRepo.GetByIDs(ctx, []domain.DictionaryID{id})
+	if err != nil {
 		// Если это таймаут — не затираем ошибку
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 			return err
 		}
+		return domain.DictNotFoundError
+	}
+
+	if len(dictionaries) == 0 {
 		return domain.DictNotFoundError
 	}
 
