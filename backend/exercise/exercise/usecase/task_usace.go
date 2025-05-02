@@ -95,7 +95,35 @@ func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (
 	return &task, nil
 }
 
-func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseID, taskId domain.TaskID, dictId domain.DictionaryID) error {
+func (t taskUseCase) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.ExerciseID, taskID domain.TaskID) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, t.contextTimeout)
+	defer cancel()
+
+	ok, err := t.taskRepo.IsTaskOwnerExercise(ctx, exerciseID, taskID)
+	if err != nil {
+		return false, err
+	}
+
+	return ok, nil
+}
+
+func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseID, taskId domain.TaskID, dictId domain.DictionaryID) (*domain.Task, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, t.contextTimeout)
+	defer cancel()
+
+	// получить задачу со словарями
+	// проверить, что задача принадлежит упражнению
+	// проверить, что dictId есть в Words
+	// принять выбранное слово SetWordSelected
+	// проверить, что exercise.taskAmount == exercise.processedCounter (упражнение завершено)
+	// если упражнение завершено, получить потраченное время (created_at - updated_at) и отправить сообщение в kafka
+
 	//TODO implement me
 	panic("implement me")
 }

@@ -12,6 +12,10 @@ import (
 	"strconv"
 )
 
+type TaskWordSelectRequest struct {
+	WordSelect uint64 `json:"word_select" validate:"required,gt=0"`
+}
+
 type TaskHandler struct {
 	TUseCase domain.TaskUseCase
 	EUseCase domain.ExerciseUseCase
@@ -82,12 +86,57 @@ func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request, id uint64) 
 	})
 }
 
-func (d *TaskHandler) SelectWord(w http.ResponseWriter, r *http.Request, exerciseID domain.ExerciseID, taskID *domain.TaskID) {
+func (t *TaskHandler) SelectWord(w http.ResponseWriter, r *http.Request, exerciseID domain.ExerciseID, taskID *domain.TaskID) {
+	var requestBody TaskWordSelectRequest
+	if err := t.validateRequest(r, &requestBody); err != nil {
+		response.Error(err, r)
+		return
+	}
+	dictionaryID := domain.DictionaryID(requestBody.WordSelect)
+
+	userID, err := t.auth.GetUserID(r.Context())
+	if err != nil {
+		err = _internalError.NewAppError(http.StatusUnauthorized, "Не удалось получить userID", err)
+		response.Error(err, r)
+		return
+	}
+
+	if ok, err := t.EUseCase.IsExerciseOwner(r.Context(), exerciseID, *userID); !ok {
+		err = _internalError.NewAppError(http.StatusForbidden, "Только автор упражнения может выбрать слово", err)
+		response.Error(err, r)
+		return
+	}
+
+	if ok, err := t.TUseCase.IsTaskOwnerExercise(r.Context(), exerciseID, *taskID); !ok {
+		err = _internalError.NewAppError(http.StatusForbidden, "Только автор задания может выбрать слово", err)
+		response.Error(err, r)
+		return
+	}
+
+	task, err := t.TUseCase.SelectWord(r.Context(), exerciseID, *taskID, dictionaryID)
+	if err != nil {
+		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка выбора слова", err)
+		response.Error(err, r)
+		return
+	}
+
 	response.JSON(w, http.StatusCreated, response.APIResponse{
 		Data: map[string]any{
-			"task": "task",
+			"task": task,
 		},
 	})
+}
+
+func (e *TaskHandler) validateRequest(r *http.Request, req any) error {
+	if err := request.FromJSON(r, req); err != nil {
+		return _internalError.NewAppError(http.StatusBadRequest, "Некорректный синтаксис JSON", _internalError.InvalidDecodeJsonError)
+	}
+
+	if err := e.validate.Struct(req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type HandlerFuncWithExerciseIDAndTaskID func(w http.ResponseWriter, r *http.Request, exerciseID domain.ExerciseID, taskID *domain.TaskID)

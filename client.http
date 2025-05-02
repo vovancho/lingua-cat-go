@@ -197,6 +197,18 @@ Authorization: Bearer {{token}}
 
 ###
 
+// @no-cookie-jar
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/2/task/2/word-selected
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "word_select": 0
+}
+
+###
+
 
 
 

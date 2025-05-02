@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -22,6 +23,21 @@ func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
 	panic("implement me")
 }
 
+func (p postgresTaskRepository) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.ExerciseID, taskID domain.TaskID) (bool, error) {
+	const query = `SELECT id FROM task WHERE id = $1 AND exercise_id = $2`
+
+	var id domain.TaskID
+	err := p.Conn.GetContext(ctx, &id, query, taskID, exerciseID)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) error {
 	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Вставка задачи
@@ -32,15 +48,22 @@ func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) er
 		task.ID = taskID
 
 		// Инкремент счетчика получения задачи
-		if err := p.incrementProcessedCounter(ctx, tx, task.Exercise.ID); err != nil {
+		counter, err := p.incrementProcessedCounter(ctx, tx, task.Exercise.ID)
+		if err != nil {
 			return err
 		}
+		task.Exercise.ProcessedCounter = counter
 
 		return nil
 	})
 }
 
-func (p postgresTaskRepository) SetWordSelected(ctx context.Context, taskId domain.TaskID, dictId domain.DictionaryID) error {
+func (p postgresTaskRepository) SetWordSelected(ctx context.Context, task *domain.Task, dictId domain.DictionaryID) error {
+
+	// установить task.word_selected = dictId
+	// сделать инкремент exercise.selected_counter
+	// сделать инкремент exercise.corrected_counter, если task.word_selected == task.word_correct
+
 	//TODO implement me
 	panic("implement me")
 }
@@ -98,19 +121,24 @@ func (p postgresTaskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *
 	return id, nil
 }
 
-func (p postgresTaskRepository) incrementProcessedCounter(ctx context.Context, tx *sqlx.Tx, exerciseId domain.ExerciseID) error {
-	const query = `UPDATE exercise SET processed_counter = processed_counter + 1 WHERE id = :id AND processed_counter < task_amount`
-	res, err := tx.NamedExecContext(ctx, query, map[string]any{
-		"id": exerciseId,
-	})
+func (p postgresTaskRepository) incrementProcessedCounter(ctx context.Context, tx *sqlx.Tx, exerciseId domain.ExerciseID) (uint16, error) {
+	const query = `
+		UPDATE exercise
+		SET processed_counter = processed_counter + 1
+		WHERE id = :id AND processed_counter < task_amount
+		RETURNING processed_counter`
+
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
-		return fmt.Errorf("increment processed counter: %w", err)
+		return 0, fmt.Errorf("prepare named statement: %w", err)
+	}
+	defer stmt.Close()
+
+	var counter uint16
+	err = stmt.QueryRowxContext(ctx, map[string]any{"id": exerciseId}).Scan(&counter)
+	if err != nil {
+		return 0, fmt.Errorf("increment processed counter: %w", err)
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if (rowsAffected == 0) || err != nil {
-		return fmt.Errorf("increment processed counter not affected")
-	}
-
-	return nil
+	return counter, nil
 }
