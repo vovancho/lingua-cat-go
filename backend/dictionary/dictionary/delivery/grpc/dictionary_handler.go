@@ -32,10 +32,20 @@ func (d *DictionaryHandler) GetRandomDictionaries(ctx context.Context, req *pb.G
 	for i, dict := range dictionaries {
 		translations := make([]*pb.Translation, len(dict.Translations))
 		for j, t := range dict.Translations {
+			tSentences := make([]*pb.Sentence, len(t.Dictionary.Sentences))
+			for k, ts := range t.Dictionary.Sentences {
+				tSentences[k] = &pb.Sentence{
+					TextRu: ts.TextRU,
+					TextEn: ts.TextEN,
+				}
+			}
+
 			translations[j] = &pb.Translation{
-				Lang: string(t.Dictionary.Lang),
-				Name: t.Dictionary.Name,
-				Type: int32(t.Dictionary.Type),
+				Id:        int64(t.Dictionary.ID),
+				Lang:      string(t.Dictionary.Lang),
+				Name:      t.Dictionary.Name,
+				Type:      int32(t.Dictionary.Type),
+				Sentences: tSentences,
 			}
 		}
 

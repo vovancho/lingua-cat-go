@@ -17,6 +17,7 @@ import (
 )
 
 type userKey struct{}
+type jwtTokenKey struct{}
 type PublicKeyPath string
 
 type UserID uuid.UUID
@@ -50,6 +51,10 @@ func (s *AuthService) withUserID(ctx context.Context, userID string) context.Con
 	return context.WithValue(ctx, userKey{}, userID)
 }
 
+func (s *AuthService) withJWTToken(ctx context.Context, jwtToken string) context.Context {
+	return context.WithValue(ctx, jwtTokenKey{}, jwtToken)
+}
+
 func (s *AuthService) GetUserID(ctx context.Context) (*UserID, error) {
 	userIDStr, ok := ctx.Value(userKey{}).(string)
 	if !ok {
@@ -63,6 +68,15 @@ func (s *AuthService) GetUserID(ctx context.Context) (*UserID, error) {
 
 	uid := UserID(userID)
 	return &uid, nil
+}
+
+func (s *AuthService) GetJWTToken(ctx context.Context) (string, error) {
+	jwtToken, ok := ctx.Value(jwtTokenKey{}).(string)
+	if !ok {
+		return "", fmt.Errorf("JWT token not found in context")
+	}
+
+	return jwtToken, nil
 }
 
 func (s *AuthService) VerifyToken(tokenStr string) (string, error) {

@@ -143,7 +143,7 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/1
+GET http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/41
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"time"
@@ -22,8 +23,23 @@ type dictionaryUseCase struct {
 }
 
 func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
+	defer cancel()
+
+	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
+	if err != nil {
+		// Если это таймаут — не затираем ошибку
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, err
+		}
+
+		return nil, domain.DictionariesNotFoundError
+	}
+
+	return dicts, nil
 }
 
 func (d dictionaryUseCase) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {

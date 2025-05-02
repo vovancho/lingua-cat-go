@@ -7,11 +7,11 @@ import (
 type TaskID uint64
 
 type Task struct {
-	ID              TaskID
-	Words           []Dictionary
-	WordIDCorrected DictionaryID
-	WordIDSelected  *DictionaryID
-	Exercise        Exercise
+	ID              TaskID        `json:"id" db:"id"`
+	Words           []Dictionary  `json:"words"`
+	WordIDCorrected DictionaryID  `json:"word_corrected" db:"word_corrected"`
+	WordIDSelected  *DictionaryID `json:"word_selected" db:"word_selected"`
+	Exercise        Exercise      `json:"exercise"`
 }
 
 type TaskUseCase interface {

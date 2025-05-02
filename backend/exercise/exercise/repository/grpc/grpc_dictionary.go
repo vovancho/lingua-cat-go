@@ -3,21 +3,82 @@ package grpc
 import (
 	"context"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
+	pb "github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc/gen"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
-type postgresDictionaryRepository struct {
+type grpcDictionaryRepository struct {
+	client pb.DictionaryServiceClient
+	auth   *auth.AuthService
 }
 
-func NewPostgresDictionaryRepository() domain.DictionaryRepository {
-	return &postgresDictionaryRepository{}
+func NewGrpcDictionaryRepository(conn *grpc.ClientConn, auth *auth.AuthService) domain.DictionaryRepository {
+	return &grpcDictionaryRepository{
+		client: pb.NewDictionaryServiceClient(conn),
+		auth:   auth,
+	}
 }
 
-func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
-	//TODO implement me
-	panic("implement me")
+func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+	token, err := d.auth.GetJWTToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+
+	resp, err := d.client.GetRandomDictionaries(ctx, &pb.GetRandomDictionariesRequest{
+		Lang:  string(lang),
+		Limit: int32(limit),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var dictionaries []domain.Dictionary
+	for _, dt := range resp.Dictionaries {
+		dict := domain.Dictionary{
+			ID:   domain.DictionaryID(dt.Id),
+			Lang: domain.DictionaryLang(dt.Lang),
+			Name: dt.Name,
+			Type: domain.DictionaryType(dt.Type),
+		}
+
+		for _, t := range dt.Translations {
+			var dSentences []domain.Sentence
+			for _, ts := range t.Sentences {
+				dSentences = append(dSentences, domain.Sentence{
+					TextRU: ts.TextRu,
+					TextEN: ts.TextEn,
+				})
+			}
+
+			dict.Translations = append(dict.Translations, domain.Translation{
+				Dictionary: domain.Dictionary{
+					ID:        domain.DictionaryID(t.Id),
+					Lang:      domain.DictionaryLang(t.Lang),
+					Name:      t.Name,
+					Type:      domain.DictionaryType(t.Type),
+					Sentences: dSentences,
+				},
+			})
+		}
+
+		for _, s := range dt.Sentences {
+			dict.Sentences = append(dict.Sentences, domain.Sentence{
+				TextRU: s.TextRu,
+				TextEN: s.TextEn,
+			})
+		}
+
+		dictionaries = append(dictionaries, dict)
+	}
+
+	return dictionaries, nil
 }
 
-func (p postgresDictionaryRepository) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
+func (p grpcDictionaryRepository) GetDictionaryByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
 	//TODO implement me
 	panic("implement me")
 }

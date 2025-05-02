@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 )
@@ -66,15 +67,34 @@ func (p postgresTaskRepository) withTransaction(ctx context.Context, callback fu
 
 func (p postgresTaskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *domain.Task) (domain.TaskID, error) {
 	var id domain.TaskID
-	const query = `INSERT INTO task (exercise_id, words, word_correct) VALUES (:exercise_id, :words, :word_correct) RETURNING id`
-	nstmt, err := tx.PrepareNamed(query)
+
+	wordIDs := make([]int64, len(t.Words))
+	for i, w := range t.Words {
+		wordIDs[i] = int64(w.ID)
+	}
+
+	dto := map[string]any{
+		"exercise_id":  t.Exercise.ID,
+		"words":        pq.Array(wordIDs),
+		"word_correct": t.WordIDCorrected,
+	}
+
+	const query = `
+		INSERT INTO task (exercise_id, words, word_correct)
+		VALUES (:exercise_id, :words, :word_correct)
+		RETURNING id`
+
+	nstmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare named query: %w", err)
 	}
-	err = nstmt.QueryRowxContext(ctx, t).Scan(&id)
+	defer nstmt.Close()
+
+	err = nstmt.QueryRowxContext(ctx, dto).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("insert task: %w", err)
 	}
+
 	return id, nil
 }
 

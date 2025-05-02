@@ -21,6 +21,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/translator"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/validator"
+	grpc2 "google.golang.org/grpc"
 	"net/http"
 	"time"
 )
@@ -54,9 +55,14 @@ func InitializeApp() (*App, error) {
 	exerciseRepository := postgres.NewPostgresExerciseRepository(dbDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseUseCase := usecase.NewExerciseUseCase(exerciseRepository, validate, timeout)
+	clientConn, err := ProvideGRPCConn(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	dictionaryRepository := grpc.NewGrpcDictionaryRepository(clientConn, authService)
+	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	taskRepository := postgres.NewPostgresTaskRepository(dbDB)
-	dictionaryRepository := grpc.NewPostgresDictionaryRepository()
-	taskUseCase := usecase.NewTaskUseCase(taskRepository, dictionaryRepository, validate, timeout)
+	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
 	app := NewApp(configConfig, server, sqlxDB)
 	return app, nil
@@ -98,6 +104,14 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideGRPCConn(cfg *config.Config) (*grpc2.ClientConn, error) {
+	conn, err := grpc2.Dial(cfg.DictionaryGRPCAddress, grpc2.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
@@ -109,7 +123,7 @@ func newHTTPServer(
 ) *http.Server {
 	router := http.NewServeMux()
 	http2.NewExerciseHandler(router, validate, authService, exerciseUcase)
-	http2.NewTaskHandler(router, validate, taskUcase)
+	http2.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),

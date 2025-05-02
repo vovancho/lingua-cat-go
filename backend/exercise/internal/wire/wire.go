@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	_internalHttp "github.com/vovancho/lingua-cat-go/exercise/exercise/delivery/http"
-	"github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc"
+	_internalGrpc "github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc"
 	"github.com/vovancho/lingua-cat-go/exercise/exercise/repository/postgres"
 	"github.com/vovancho/lingua-cat-go/exercise/exercise/usecase"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
@@ -19,6 +19,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/exercise/internal/validator"
+	"google.golang.org/grpc"
 	"net/http"
 	"time"
 )
@@ -59,10 +60,13 @@ func InitializeApp() (*App, error) {
 		ProvidePublicKeyPath,
 		auth.NewAuthService,
 
+		// GRPC соединение
+		ProvideGRPCConn,
+
 		// Репозиторий
 		postgres.NewPostgresExerciseRepository,
 		postgres.NewPostgresTaskRepository,
-		grpc.NewPostgresDictionaryRepository,
+		_internalGrpc.NewGrpcDictionaryRepository,
 
 		// Use case
 		ProvideUseCaseTimeout,
@@ -95,6 +99,14 @@ func getPostgresDB(db *sqlx.DB) db.DB {
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
 func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+}
+
+func ProvideGRPCConn(cfg *config.Config) (*grpc.ClientConn, error) {
+	conn, err := grpc.Dial(cfg.DictionaryGRPCAddress, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
 // newHTTPServer создаёт новый HTTP-сервер

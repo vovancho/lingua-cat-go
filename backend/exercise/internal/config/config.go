@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	DBDSN             string
-	HTTPPort          string
-	AuthPublicKeyPath string
-	Timeout           int // in seconds
+	DBDSN                 string
+	HTTPPort              string
+	DictionaryGRPCAddress string
+	AuthPublicKeyPath     string
+	Timeout               int // in seconds
 }
 
 func Load() (*Config, error) {
@@ -26,10 +27,11 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		DBDSN:             os.Getenv("DB_DSN"),
-		HTTPPort:          os.Getenv("HTTP_PORT"),
-		AuthPublicKeyPath: os.Getenv("AUTH_PUBLIC_KEY_PATH"),
-		Timeout:           timeout,
+		DBDSN:                 os.Getenv("DB_DSN"),
+		HTTPPort:              os.Getenv("HTTP_PORT"),
+		DictionaryGRPCAddress: os.Getenv("DICTIONARY_GRPC_HOST"),
+		AuthPublicKeyPath:     os.Getenv("AUTH_PUBLIC_KEY_PATH"),
+		Timeout:               timeout,
 	}
 
 	if cfg.DBDSN == "" {
