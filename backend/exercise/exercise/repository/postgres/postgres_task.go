@@ -8,6 +8,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
+	"slices"
 )
 
 type postgresTaskRepository struct {
@@ -114,13 +115,47 @@ func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) er
 }
 
 func (p postgresTaskRepository) SetWordSelected(ctx context.Context, task *domain.Task, dictId domain.DictionaryID) error {
+	found := slices.IndexFunc(task.Words, func(w domain.Dictionary) bool {
+		return w.ID == dictId
+	})
+	if found == -1 {
+		return domain.DictionaryNotFoundError
+	}
+	dict := task.Words[found]
+	task.WordSelected = &dict
 
-	// установить task.word_selected = dictId
-	// сделать инкремент exercise.selected_counter
-	// сделать инкремент exercise.corrected_counter, если task.word_selected == task.word_correct
+	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
+		// обновить поле word_selected в таблице task
+		_, err := tx.ExecContext(ctx, `UPDATE task SET word_selected = $1 WHERE id = $2`, dictId, task.ID)
+		if err != nil {
+			return fmt.Errorf("update task.word_selected: %w", err)
+		}
 
-	//TODO implement me
-	panic("implement me")
+		// инкрементировать selected_counter в exercise
+		err = tx.GetContext(
+			ctx, &task.Exercise.SelectedCounter,
+			`UPDATE exercise SET selected_counter = selected_counter + 1 WHERE id = $1 RETURNING selected_counter`,
+			task.Exercise.ID,
+		)
+		if err != nil {
+			return fmt.Errorf("increment selected_counter: %w", err)
+		}
+
+		// если выбрано правильно — инкрементировать corrected_counter
+		if dictId == task.WordCorrect.ID {
+			err = tx.GetContext(
+				ctx,
+				&task.Exercise.CorrectedCounter,
+				`UPDATE exercise SET corrected_counter = corrected_counter + 1 WHERE id = $1 RETURNING corrected_counter`,
+				task.Exercise.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("increment corrected_counter: %w", err)
+			}
+		}
+
+		return nil
+	})
 }
 
 // withTransaction выполняет callback в контексте транзакции

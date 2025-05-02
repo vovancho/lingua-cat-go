@@ -169,7 +169,7 @@ Accept: application/json
 
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/1
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/4
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -190,7 +190,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/1/task/1
+GET http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task/4
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -198,7 +198,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/2/task
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -206,13 +206,13 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/2/task/2/word-selected
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/4/task/4/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "word_select": 0
+  "word_select": 47
 }
 
 ###

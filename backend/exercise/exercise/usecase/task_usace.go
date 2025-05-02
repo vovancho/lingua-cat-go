@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"math/rand"
+	"slices"
 	"time"
 )
 
@@ -59,6 +60,11 @@ func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Tas
 		return nil, err
 	}
 
+	// если какие-то словари были удалены, то задача невалидна
+	if len(dictionaries) != len(wordIDs) {
+		return nil, domain.TaskNotFoundError
+	}
+
 	var (
 		wordCorrect  *domain.Dictionary
 		wordSelected *domain.Dictionary
@@ -101,6 +107,10 @@ func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (
 	// проверить возможность добавления новой задачи
 	isCreateTaskAllowed := exercise.SelectedCounter < exercise.TaskAmount && (exercise.ProcessedCounter == 0 || exercise.SelectedCounter == exercise.ProcessedCounter)
 	if !isCreateTaskAllowed {
+		if exercise.SelectedCounter == exercise.TaskAmount {
+			return nil, domain.ExerciseCompletedError
+		}
+
 		return nil, domain.NewTaskNotAllowedError
 	}
 
@@ -166,21 +176,35 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 	defer cancel()
 
 	// получить задачу со словарями
-	//dictionaries, err := t.dUseCase.GetDictionariesByIds(ctx, limit)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//if len(dictionaries) == 0 {
-	//	return nil, domain.DictionariesNotFoundError
-	//}
+	task, err := t.GetByID(ctx, taskId)
+	if err != nil {
+		return nil, domain.TaskNotFoundError
+	}
 
 	// проверить, что задача принадлежит упражнению
-	// проверить, что dictId есть в Words
-	// принять выбранное слово SetWordSelected
-	// проверить, что exercise.taskAmount == exercise.processedCounter (упражнение завершено)
-	// если упражнение завершено, получить потраченное время (created_at - updated_at) и отправить сообщение в kafka
+	if exerciseID != task.Exercise.ID {
+		return nil, domain.TaskNotFoundError
+	}
 
-	//TODO implement me
-	panic("implement me")
+	// проверить, что dictId есть в Words
+	if !slices.ContainsFunc(task.Words, func(d domain.Dictionary) bool {
+		return d.ID == dictId
+	}) {
+		return nil, domain.DictionaryNotFoundError
+	}
+
+	// принять выбранное слово SetWordSelected
+	if err := t.taskRepo.SetWordSelected(ctx, task, dictId); err != nil {
+		return nil, err
+	}
+
+	// проверить, что exercise.taskAmount == exercise.processedCounter (упражнение завершено)
+	if task.Exercise.TaskAmount == task.Exercise.ProcessedCounter {
+		// если упражнение завершено, получить потраченное время (created_at - updated_at) и отправить сообщение в kafka
+		spentTime := task.Exercise.UpdatedAt.Sub(task.Exercise.CreatedAt)
+
+		fmt.Println("Spent time: ", spentTime.String())
+	}
+
+	return task, nil
 }
