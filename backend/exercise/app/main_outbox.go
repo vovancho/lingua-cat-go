@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/IBM/sarama"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
@@ -14,6 +15,39 @@ import (
 )
 
 var logger = watermill.NewStdLogger(false, false)
+
+type customKafkaMarshaler struct{}
+
+func (m customKafkaMarshaler) Marshal(topic string, msg *message.Message) (*sarama.ProducerMessage, error) {
+	// Логируем перед отправкой
+	logger.Info("Marshaling message for Kafka", map[string]interface{}{
+		"topic":   topic,
+		"uuid":    msg.UUID,
+		"payload": string(msg.Payload),
+	})
+
+	// Создаем новое сообщение с тем же содержимым
+	producerMsg := &sarama.ProducerMessage{
+		Topic: topic,
+		Key:   sarama.StringEncoder(msg.UUID),
+		Value: sarama.ByteEncoder(msg.Payload),
+	}
+
+	// Добавляем метаданные
+	for k, v := range msg.Metadata {
+		producerMsg.Headers = append(producerMsg.Headers, sarama.RecordHeader{
+			Key:   []byte(k),
+			Value: []byte(v),
+		})
+	}
+
+	return producerMsg, nil
+}
+
+func (m customKafkaMarshaler) Unmarshal(msg *sarama.ConsumerMessage) (*message.Message, error) {
+	// Не используется в Publisher, но должно быть реализовано
+	return message.NewMessage(string(msg.Key), msg.Value), nil
+}
 
 func main() {
 	db, err := sqlx.Connect("postgres", "postgres://exercise:secret@lcg-exercise-db:5432/exercise?sslmode=disable")
@@ -35,10 +69,17 @@ func main() {
 		panic(err)
 	}
 
+	// Настройка Sarama для отладки
+	saramaConfig := sarama.NewConfig()
+	saramaConfig.Producer.Return.Successes = true
+	saramaConfig.Producer.RequiredAcks = sarama.WaitForAll
+	saramaConfig.Net.MaxOpenRequests = 1
+
 	saramaPublisher, err := kafka.NewPublisher(
 		kafka.PublisherConfig{
-			Brokers:   []string{"lcg-kafka:9092"},
-			Marshaler: kafka.DefaultMarshaler{},
+			Brokers:               []string{"lcg-kafka:9092"},
+			Marshaler:             customKafkaMarshaler{},
+			OverwriteSaramaConfig: saramaConfig,
 		},
 		logger,
 	)
@@ -46,43 +87,35 @@ func main() {
 		panic(err)
 	}
 
-	//router, err := message.NewRouter(message.RouterConfig{}, logger)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//router.AddNoPublisherHandler(
-	//	"outbox_to_kafka",
-	//	"lcg_exercise_topic",
-	//	subscriber,
-	//	func(msg *message.Message) error {
-	//		return saramaPublisher.Publish("lcg_exercise_topic", msg)
-	//	},
-	//)
-
-	// Configure the forwarder
-	config := forwarder.Config{
-		ForwarderTopic:      "lcg_exercise_topic",
-		Middlewares:         nil,
-		CloseTimeout:        30 * time.Second,
-		AckWhenCannotUnwrap: false,
-		Router:              nil,
+	// Middleware для проверки сообщения перед отправкой
+	forwarderMiddleware := func(h message.HandlerFunc) message.HandlerFunc {
+		return func(msg *message.Message) ([]*message.Message, error) {
+			logger.Info("Forwarding message to Kafka", map[string]interface{}{
+				"uuid":    msg.UUID,
+				"payload": string(msg.Payload),
+				"topic":   "lcg_exercise_topic",
+			})
+			return h(msg)
+		}
 	}
 
-	// Create the forwarder
+	config := forwarder.Config{
+		ForwarderTopic: "lcg_exercise_topic",
+		Middlewares:    []message.HandlerMiddleware{forwarderMiddleware},
+		CloseTimeout:   30 * time.Second,
+	}
+
 	fwd, err := forwarder.NewForwarder(subscriber, saramaPublisher, logger, config)
 	if err != nil {
 		panic(err)
 	}
 
-	// Run the forwarder in a separate goroutine
 	go func() {
 		if err := fwd.Run(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
 
-	// Function to insert into exercise table and publish to outbox in one transaction
 	insertAndPublish := func(userID, lang string, taskAmount int) error {
 		tx, err := db.Beginx()
 		if err != nil {
@@ -108,8 +141,13 @@ func main() {
 		}
 
 		msg := message.NewMessage(watermill.NewUUID(), payload)
+		msg.Metadata.Set("published_at", time.Now().UTC().Format(time.RFC3339))
 
-		// Use the transaction for publishing
+		logger.Info("Creating outbox message", map[string]interface{}{
+			"uuid":    msg.UUID,
+			"payload": string(msg.Payload),
+		})
+
 		txPublisher, err := sql.NewPublisher(
 			tx,
 			sql.PublisherConfig{
@@ -121,25 +159,18 @@ func main() {
 			return err
 		}
 
-		err = txPublisher.Publish("lcg_exercise_topic", msg)
-		if err != nil {
+		if err := txPublisher.Publish("lcg_exercise_topic", msg); err != nil {
 			return err
 		}
-
-		// Simulate error for testing
-		//time.Sleep(1 * time.Second)
-		//panic("test error")
 
 		return tx.Commit()
 	}
 
 	time.Sleep(1 * time.Second)
 
-	// Example usage
 	if err := insertAndPublish("b7237299-1e3a-4d46-bbdd-68f015598657", "en", 10); err != nil {
 		panic(err)
 	}
 
-	// Infinite loop to keep the application running
 	select {}
 }
