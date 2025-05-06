@@ -91,6 +91,7 @@ docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go g
 
 
 docker run --rm -v .\backend\dictionary\example:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go run jwt.go
+docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go run app/main_outbox.go
 
 
 

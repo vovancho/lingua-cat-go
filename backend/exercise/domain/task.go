@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 )
 
 type TaskID uint64
@@ -25,5 +26,5 @@ type TaskRepository interface {
 	GetByID(ctx context.Context, id TaskID) (*Task, []DictionaryID, DictionaryID, DictionaryID, error)
 	IsTaskOwnerExercise(ctx context.Context, exerciseID ExerciseID, taskID TaskID) (bool, error)
 	Store(ctx context.Context, task *Task) error
-	SetWordSelected(ctx context.Context, task *Task, dictId DictionaryID) error
+	SetWordSelected(ctx context.Context, task *Task, dictId DictionaryID, afterWordSetCallback func(ce sql.ContextExecutor, t Task) error) error
 }

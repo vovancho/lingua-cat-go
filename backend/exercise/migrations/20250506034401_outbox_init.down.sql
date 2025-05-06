@@ -1,0 +1,2 @@
+DROP TABLE public.watermill_lcg_exercise_completed;
+DROP TABLE public.watermill_offsets_lcg_exercise_completed;

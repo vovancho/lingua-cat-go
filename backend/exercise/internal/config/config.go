@@ -9,11 +9,13 @@ import (
 )
 
 type Config struct {
-	DBDSN                 string
-	HTTPPort              string
-	DictionaryGRPCAddress string
-	AuthPublicKeyPath     string
-	Timeout               int // in seconds
+	DBDSN                       string
+	HTTPPort                    string
+	DictionaryGRPCAddress       string
+	AuthPublicKeyPath           string
+	Timeout                     int // in seconds
+	KafkaBroker                 string
+	KafkaExerciseCompletedTopic string
 }
 
 func Load() (*Config, error) {
@@ -27,11 +29,13 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		DBDSN:                 os.Getenv("DB_DSN"),
-		HTTPPort:              os.Getenv("HTTP_PORT"),
-		DictionaryGRPCAddress: os.Getenv("DICTIONARY_GRPC_HOST"),
-		AuthPublicKeyPath:     os.Getenv("AUTH_PUBLIC_KEY_PATH"),
-		Timeout:               timeout,
+		DBDSN:                       os.Getenv("DB_DSN"),
+		HTTPPort:                    os.Getenv("HTTP_PORT"),
+		DictionaryGRPCAddress:       os.Getenv("DICTIONARY_GRPC_HOST"),
+		AuthPublicKeyPath:           os.Getenv("AUTH_PUBLIC_KEY_PATH"),
+		Timeout:                     timeout,
+		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
+		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
 	}
 
 	if cfg.DBDSN == "" {

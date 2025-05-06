@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	_watermillSql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
@@ -114,7 +115,12 @@ func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) er
 	})
 }
 
-func (p postgresTaskRepository) SetWordSelected(ctx context.Context, task *domain.Task, dictId domain.DictionaryID) error {
+func (p postgresTaskRepository) SetWordSelected(
+	ctx context.Context,
+	task *domain.Task,
+	dictId domain.DictionaryID,
+	afterWordSetCallback func(ce _watermillSql.ContextExecutor, t domain.Task) error,
+) error {
 	found := slices.IndexFunc(task.Words, func(w domain.Dictionary) bool {
 		return w.ID == dictId
 	})
@@ -151,6 +157,12 @@ func (p postgresTaskRepository) SetWordSelected(ctx context.Context, task *domai
 			)
 			if err != nil {
 				return fmt.Errorf("increment corrected_counter: %w", err)
+			}
+		}
+
+		if afterWordSetCallback != nil {
+			if err = afterWordSetCallback(tx, *task); err != nil {
+				return fmt.Errorf("execute afterWordSetCallback: %w", err)
 			}
 		}
 

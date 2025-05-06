@@ -7,6 +7,11 @@
 package wire
 
 import (
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
+	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
+	"github.com/ThreeDotsLabs/watermill/components/forwarder"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/universal-translator"
 	validator2 "github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
@@ -64,7 +69,21 @@ func InitializeApp() (*App, error) {
 	taskRepository := postgres.NewPostgresTaskRepository(dbDB)
 	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
-	app := NewApp(configConfig, server, sqlxDB)
+	loggerAdapter := ProvideLogger()
+	subscriber, err := ProvideSubscriber(sqlxDB, loggerAdapter)
+	if err != nil {
+		return nil, err
+	}
+	publisher, err := ProvidePublisher(configConfig, loggerAdapter)
+	if err != nil {
+		return nil, err
+	}
+	forwarderConfig := ProvideForwarderConfig(configConfig)
+	forwarder, err := ProvideForwarder(subscriber, publisher, loggerAdapter, forwarderConfig)
+	if err != nil {
+		return nil, err
+	}
+	app := NewApp(configConfig, server, sqlxDB, forwarder)
 	return app, nil
 }
 
@@ -75,14 +94,16 @@ type App struct {
 	Config     *config.Config
 	HTTPServer *http.Server
 	DB         *sqlx.DB
+	Forwarder  *forwarder.Forwarder
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB) *App {
+func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB, fwd *forwarder.Forwarder) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		DB:         db2,
+		Forwarder:  fwd,
 	}
 }
 
@@ -128,4 +149,46 @@ func newHTTPServer(
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
 	}
+}
+
+// ProvideLogger создает Watermill логгер
+func ProvideLogger() watermill.LoggerAdapter {
+	return watermill.NewStdLogger(true, true)
+
+}
+
+// ProvideSubscriber создает SQL-подписчик
+func ProvideSubscriber(db2 *sqlx.DB, logger watermill.LoggerAdapter) (message.Subscriber, error) {
+	return sql.NewSubscriber(db2, sql.SubscriberConfig{
+		SchemaAdapter:    sql.DefaultPostgreSQLSchema{},
+		OffsetsAdapter:   sql.DefaultPostgreSQLOffsetsAdapter{},
+		InitializeSchema: false,
+	}, logger,
+	)
+}
+
+// ProvidePublisher создает Kafka-паблишер
+func ProvidePublisher(cfg *config.Config, logger watermill.LoggerAdapter) (message.Publisher, error) {
+	return kafka.NewPublisher(kafka.PublisherConfig{
+		Brokers:   []string{cfg.KafkaBroker},
+		Marshaler: kafka.DefaultMarshaler{},
+	}, logger,
+	)
+}
+
+// ProvideForwarderConfig возвращает конфигурацию форвардера
+func ProvideForwarderConfig(cfg *config.Config) forwarder.Config {
+	return forwarder.Config{
+		ForwarderTopic: cfg.KafkaExerciseCompletedTopic,
+	}
+}
+
+// ProvideForwarder создает форвардер
+func ProvideForwarder(
+	subscriber message.Subscriber,
+	publisher message.Publisher,
+	logger watermill.LoggerAdapter,
+	cfg forwarder.Config,
+) (*forwarder.Forwarder, error) {
+	return forwarder.NewForwarder(subscriber, publisher, logger, cfg)
 }

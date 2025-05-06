@@ -30,6 +30,18 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		slog.Info("Starting outbox forwarder")
+		if err := app.Forwarder.Run(ctx); err != nil && ctx.Err() == nil {
+			slog.Error("Outbox forwarder exited with error", "error", err)
+			stop()
+		} else {
+			slog.Info("Outbox forwarder stopped")
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		slog.Info("HTTP server is listening", "port", app.Config.HTTPPort)
 		if err := app.HTTPServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("Failed to serve HTTP", "error", err)

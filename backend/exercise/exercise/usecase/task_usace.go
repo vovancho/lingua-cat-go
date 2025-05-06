@@ -2,8 +2,13 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
+	_watermillSql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"math/rand"
@@ -193,17 +198,52 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 		return nil, domain.DictionaryNotFoundError
 	}
 
-	// принять выбранное слово SetWordSelected
-	if err := t.taskRepo.SetWordSelected(ctx, task, dictId); err != nil {
-		return nil, err
+	afterWordSetCallback := func(ce _watermillSql.ContextExecutor, t domain.Task) error {
+		if t.Exercise.TaskAmount == t.Exercise.SelectedCounter {
+			spentTime := t.Exercise.UpdatedAt.Sub(t.Exercise.CreatedAt)
+			exerciseCompletedEvent := domain.ExerciseCompletedEvent{
+				UserID:              t.Exercise.UserID,
+				ExerciseID:          t.Exercise.ID,
+				SpentTime:           spentTime.Milliseconds(),
+				WordsCount:          t.Exercise.TaskAmount,
+				WordsCorrectedCount: t.Exercise.CorrectedCounter,
+				DestinationTopic:    "lcg_exercise_completed",
+			}
+
+			//payload, err := json.Marshal(exerciseCompletedEvent)
+			payload, err := json.Marshal(map[string]interface{}{
+				"test":              "test",
+				"destination_topic": "lcg_exercise_completed",
+			})
+			if err != nil {
+				return fmt.Errorf("marshal payload: %w", err)
+			}
+
+			fmt.Println(string(payload), exerciseCompletedEvent)
+
+			msg := message.NewMessage(watermill.NewUUID(), payload)
+			txPublisher, err := sql.NewPublisher(
+				ce,
+				sql.PublisherConfig{
+					SchemaAdapter: sql.DefaultPostgreSQLSchema{},
+				},
+				watermill.NewStdLogger(true, true), // logger should be injected if available
+			)
+			if err != nil {
+				return fmt.Errorf("create tx publisher: %w", err)
+			}
+
+			err = txPublisher.Publish(exerciseCompletedEvent.DestinationTopic, msg)
+			if err != nil {
+				return fmt.Errorf("publish message: %w", err)
+			}
+		}
+		return nil
 	}
 
-	// проверить, что exercise.taskAmount == exercise.processedCounter (упражнение завершено)
-	if task.Exercise.TaskAmount == task.Exercise.ProcessedCounter {
-		// если упражнение завершено, получить потраченное время (created_at - updated_at) и отправить сообщение в kafka
-		spentTime := task.Exercise.UpdatedAt.Sub(task.Exercise.CreatedAt)
-
-		fmt.Println("Spent time: ", spentTime.String())
+	// принять выбранное слово SetWordSelected
+	if err := t.taskRepo.SetWordSelected(ctx, task, dictId, afterWordSetCallback); err != nil {
+		return nil, err
 	}
 
 	return task, nil

@@ -4,6 +4,12 @@
 package wire
 
 import (
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
+	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
+	"github.com/ThreeDotsLabs/watermill/components/forwarder"
+	"github.com/ThreeDotsLabs/watermill/message"
+
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
@@ -29,14 +35,16 @@ type App struct {
 	Config     *config.Config
 	HTTPServer *http.Server
 	DB         *sqlx.DB
+	Forwarder  *forwarder.Forwarder
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db *sqlx.DB) *App {
+func NewApp(cfg *config.Config, httpServer *http.Server, db *sqlx.DB, fwd *forwarder.Forwarder) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		DB:         db,
+		Forwarder:  fwd,
 	}
 }
 
@@ -76,6 +84,13 @@ func InitializeApp() (*App, error) {
 
 		// HTTP Delivery
 		newHTTPServer,
+
+		// Watermill Outbox
+		ProvideLogger,
+		ProvideSubscriber,
+		ProvidePublisher,
+		ProvideForwarderConfig,
+		ProvideForwarder,
 
 		// App
 		NewApp,
@@ -125,4 +140,51 @@ func newHTTPServer(
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
 	}
+}
+
+// ProvideLogger создает Watermill логгер
+func ProvideLogger() watermill.LoggerAdapter {
+	return watermill.NewStdLogger(true, true)
+	//return watermill.NopLogger{}
+}
+
+// ProvideSubscriber создает SQL-подписчик
+func ProvideSubscriber(db *sqlx.DB, logger watermill.LoggerAdapter) (message.Subscriber, error) {
+	return sql.NewSubscriber(
+		db,
+		sql.SubscriberConfig{
+			SchemaAdapter:    sql.DefaultPostgreSQLSchema{},
+			OffsetsAdapter:   sql.DefaultPostgreSQLOffsetsAdapter{},
+			InitializeSchema: false,
+		},
+		logger,
+	)
+}
+
+// ProvidePublisher создает Kafka-паблишер
+func ProvidePublisher(cfg *config.Config, logger watermill.LoggerAdapter) (message.Publisher, error) {
+	return kafka.NewPublisher(
+		kafka.PublisherConfig{
+			Brokers:   []string{cfg.KafkaBroker},
+			Marshaler: kafka.DefaultMarshaler{},
+		},
+		logger,
+	)
+}
+
+// ProvideForwarderConfig возвращает конфигурацию форвардера
+func ProvideForwarderConfig(cfg *config.Config) forwarder.Config {
+	return forwarder.Config{
+		ForwarderTopic: cfg.KafkaExerciseCompletedTopic,
+	}
+}
+
+// ProvideForwarder создает форвардер
+func ProvideForwarder(
+	subscriber message.Subscriber,
+	publisher message.Publisher,
+	logger watermill.LoggerAdapter,
+	cfg forwarder.Config,
+) (*forwarder.Forwarder, error) {
+	return forwarder.NewForwarder(subscriber, publisher, logger, cfg)
 }

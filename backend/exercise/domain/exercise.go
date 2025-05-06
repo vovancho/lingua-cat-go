@@ -30,6 +30,15 @@ type Exercise struct {
 	CorrectedCounter uint16       `json:"corrected_counter" db:"corrected_counter"`
 }
 
+type ExerciseCompletedEvent struct {
+	UserID              auth.UserID `json:"user_id"`
+	ExerciseID          ExerciseID  `json:"exercise_id"`
+	SpentTime           int64       `json:"spent_time"` // в миллисекундах
+	WordsCount          uint16      `json:"words_count"`
+	WordsCorrectedCount uint16      `json:"words_corrected_count"`
+	DestinationTopic    string      `json:"destination_topic"`
+}
+
 type ExerciseUseCase interface {
 	GetByID(ctx context.Context, id ExerciseID) (*Exercise, error)
 	IsExerciseOwner(ctx context.Context, exerciseID ExerciseID, userID auth.UserID) (bool, error)
