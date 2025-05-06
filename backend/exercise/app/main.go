@@ -30,12 +30,12 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		slog.Info("Starting outbox forwarder")
-		if err := app.Forwarder.Run(ctx); err != nil && ctx.Err() == nil {
-			slog.Error("Outbox forwarder exited with error", "error", err)
+		slog.Info("Starting outbox router")
+		if err := app.Outbox.Run(ctx); err != nil && ctx.Err() == nil {
+			slog.Error("Outbox router exited with error", "error", err)
 			stop()
 		} else {
-			slog.Info("Outbox forwarder stopped")
+			slog.Info("Outbox router stopped")
 		}
 	}()
 

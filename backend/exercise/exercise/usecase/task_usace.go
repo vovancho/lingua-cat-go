@@ -16,28 +16,33 @@ import (
 	"time"
 )
 
+type ExerciseCompletedTopic string
+
 func NewTaskUseCase(
 	eUseCase domain.ExerciseUseCase,
 	dUseCase domain.DictionaryUseCase,
 	tr domain.TaskRepository,
 	v *validator.Validate,
 	timeout Timeout,
+	ect ExerciseCompletedTopic,
 ) domain.TaskUseCase {
 	return &taskUseCase{
-		eUseCase:       eUseCase,
-		dUseCase:       dUseCase,
-		taskRepo:       tr,
-		validate:       v,
-		contextTimeout: time.Duration(timeout),
+		eUseCase:               eUseCase,
+		dUseCase:               dUseCase,
+		taskRepo:               tr,
+		validate:               v,
+		contextTimeout:         time.Duration(timeout),
+		exerciseCompletedTopic: string(ect),
 	}
 }
 
 type taskUseCase struct {
-	eUseCase       domain.ExerciseUseCase
-	dUseCase       domain.DictionaryUseCase
-	taskRepo       domain.TaskRepository
-	validate       *validator.Validate
-	contextTimeout time.Duration
+	eUseCase               domain.ExerciseUseCase
+	dUseCase               domain.DictionaryUseCase
+	taskRepo               domain.TaskRepository
+	validate               *validator.Validate
+	contextTimeout         time.Duration
+	exerciseCompletedTopic string
 }
 
 func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Task, error) {
@@ -173,15 +178,15 @@ func (t taskUseCase) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.
 	return ok, nil
 }
 
-func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseID, taskId domain.TaskID, dictId domain.DictionaryID) (*domain.Task, error) {
+func (tuc taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseID, taskId domain.TaskID, dictId domain.DictionaryID) (*domain.Task, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, t.contextTimeout)
+	ctx, cancel := context.WithTimeout(ctx, tuc.contextTimeout)
 	defer cancel()
 
 	// получить задачу со словарями
-	task, err := t.GetByID(ctx, taskId)
+	task, err := tuc.GetByID(ctx, taskId)
 	if err != nil {
 		return nil, domain.TaskNotFoundError
 	}
@@ -201,25 +206,19 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 	afterWordSetCallback := func(ce _watermillSql.ContextExecutor, t domain.Task) error {
 		if t.Exercise.TaskAmount == t.Exercise.SelectedCounter {
 			spentTime := t.Exercise.UpdatedAt.Sub(t.Exercise.CreatedAt)
+
 			exerciseCompletedEvent := domain.ExerciseCompletedEvent{
 				UserID:              t.Exercise.UserID,
 				ExerciseID:          t.Exercise.ID,
 				SpentTime:           spentTime.Milliseconds(),
 				WordsCount:          t.Exercise.TaskAmount,
 				WordsCorrectedCount: t.Exercise.CorrectedCounter,
-				DestinationTopic:    "lcg_exercise_completed",
 			}
 
-			//payload, err := json.Marshal(exerciseCompletedEvent)
-			payload, err := json.Marshal(map[string]interface{}{
-				"test":              "test",
-				"destination_topic": "lcg_exercise_completed",
-			})
+			payload, err := json.Marshal(exerciseCompletedEvent)
 			if err != nil {
 				return fmt.Errorf("marshal payload: %w", err)
 			}
-
-			fmt.Println(string(payload), exerciseCompletedEvent)
 
 			msg := message.NewMessage(watermill.NewUUID(), payload)
 			txPublisher, err := sql.NewPublisher(
@@ -227,13 +226,13 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 				sql.PublisherConfig{
 					SchemaAdapter: sql.DefaultPostgreSQLSchema{},
 				},
-				watermill.NewStdLogger(true, true), // logger should be injected if available
+				nil, // logger should be injected if available
 			)
 			if err != nil {
 				return fmt.Errorf("create tx publisher: %w", err)
 			}
 
-			err = txPublisher.Publish(exerciseCompletedEvent.DestinationTopic, msg)
+			err = txPublisher.Publish(tuc.exerciseCompletedTopic, msg)
 			if err != nil {
 				return fmt.Errorf("publish message: %w", err)
 			}
@@ -242,7 +241,7 @@ func (t taskUseCase) SelectWord(ctx context.Context, exerciseID domain.ExerciseI
 	}
 
 	// принять выбранное слово SetWordSelected
-	if err := t.taskRepo.SetWordSelected(ctx, task, dictId, afterWordSetCallback); err != nil {
+	if err := tuc.taskRepo.SetWordSelected(ctx, task, dictId, afterWordSetCallback); err != nil {
 		return nil, err
 	}
 

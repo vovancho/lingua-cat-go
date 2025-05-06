@@ -36,7 +36,6 @@ type ExerciseCompletedEvent struct {
 	SpentTime           int64       `json:"spent_time"` // в миллисекундах
 	WordsCount          uint16      `json:"words_count"`
 	WordsCorrectedCount uint16      `json:"words_corrected_count"`
-	DestinationTopic    string      `json:"destination_topic"`
 }
 
 type ExerciseUseCase interface {

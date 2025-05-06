@@ -206,13 +206,13 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/11/task/13/word-selected
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/11/task/5/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "word_select": 64
+  "word_select": 44
 }
 
 ###

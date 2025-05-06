@@ -138,11 +138,14 @@ func (p postgresTaskRepository) SetWordSelected(
 		}
 
 		// инкрементировать selected_counter в exercise
-		err = tx.GetContext(
-			ctx, &task.Exercise.SelectedCounter,
-			`UPDATE exercise SET selected_counter = selected_counter + 1, updated_at = NOW() WHERE id = $1 RETURNING selected_counter`,
+		err = tx.QueryRowxContext(
+			ctx,
+			`UPDATE exercise 
+				 SET selected_counter = selected_counter + 1, updated_at = NOW() 
+				 WHERE id = $1 
+				 RETURNING selected_counter, updated_at`,
 			task.Exercise.ID,
-		)
+		).Scan(&task.Exercise.SelectedCounter, &task.Exercise.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("increment selected_counter: %w", err)
 		}

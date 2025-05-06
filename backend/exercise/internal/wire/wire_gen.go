@@ -10,7 +10,6 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
-	"github.com/ThreeDotsLabs/watermill/components/forwarder"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/universal-translator"
 	validator2 "github.com/go-playground/validator/v10"
@@ -67,7 +66,8 @@ func InitializeApp() (*App, error) {
 	dictionaryRepository := grpc.NewGrpcDictionaryRepository(clientConn, authService)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	taskRepository := postgres.NewPostgresTaskRepository(dbDB)
-	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout)
+	exerciseCompletedTopic := ProvideKafkaExerciseCompletedTopic(configConfig)
+	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout, exerciseCompletedTopic)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(sqlxDB, loggerAdapter)
@@ -78,12 +78,11 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	forwarderConfig := ProvideForwarderConfig(configConfig)
-	forwarder, err := ProvideForwarder(subscriber, publisher, loggerAdapter, forwarderConfig)
+	router, err := ProvideOutboxRouter(loggerAdapter, subscriber, publisher, configConfig)
 	if err != nil {
 		return nil, err
 	}
-	app := NewApp(configConfig, server, sqlxDB, forwarder)
+	app := NewApp(configConfig, server, sqlxDB, router)
 	return app, nil
 }
 
@@ -94,16 +93,16 @@ type App struct {
 	Config     *config.Config
 	HTTPServer *http.Server
 	DB         *sqlx.DB
-	Forwarder  *forwarder.Forwarder
+	Outbox     *message.Router
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB, fwd *forwarder.Forwarder) *App {
+func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB, outbox *message.Router) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		DB:         db2,
-		Forwarder:  fwd,
+		Outbox:     outbox,
 	}
 }
 
@@ -151,10 +150,15 @@ func newHTTPServer(
 	}
 }
 
+// ProvideKafkaExerciseCompletedTopic возвращает имя топика о выполненных упражнениях
+func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase.ExerciseCompletedTopic {
+	return usecase.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
+}
+
 // ProvideLogger создает Watermill логгер
 func ProvideLogger() watermill.LoggerAdapter {
-	return watermill.NewStdLogger(true, true)
 
+	return watermill.NopLogger{}
 }
 
 // ProvideSubscriber создает SQL-подписчик
@@ -176,19 +180,26 @@ func ProvidePublisher(cfg *config.Config, logger watermill.LoggerAdapter) (messa
 	)
 }
 
-// ProvideForwarderConfig возвращает конфигурацию форвардера
-func ProvideForwarderConfig(cfg *config.Config) forwarder.Config {
-	return forwarder.Config{
-		ForwarderTopic: cfg.KafkaExerciseCompletedTopic,
-	}
-}
-
-// ProvideForwarder создает форвардер
-func ProvideForwarder(
+// ProvideOutboxRouter создает outbox роутер из БД ProvideSubscriber в ProvidePublisher
+func ProvideOutboxRouter(
+	logger watermill.LoggerAdapter,
 	subscriber message.Subscriber,
 	publisher message.Publisher,
-	logger watermill.LoggerAdapter,
-	cfg forwarder.Config,
-) (*forwarder.Forwarder, error) {
-	return forwarder.NewForwarder(subscriber, publisher, logger, cfg)
+	cfg *config.Config,
+) (*message.Router, error) {
+	router, err := message.NewRouter(message.RouterConfig{}, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	router.AddNoPublisherHandler(
+		"outbox_to_kafka",
+		cfg.KafkaExerciseCompletedTopic,
+		subscriber,
+		func(msg *message.Message) error {
+			return publisher.Publish(cfg.KafkaExerciseCompletedTopic, msg)
+		},
+	)
+
+	return router, nil
 }
