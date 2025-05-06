@@ -217,6 +217,14 @@ Authorization: Bearer {{token}}
 
 ###
 
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/analytics/v1/analytics/user/dbacd50b-e4c4-428d-a1f9-952f13c4d671
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
 
 
 

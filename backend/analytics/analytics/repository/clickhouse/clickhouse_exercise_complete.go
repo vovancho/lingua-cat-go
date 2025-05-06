@@ -2,6 +2,8 @@ package clickhouse
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
@@ -15,12 +17,25 @@ func NewClickhouseExerciseCompleteRepository(conn db.DB) domain.ExerciseComplete
 	return &clickhouseExerciseCompleteRepository{conn}
 }
 
-func (c clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context, userId auth.UserID) ([]domain.ExerciseComplete, error) {
-	//TODO implement me
-	panic("implement me")
+func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context, userId auth.UserID) ([]domain.ExerciseComplete, error) {
+	const query = `SELECT user_id, user_name, exercise_id, exercise_lang, spent_time, words_count, words_corrected_count, event_time
+		FROM analytics.exercise_complete
+		WHERE user_id = $1
+		ORDER BY event_time DESC`
+
+	var ecList []domain.ExerciseComplete
+
+	if err := ecr.Conn.SelectContext(ctx, &ecList, query, userId); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("analytics not found: %w", err)
+		}
+		return nil, fmt.Errorf("get analytics: %w", err)
+	}
+
+	return ecList, nil
 }
 
-func (c clickhouseExerciseCompleteRepository) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
+func (ecr clickhouseExerciseCompleteRepository) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
 	//TODO implement me
 	panic("implement me")
 }
