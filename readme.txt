@@ -59,6 +59,12 @@ docker run --rm -v .\backend\exercise\migrations:/migrations --network host migr
 docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable down 1
 docker run --rm -v .\backend\exercise\migrations:/migrations --network host migrate/migrate -path /migrations -database postgres://exercise:secret@localhost:54322/exercise?sslmode=disable drop -f
 
+analytics migrations:
+docker run --rm -v .\backend\analytics\migrations:/migrations --network host migrate/migrate -path /migrations -database clickhouse://analytics:secret@localhost:59000/analytics create -ext sql -dir /migrations init_schema
+docker run --rm -v .\backend\analytics\migrations:/migrations --network host migrate/migrate -path /migrations -database "clickhouse://localhost:59000?username=analytics&database=analytics&password=secret&x-multi-statement=true" up
+docker run --rm -v .\backend\analytics\migrations:/migrations --network host migrate/migrate -path /migrations -database "clickhouse://localhost:59000?username=analytics&database=analytics&password=secret&x-multi-statement=true" down 1
+docker run --rm -v .\backend\analytics\migrations:/migrations --network host migrate/migrate -path /migrations -database "clickhouse://localhost:59000?username=analytics&database=analytics&password=secret&x-multi-statement=true" drop -f
+
 
 
 GROK:
@@ -117,6 +123,7 @@ func init() {
 
 docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
+docker run --rm -v .\backend\analytics:/app -v pkgmod:/go/pkg/mod -w /app/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 
 
 docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase

@@ -21,18 +21,23 @@ services:
         image: clickhouse/clickhouse-server:25.4-alpine
         environment:
             CLICKHOUSE_USER: analytics
-            CLICKHOUSE_PASSWORD: /run/secrets/analytics_db_password
+            CLICKHOUSE_PASSWORD_FILE: /run/secrets/analytics_db_password
             CLICKHOUSE_DB: analytics
+            CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
         volumes:
             - analytics-db:/var/lib/clickhouse
         secrets:
             - analytics_db_password
         labels:
             - traefik.enable=true
-            - traefik.tcp.routers.lcg-analytics-db.entrypoints=analytics-db
-            - traefik.tcp.routers.lcg-analytics-db.service=lcg-analytics-db
-            - traefik.tcp.routers.lcg-analytics-db.rule=HostSNI(`*`)
-            - traefik.tcp.services.lcg-analytics-db.loadbalancer.server.port=9000
+            - traefik.http.routers.lcg-analytics-db.entrypoints=web
+            - traefik.http.routers.lcg-analytics-db.service=lcg-analytics-db
+            - traefik.http.routers.lcg-analytics-db.rule=Host(`analytics-db.lingua-cat-go.localhost`)
+            - traefik.http.services.lcg-analytics-db.loadbalancer.server.port=8123
+            - traefik.tcp.routers.lcg-analytics-db-tcp.entrypoints=analytics-db
+            - traefik.tcp.routers.lcg-analytics-db-tcp.service=lcg-analytics-db-tcp
+            - traefik.tcp.routers.lcg-analytics-db-tcp.rule=HostSNI(`*`)
+            - traefik.tcp.services.lcg-analytics-db-tcp.loadbalancer.server.port=9000
 
 volumes:
     analytics-db:

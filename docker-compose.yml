@@ -3,7 +3,7 @@ include:
     - backend/kafka/docker-compose.yml
     - backend/dictionary/docker-compose.yml
     - backend/exercise/docker-compose.yml
-#    - backend/analytics/docker-compose.yml
+    - backend/analytics/docker-compose.yml
 #    - backend/api/docker-compose.yml
 
 services:
