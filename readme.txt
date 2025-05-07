@@ -133,17 +133,17 @@ docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golan
 
 
 
+'{"event":"exercise_completed","user_id":123}' | docker run --rm -i --network host apache/kafka:3.7.1 /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9093 --topic lcg_exercise_completed
+'{"event":"exercise_completed","user_id":123}' | docker run --rm -i --network lingua-cat-go_default apache/kafka:3.7.1 /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server lcg-kafka:9092 --topic lcg_exercise_completed
+docker run --rm --network lingua-cat-go_default apache/kafka:3.7.1 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server lcg-kafka:9092 --topic lcg_exercise_completed --from-beginning
 
 
 
 
 
+echo '{"event":"exercise_completed","user_id":123}' |  /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server lcg-kafka:9092 --topic lcg_exercise_completed
+/opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server lcg-kafka:9092 --topic lcg_exercise_completed --from-beginning
 
 
 
-
-
-
-
-
-
+ docker ps --format "{{.Names}}"

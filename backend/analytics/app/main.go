@@ -37,6 +37,25 @@ func main() {
 		}
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case msg, ok := <-app.ConsumerMessages:
+				if !ok {
+					slog.Info("Kafka message channel closed")
+					return
+				}
+				slog.Info("Received message:", "uuid", msg.UUID)
+				msg.Ack()
+			case <-ctx.Done():
+				slog.Info("Stopping Kafka message processing")
+				return
+			}
+		}
+	}()
+
 	<-ctx.Done()
 	slog.Info("Initiating graceful shutdown...")
 
@@ -49,6 +68,22 @@ func main() {
 		slog.Info("HTTP server stopped")
 	}
 
-	wg.Wait()
-	slog.Info("All servers stopped")
+	// Закрытие subscriber
+	if err := app.Consumer.Close(); err != nil {
+		slog.Error("Error closing subscriber", "error", err)
+	}
+
+	// Ожидание завершения горутин с таймаутом
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		slog.Info("All servers stopped")
+	case <-time.After(15 * time.Second):
+		slog.Error("Timeout waiting for servers to stop")
+	}
 }

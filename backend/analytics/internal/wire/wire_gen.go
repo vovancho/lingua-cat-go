@@ -7,6 +7,10 @@
 package wire
 
 import (
+	"context"
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/universal-translator"
 	validator2 "github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
@@ -54,7 +58,16 @@ func InitializeApp() (*App, error) {
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseCompleteUseCase)
-	app := NewApp(configConfig, server, sqlxDB)
+	loggerAdapter := ProvideLogger()
+	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
+	if err != nil {
+		return nil, err
+	}
+	v, err := ProvideMessages(configConfig, subscriber)
+	if err != nil {
+		return nil, err
+	}
+	app := NewApp(configConfig, server, sqlxDB, subscriber, v)
 	return app, nil
 }
 
@@ -62,17 +75,26 @@ func InitializeApp() (*App, error) {
 
 // App представляет приложение с конфигурацией и серверами
 type App struct {
-	Config     *config.Config
-	HTTPServer *http.Server
-	DB         *sqlx.DB
+	Config           *config.Config
+	HTTPServer       *http.Server
+	DB               *sqlx.DB
+	Consumer         *kafka.Subscriber
+	ConsumerMessages <-chan *message.Message
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB) *App {
+func NewApp(
+	cfg *config.Config,
+	httpServer *http.Server, db2 *sqlx.DB,
+	consumer *kafka.Subscriber,
+	consumerMessages <-chan *message.Message,
+) *App {
 	return &App{
-		Config:     cfg,
-		HTTPServer: httpServer,
-		DB:         db2,
+		Config:           cfg,
+		HTTPServer:       httpServer,
+		DB:               db2,
+		Consumer:         consumer,
+		ConsumerMessages: consumerMessages,
 	}
 }
 
@@ -108,4 +130,26 @@ func newHTTPServer(
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
 	}
+}
+
+// ProvideLogger создает Watermill логгер
+func ProvideLogger() watermill.LoggerAdapter {
+	return watermill.NewStdLogger(false, false)
+
+}
+
+// ProvideSubscriber создает Kafka Subscriber
+func ProvideSubscriber(cfg *config.Config, logger watermill.LoggerAdapter) (*kafka.Subscriber, error) {
+	return kafka.NewSubscriber(kafka.SubscriberConfig{
+		Brokers:       []string{cfg.KafkaBroker},
+		ConsumerGroup: cfg.KafkaExerciseCompletedGroup,
+		Unmarshaler:   kafka.DefaultMarshaler{},
+	}, logger,
+	)
+}
+
+// ProvideMessages создает канал сообщений
+func ProvideMessages(cfg *config.Config, subscriber *kafka.Subscriber) (<-chan *message.Message, error) {
+	ctx := context.Background()
+	return subscriber.Subscribe(ctx, cfg.KafkaExerciseCompletedTopic)
 }

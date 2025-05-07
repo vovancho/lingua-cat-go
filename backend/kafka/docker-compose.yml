@@ -9,7 +9,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19091
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://lcg-kafka:9092
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@lcg-kafka:19091"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@lcg-kafka:19091
       KAFKA_LOG_DIRS: /var/lib/kafka/data
 
   # инициализируем топик lcg_exercise_topic
@@ -40,6 +40,12 @@ services:
       - traefik.http.routers.kafka-ui.entrypoints=web
       - traefik.http.routers.kafka-ui.rule=Host(`kafka-ui.localhost`)
       - traefik.http.services.kafka-ui.loadbalancer.server.port=80
+
+  lcg-kafka-cmd:
+    image: apache/kafka:3.7.2
+    depends_on:
+      - lcg-kafka
+    restart: "no"
 
 volumes:
   kafka-storage:

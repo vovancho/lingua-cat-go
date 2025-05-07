@@ -8,6 +8,8 @@ import (
 	"strconv"
 )
 
+type ExerciseCompletedTopic string
+
 type Config struct {
 	DBDSN                       string
 	HTTPPort                    string
@@ -15,6 +17,7 @@ type Config struct {
 	Timeout                     int // in seconds
 	KafkaBroker                 string
 	KafkaExerciseCompletedTopic string
+	KafkaExerciseCompletedGroup string
 }
 
 func Load() (*Config, error) {
@@ -34,6 +37,7 @@ func Load() (*Config, error) {
 		Timeout:                     timeout,
 		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
 		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
+		KafkaExerciseCompletedGroup: os.Getenv("KAFKA_EXERCISE_COMPLETED_GROUP"),
 	}
 
 	if cfg.DBDSN == "" {
