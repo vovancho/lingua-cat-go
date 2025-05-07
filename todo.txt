@@ -9,11 +9,12 @@
 
 
 grpc-gateway
-consul
 outbox/inbox pattern
-console command
 Jaeger tracing
+consul
+console command
 cache
+Заменить KEYCLOAK_ADMIN_TOKEN на долгоживущий refresh_token в backend/analytics/.env
 
 
 swagger:

@@ -147,3 +147,34 @@ echo '{"event":"exercise_completed","user_id":123}' |  /opt/kafka/bin/kafka-cons
 
 
  docker ps --format "{{.Names}}"
+
+
+------------------------------------- Получить KEYCLOAK_ADMIN_TOKEN ----------------------------------------------------
+docker compose exec lcg-exercise-backend sh
+
+curl -X POST --location "http://lcg-keycloak/realms/lingua-cat-go/protocol/openid-connect/token" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -H "Accept: application/json" \
+    -d 'grant_type=client_credentials&client_id=lingua-cat-go-admin&client_secret=OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR'
+
+"access_token" => KEYCLOAK_ADMIN_TOKEN
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
