@@ -65,12 +65,37 @@ grant_type=client_credentials&scope=openid&client_id=lingua-cat-go-dev&client_se
 #   "scope": "openid profile email"
 # }
 
+###
+
 // @no-cookie-jar
 POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 
-grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ&username=dummy-user&password=password
+grant_type = client_credentials &
+client_id = lingua-cat-go-admin &
+client_secret = OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR
+
+###
+
+// @no-cookie-jar
+GET http://keycloak.localhost/admin/realms/lingua-cat-go/users/11c65e41-2496-43af-ac4c-daa898c24664
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+###
+
+// @no-cookie-jar
+POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+grant_type = password &
+scope = openid &
+client_id = lingua-cat-go-dev &
+client_secret = GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ &
+username = dummy-user &
+password = password
 
 ###
 

@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-type Timeout time.Duration
-
 func NewExerciseCompleteUseCase(ecr domain.ExerciseCompleteRepository, v *validator.Validate, timeout Timeout) domain.ExerciseCompleteUseCase {
 	return &exerciseCompleteUseCase{
 		exerciseCompleteRepo: ecr,

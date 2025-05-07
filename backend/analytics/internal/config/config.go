@@ -18,6 +18,8 @@ type Config struct {
 	KafkaBroker                 string
 	KafkaExerciseCompletedTopic string
 	KafkaExerciseCompletedGroup string
+	KeycloakAdminRealmEndpoint  string
+	KeycloakAdminToken          string
 }
 
 func Load() (*Config, error) {
@@ -38,6 +40,8 @@ func Load() (*Config, error) {
 		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
 		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
 		KafkaExerciseCompletedGroup: os.Getenv("KAFKA_EXERCISE_COMPLETED_GROUP"),
+		KeycloakAdminRealmEndpoint:  os.Getenv("KEYCLOAK_ADMIN_REALM_ENDPOINT"),
+		KeycloakAdminToken:          os.Getenv("KEYCLOAK_ADMIN_TOKEN"),
 	}
 
 	if cfg.DBDSN == "" {

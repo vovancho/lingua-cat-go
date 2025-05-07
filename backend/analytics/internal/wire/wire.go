@@ -15,6 +15,7 @@ import (
 	_internalHttp "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/http"
 	_internalKafka "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/clickhouse"
+	_httpRepo "github.com/vovancho/lingua-cat-go/analytics/analytics/repository/http"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
@@ -76,12 +77,18 @@ func InitializeApp() (*App, error) {
 		ProvidePublicKeyPath,
 		auth.NewAuthService,
 
+		// Keycloak
+		ProvideKeycloakConfig,
+
 		//// Репозиторий
 		clickhouse.NewClickhouseExerciseCompleteRepository,
+		ProvideUserHttpClient,
+		_httpRepo.NewHttpUserRepository,
 
 		//// Use case
 		ProvideUseCaseTimeout,
 		usecase.NewExerciseCompleteUseCase,
+		usecase.NewUserUseCase,
 
 		// HTTP Delivery
 		newHTTPServer,
@@ -156,4 +163,17 @@ func ProvideSubscriber(cfg *config.Config, logger watermill.LoggerAdapter) (*kaf
 func ProvideMessages(cfg *config.Config, subscriber *kafka.Subscriber) (<-chan *message.Message, error) {
 	ctx := context.Background()
 	return subscriber.Subscribe(ctx, cfg.KafkaExerciseCompletedTopic)
+}
+
+// ProvideKeycloakConfig создает конфигурацию для Keycloak из общей конфигурации
+func ProvideKeycloakConfig(cfg *config.Config) _httpRepo.Config {
+	return _httpRepo.Config{
+		AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
+		AdminToken:         cfg.KeycloakAdminToken,
+	}
+}
+
+// ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
+func ProvideUserHttpClient() *http.Client {
+	return &http.Client{}
 }

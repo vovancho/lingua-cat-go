@@ -14,9 +14,10 @@ import (
 	"github.com/go-playground/universal-translator"
 	validator2 "github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
-	http2 "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/http"
+	http3 "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/http"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/clickhouse"
+	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/http"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
@@ -25,7 +26,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/validator"
-	"net/http"
+	http2 "net/http"
 	"time"
 )
 
@@ -68,7 +69,11 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase)
+	httpConfig := ProvideKeycloakConfig(configConfig)
+	client := ProvideUserHttpClient()
+	userRepository := http.NewHttpUserRepository(httpConfig, client)
+	userUseCase := usecase.NewUserUseCase(userRepository, timeout)
+	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
 	app := NewApp(configConfig, server, sqlxDB, subscriber, v, exerciseCompleteHandler)
 	return app, nil
 }
@@ -78,7 +83,7 @@ func InitializeApp() (*App, error) {
 // App представляет приложение с конфигурацией и серверами
 type App struct {
 	Config           *config.Config
-	HTTPServer       *http.Server
+	HTTPServer       *http2.Server
 	DB               *sqlx.DB
 	Consumer         *kafka2.Subscriber
 	ConsumerMessages <-chan *message.Message
@@ -88,7 +93,7 @@ type App struct {
 // NewApp создаёт новый экземпляр App
 func NewApp(
 	cfg *config.Config,
-	httpServer *http.Server, db2 *sqlx.DB,
+	httpServer *http2.Server, db2 *sqlx.DB,
 	consumer *kafka2.Subscriber,
 	consumerMessages <-chan *message.Message,
 	consumerHandler *kafka.ExerciseCompleteHandler,
@@ -128,10 +133,10 @@ func newHTTPServer(
 	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseCompleteUcase domain.ExerciseCompleteUseCase,
-) *http.Server {
-	router := http.NewServeMux()
-	http2.NewExerciseCompleteHandler(router, validate, authService, exerciseCompleteUcase)
-	return &http.Server{
+) *http2.Server {
+	router := http2.NewServeMux()
+	http3.NewExerciseCompleteHandler(router, validate, authService, exerciseCompleteUcase)
+	return &http2.Server{
 		Addr:    cfg.HTTPPort,
 		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
 	}
@@ -157,4 +162,17 @@ func ProvideSubscriber(cfg *config.Config, logger watermill.LoggerAdapter) (*kaf
 func ProvideMessages(cfg *config.Config, subscriber *kafka2.Subscriber) (<-chan *message.Message, error) {
 	ctx := context.Background()
 	return subscriber.Subscribe(ctx, cfg.KafkaExerciseCompletedTopic)
+}
+
+// ProvideKeycloakConfig создает конфигурацию для Keycloak из общей конфигурации
+func ProvideKeycloakConfig(cfg *config.Config) http.Config {
+	return http.Config{
+		AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
+		AdminToken:         cfg.KeycloakAdminToken,
+	}
+}
+
+// ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
+func ProvideUserHttpClient() *http2.Client {
+	return &http2.Client{}
 }

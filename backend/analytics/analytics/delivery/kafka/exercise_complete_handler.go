@@ -23,12 +23,18 @@ type ExerciseCompleteMessage struct {
 
 type ExerciseCompleteHandler struct {
 	ECUseCase domain.ExerciseCompleteUseCase
+	UUseCase  domain.UserUseCase
 	validate  *validator.Validate
 }
 
-func NewExerciseCompleteHandler(v *validator.Validate, ec domain.ExerciseCompleteUseCase) *ExerciseCompleteHandler {
+func NewExerciseCompleteHandler(
+	v *validator.Validate,
+	ec domain.ExerciseCompleteUseCase,
+	u domain.UserUseCase,
+) *ExerciseCompleteHandler {
 	return &ExerciseCompleteHandler{
 		ECUseCase: ec,
+		UUseCase:  u,
 		validate:  v,
 	}
 }
@@ -46,18 +52,23 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 		return fmt.Errorf("UserID not parsed: %w", err)
 	}
 
+	user, err := ech.UUseCase.GetByID(ctx, auth.UserID(userID))
+	if err != nil {
+		return fmt.Errorf("failed to get user from Keycloak: %w", err)
+	}
+
 	ec := &domain.ExerciseComplete{
 		UserID:              auth.UserID(userID),
-		UserName:            "test name",
+		UserName:            user.Username,
 		ExerciseID:          domain.ExerciseID(ecMsg.ExerciseID),
 		ExerciseLang:        domain.ExerciseLang(ecMsg.ExerciseLang),
-		SpentTime:           time.UnixMilli(ecMsg.SpentTime), // Assuming spent_time is in milliseconds
+		SpentTime:           time.UnixMilli(ecMsg.SpentTime), // Предполагается, что spent_time в миллисекундах
 		WordsCount:          ecMsg.WordsCount,
 		WordsCorrectedCount: ecMsg.WordsCorrectedCount,
 		EventTime:           time.Now(),
 	}
 
-	// Store the data using ExerciseCompleteUseCase
+	// Сохранение данных через ExerciseCompleteUseCase
 	if err := ech.ECUseCase.Store(ctx, ec); err != nil {
 		return err
 	}
