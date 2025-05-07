@@ -190,7 +190,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/13/task
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/14/task
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -206,7 +206,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/13/task/7/word-selected
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/14/task/8/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}

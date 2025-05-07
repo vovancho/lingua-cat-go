@@ -31,11 +31,12 @@ type Exercise struct {
 }
 
 type ExerciseCompletedEvent struct {
-	UserID              auth.UserID `json:"user_id"`
-	ExerciseID          ExerciseID  `json:"exercise_id"`
-	SpentTime           int64       `json:"spent_time"` // в миллисекундах
-	WordsCount          uint16      `json:"words_count"`
-	WordsCorrectedCount uint16      `json:"words_corrected_count"`
+	UserID              auth.UserID  `json:"user_id"`
+	ExerciseID          ExerciseID   `json:"exercise_id"`
+	ExerciseLang        ExerciseLang `json:"exercise_lang"`
+	SpentTime           int64        `json:"spent_time"` // в миллисекундах
+	WordsCount          uint16       `json:"words_count"`
+	WordsCorrectedCount uint16       `json:"words_corrected_count"`
 }
 
 type ExerciseUseCase interface {

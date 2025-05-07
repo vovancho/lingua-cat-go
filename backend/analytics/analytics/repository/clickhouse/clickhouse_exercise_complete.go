@@ -36,6 +36,15 @@ func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context,
 }
 
 func (ecr clickhouseExerciseCompleteRepository) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
-	//TODO implement me
-	panic("implement me")
+	const query = `
+		INSERT INTO analytics.exercise_complete 
+		    (user_id, user_name, exercise_id, exercise_lang, spent_time, words_count, words_corrected_count)
+		VALUES 
+		    (:user_id, :user_name, :exercise_id, :exercise_lang, :spent_time, :words_count, :words_corrected_count)`
+
+	_, err := ecr.Conn.NamedExecContext(ctx, query, ec)
+	if err != nil {
+		return fmt.Errorf("insert exercise_complete: %w", err)
+	}
+	return nil
 }

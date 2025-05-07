@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
@@ -46,6 +47,20 @@ func (ecu exerciseCompleteUseCase) GetByUserID(ctx context.Context, userId auth.
 }
 
 func (ecu exerciseCompleteUseCase) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
-	//TODO implement me
-	panic("implement me")
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, ecu.contextTimeout)
+	defer cancel()
+
+	if err := ecu.validate.Struct(ec); err != nil {
+		fmt.Println(ec)
+		return err
+	}
+
+	if err := ecu.exerciseCompleteRepo.Store(ctx, ec); err != nil {
+		return err
+	}
+
+	return nil
 }

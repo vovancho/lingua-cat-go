@@ -48,6 +48,14 @@ func main() {
 					return
 				}
 				slog.Info("Received message:", "uuid", msg.UUID)
+
+				if err := app.ConsumerHandler.Handle(msg); err != nil {
+					slog.Error("Failed to handle message", "error", err)
+
+					msg.Nack()
+					continue
+				}
+
 				msg.Ack()
 			case <-ctx.Done():
 				slog.Info("Stopping Kafka message processing")

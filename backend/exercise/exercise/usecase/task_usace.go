@@ -210,6 +210,7 @@ func (tuc taskUseCase) SelectWord(ctx context.Context, exerciseID domain.Exercis
 			exerciseCompletedEvent := domain.ExerciseCompletedEvent{
 				UserID:              t.Exercise.UserID,
 				ExerciseID:          t.Exercise.ID,
+				ExerciseLang:        t.Exercise.Lang,
 				SpentTime:           spentTime.Milliseconds(),
 				WordsCount:          t.Exercise.TaskAmount,
 				WordsCorrectedCount: t.Exercise.CorrectedCounter,

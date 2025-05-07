@@ -13,6 +13,7 @@ import (
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
 	_internalHttp "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/http"
+	_internalKafka "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/clickhouse"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
@@ -33,6 +34,7 @@ type App struct {
 	DB               *sqlx.DB
 	Consumer         *kafka.Subscriber
 	ConsumerMessages <-chan *message.Message
+	ConsumerHandler  *_internalKafka.ExerciseCompleteHandler
 }
 
 // NewApp создаёт новый экземпляр App
@@ -42,6 +44,7 @@ func NewApp(
 	db *sqlx.DB,
 	consumer *kafka.Subscriber,
 	consumerMessages <-chan *message.Message,
+	consumerHandler *_internalKafka.ExerciseCompleteHandler,
 ) *App {
 	return &App{
 		Config:           cfg,
@@ -49,6 +52,7 @@ func NewApp(
 		DB:               db,
 		Consumer:         consumer,
 		ConsumerMessages: consumerMessages,
+		ConsumerHandler:  consumerHandler,
 	}
 }
 
@@ -86,6 +90,9 @@ func InitializeApp() (*App, error) {
 		ProvideLogger,
 		ProvideSubscriber,
 		ProvideMessages,
+
+		// Consumer Handler
+		_internalKafka.NewExerciseCompleteHandler,
 
 		// App
 		NewApp,
@@ -129,8 +136,8 @@ func newHTTPServer(
 
 // ProvideLogger создает Watermill логгер
 func ProvideLogger() watermill.LoggerAdapter {
-	return watermill.NewStdLogger(false, false)
-	//return watermill.NopLogger{}
+	//return watermill.NewStdLogger(false, false)
+	return watermill.NopLogger{}
 }
 
 // ProvideSubscriber создает Kafka Subscriber

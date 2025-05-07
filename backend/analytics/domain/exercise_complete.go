@@ -19,14 +19,14 @@ func (l ExerciseLang) IsValid() bool {
 }
 
 type ExerciseComplete struct {
-	UserID              auth.UserID  `json:"user_id"`
-	UserName            string       `json:"user_name"`
-	ExerciseID          ExerciseID   `json:"exercise_id"`
-	ExerciseLang        ExerciseLang `json:"exercise_lang"`
-	SpentTime           time.Time    `json:"spent_time"`
-	WordsCount          uint16       `json:"words_count"`
-	WordsCorrectedCount uint16       `json:"words_corrected_count"`
-	EventTime           time.Time    `json:"event_time"`
+	UserID              auth.UserID  `json:"user_id" db:"user_id" validate:"required"`
+	UserName            string       `json:"user_name" db:"user_name" validate:"required"`
+	ExerciseID          ExerciseID   `json:"exercise_id" db:"exercise_id" validate:"required"`
+	ExerciseLang        ExerciseLang `json:"exercise_lang" db:"exercise_lang" validate:"required"`
+	SpentTime           time.Time    `json:"spent_time" db:"spent_time" validate:"required"`
+	WordsCount          uint16       `json:"words_count" db:"words_count" validate:"required,min=1"`
+	WordsCorrectedCount uint16       `json:"words_corrected_count" db:"words_corrected_count" validate:"required"`
+	EventTime           time.Time    `json:"event_time" db:"event_time"`
 }
 
 type ExerciseCompleteUseCase interface {
