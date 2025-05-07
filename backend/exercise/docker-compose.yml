@@ -1,9 +1,13 @@
 services:
     lcg-exercise-backend:
         image: golang:1.24-alpine3.21
+        environment:
+            AUTH_PUBLIC_KEY_PATH: /run/secrets/auth_public_key
         volumes:
             - ./:/app
             - exercise-backend-pkg-mod:/go/pkg/mod
+        secrets:
+            - auth_public_key
         working_dir: /app
         labels:
             - traefik.enable=true

@@ -41,6 +41,9 @@ docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go m
 docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go run app/main.go
 docker compose run lcg-dictionary-backend go run app/main.go
 
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/dictionary
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
+
 docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/exercise
 docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
 
@@ -162,15 +165,31 @@ curl -X POST --location "http://lcg-keycloak/realms/lingua-cat-go/protocol/openi
 
 
 
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
+
+docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs
 
 
 
+docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/gen-grpc-gateway:1.51_2 -f proto/dictionary.proto -s DictionaryService
+docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -I /defs --go_out=/defs/gen --go_opt=paths=source_relative --go-grpc_out=/defs/gen --go-grpc_opt=paths=source_relative --grpc-gateway_out=/defs/gen --grpc-gateway_opt=paths=source_relative
 
 
-
-
-
-
+docker run --rm -v $(pwd):/defs -w /defs namely/protoc-all:1.51_2 \
+  -f dictionary.proto \
+  -l go \
+  -I /defs \
+  --go_out=./gen \
+  --go_opt=paths=source_relative \
+  --go-grpc_out=./gen \
+  --go-grpc_opt=paths=source_relative \
+  --grpc-gateway_out=./gen \
+  --grpc-gateway_opt=paths=source_relative
 
 
 

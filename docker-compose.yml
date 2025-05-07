@@ -41,3 +41,5 @@ secrets:
         file: ./docker/secrets/backend_exercise_db_password
     analytics_db_password:
         file: ./docker/secrets/backend_analytics_db_password
+    auth_public_key:
+        file: ./docker/secrets/backend_auth_public_key

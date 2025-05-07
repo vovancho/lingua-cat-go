@@ -168,7 +168,7 @@ Accept: application/json
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/41
+GET http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/1
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -215,7 +215,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/14/task
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/15/task
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -231,7 +231,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/14/task/8/word-selected
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/15/task/9/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -243,7 +243,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-GET http://api.lingua-cat-go.localhost/analytics/v1/analytics/user/dbacd50b-e4c4-428d-a1f9-952f13c4d671
+GET http://api.lingua-cat-go.localhost/analytics/v1/analytics/user/11c65e41-2496-43af-ac4c-daa898c24664
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}

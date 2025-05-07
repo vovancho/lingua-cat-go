@@ -16,7 +16,7 @@ type ExerciseCompleteMessage struct {
 	UserID              string `json:"user_id"`
 	ExerciseID          uint64 `json:"exercise_id"`
 	ExerciseLang        string `json:"exercise_lang"`
-	SpentTime           int64  `json:"spent_time"`
+	SpentTime           uint64 `json:"spent_time"`
 	WordsCount          uint16 `json:"words_count"`
 	WordsCorrectedCount uint16 `json:"words_corrected_count"`
 }
@@ -62,7 +62,7 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 		UserName:            user.Username,
 		ExerciseID:          domain.ExerciseID(ecMsg.ExerciseID),
 		ExerciseLang:        domain.ExerciseLang(ecMsg.ExerciseLang),
-		SpentTime:           time.UnixMilli(ecMsg.SpentTime), // Предполагается, что spent_time в миллисекундах
+		SpentTime:           ecMsg.SpentTime,
 		WordsCount:          ecMsg.WordsCount,
 		WordsCorrectedCount: ecMsg.WordsCorrectedCount,
 		EventTime:           time.Now(),
