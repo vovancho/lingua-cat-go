@@ -266,4 +266,11 @@ Authorization: Bearer {{token}}
 
 ###
 
+GET http://api.lingua-cat-go.localhost/analytics/swagger.json
+Origin: http://example.com
+
+###
+
+
+
 

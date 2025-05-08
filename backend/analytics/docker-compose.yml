@@ -14,7 +14,7 @@ services:
             - traefik.http.routers.lcg-analytics-backend.entrypoints=web
             - traefik.http.routers.lcg-analytics-backend.service=lcg-analytics-backend
             - traefik.http.routers.lcg-analytics-backend.rule=Host(`api.lingua-cat-go.localhost`) && PathPrefix(`/analytics/`)
-            - traefik.http.routers.lcg-analytics-backend.middlewares=strip-analytics-prefix
+            - traefik.http.routers.lcg-analytics-backend.middlewares=strip-analytics-prefix,cors
             - traefik.http.middlewares.strip-analytics-prefix.stripprefix.prefixes=/analytics
             - traefik.http.services.lcg-analytics-backend.loadbalancer.server.port=80
         command: sh -c "go build -o /tmp/main app/main.go && exec /tmp/main"

@@ -32,6 +32,10 @@ services:
             - //var/run/docker.sock:/var/run/docker.sock:ro
         labels:
             - traefik.enable=true
+            # cors для http://swagger.lingua-cat-go.localhost/
+            - traefik.http.middlewares.cors.headers.customresponseheaders.Access-Control-Allow-Origin=*
+            - traefik.http.middlewares.cors.headers.customresponseheaders.Access-Control-Allow-Methods=*
+            - traefik.http.middlewares.cors.headers.customresponseheaders.Access-Control-Allow-Headers=*
 
 secrets:
     keycloak_db_password:

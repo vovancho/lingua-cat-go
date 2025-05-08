@@ -14,7 +14,7 @@ services:
             - traefik.http.routers.lcg-exercise-backend.entrypoints=web
             - traefik.http.routers.lcg-exercise-backend.service=lcg-exercise-backend
             - traefik.http.routers.lcg-exercise-backend.rule=Host(`api.lingua-cat-go.localhost`) && PathPrefix(`/exercise/`)
-            - traefik.http.routers.lcg-exercise-backend.middlewares=strip-exercise-prefix
+            - traefik.http.routers.lcg-exercise-backend.middlewares=strip-exercise-prefix,cors
             - traefik.http.middlewares.strip-exercise-prefix.stripprefix.prefixes=/exercise
             - traefik.http.services.lcg-exercise-backend.loadbalancer.server.port=80
         command: sh -c "go build -o /tmp/main app/main.go && exec /tmp/main"
