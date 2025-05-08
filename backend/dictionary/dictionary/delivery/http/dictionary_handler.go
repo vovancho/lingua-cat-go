@@ -22,59 +22,75 @@ type dictionaryResponse struct {
 
 // swagger:response errorResponse
 type errorResponse struct {
-	Message string `json:"message"`
-	Error   string `json:"error,omitempty"`
-}
-
-// swagger:model
-type DictionaryTranslation struct {
-	// Lang - язык перевода
-	// Required: true
-	Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang,valid_dict_translation_lang"`
-	// Name - название перевода
-	// Required: true
-	Name string `json:"name" validate:"required,min=2"`
-	// Type - тип перевода
-	// Required: true
-	Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-}
-
-// swagger:model
-type DictionarySentence struct {
-	// TextRU - текст на русском
-	// Required: true
-	TextRU string `json:"text_ru" validate:"required,min=5"`
-	// TextEN - текст на английском
-	// Required: true
-	TextEN string `json:"text_en" validate:"required,min=5"`
-}
-
-// swagger:model
-type DictionaryStoreRequest struct {
-	// Lang - язык словаря
-	// Required: true
-	Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
-	// Name - название словаря
-	// Required: true
-	Name string `json:"name" validate:"required,min=2"`
-	// Type - тип словаря
-	// Required: true
-	Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-	// Translations - переводы словаря
-	// Required: true
-	Translations []DictionaryTranslation `json:"translations" validate:"required,min=1,dive"`
-	// Sentences - предложения словаря
-	Sentences []DictionarySentence `json:"sentences" validate:"dive"`
+	// in: body
+	Body struct {
+		Message string `json:"message"`
+		Error   string `json:"error,omitempty"`
+	}
 }
 
 // swagger:parameters storeDictionary
-type StoreDictionaryParams struct {
-	// in:body
+type DictionaryStoreRequest struct {
+	// in: body
+	Body struct {
+		// Lang - язык словаря
+		// Required: true
+		Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
+		// Name - название словаря
+		// Required: true
+		Name string `json:"name" validate:"required,min=2"`
+		// Type - тип словаря
+		// Required: true
+		Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
+		// Translations - переводы словаря
+		// Required: true
+		Translations []struct {
+			// Lang - язык перевода
+			// Required: true
+			Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang,valid_dict_translation_lang"`
+			// Name - название перевода
+			// Required: true
+			Name string `json:"name" validate:"required,min=2"`
+			// Type - тип перевода
+			// Required: true
+			Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
+		} `json:"translations" validate:"required,min=1,dive"`
+		// Sentences - предложения словаря
+		Sentences []struct {
+			// TextRU - текст на русском
+			// Required: true
+			TextRU string `json:"text_ru" validate:"required,min=5"`
+			// TextEN - текст на английском
+			// Required: true
+			TextEN string `json:"text_en" validate:"required,min=5"`
+		} `json:"sentences" validate:"dive"`
+	}
+}
+
+// swagger:parameters changeDictionaryName
+type changeDictionaryNameParams struct {
+	// ID словаря
+	// in: path
 	// required: true
-	Body DictionaryStoreRequest `json:"body"`
+	ID uint64 `json:"id"`
+
+	// Новое название словаря
+	// in: body
+	// required: true
+	Body DictionaryChangeNameRequest
+}
+
+// swagger:parameters getDictionaryByID
+type getDictionaryByIDParams struct {
+	// ID словаря
+	// in: path
+	// required: true
+	ID uint64 `json:"id"`
 }
 
 type DictionaryChangeNameRequest struct {
+	// Name - название перевода
+	// Required: true
 	Name string `json:"name" validate:"required,min=2"`
 }
 
@@ -95,6 +111,16 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 	router.HandleFunc("DELETE /v1/dictionary/{id}", request.WithID(handler.Delete))
 }
 
+// swagger:route GET /v1/dictionary/{id} dictionary getDictionaryByID
+//
+// # Получение словаря по идентификатору
+//
+// Возвращает словарь с указанным идентификатором, включая его переводы и предложения.
+//
+// Responses:
+//
+//	200: dictionaryResponse
+//	404: errorResponse
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
 	dictID := domain.DictionaryID(id)
 	dictionaries, err := d.DUseCase.GetByIDs(r.Context(), []domain.DictionaryID{dictID})
@@ -157,6 +183,17 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// swagger:route POST /v1/dictionary/{id}/name dictionary changeDictionaryName
+//
+// # Изменение названия словаря
+//
+// Обновляет название словаря с указанным идентификатором.
+//
+// Responses:
+//
+//	200: dictionaryResponse
+//	400: errorResponse
+//	404: errorResponse
 func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, id uint64) {
 	var requestBody DictionaryChangeNameRequest
 	if err := d.validateRequest(r, &requestBody); err != nil {
@@ -190,6 +227,16 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 	})
 }
 
+// swagger:route DELETE /v1/dictionary/{id} dictionary getDictionaryByID
+//
+// # Удаление словаря
+//
+// Удаляет словарь с указанным идентификатором.
+//
+// Responses:
+//
+//	204:
+//	404: errorResponse
 func (d *DictionaryHandler) Delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	if err := d.DUseCase.Delete(r.Context(), domain.DictionaryID(id)); err != nil {
 		err = _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
@@ -214,12 +261,12 @@ func (d *DictionaryHandler) validateRequest(r *http.Request, req any) error {
 
 func newDictionaryByRequest(req DictionaryStoreRequest) domain.Dictionary {
 	dictionary := domain.Dictionary{
-		Name: req.Name,
-		Type: req.Type,
-		Lang: req.Lang,
+		Name: req.Body.Name,
+		Type: req.Body.Type,
+		Lang: req.Body.Lang,
 	}
 
-	for _, s := range req.Sentences {
+	for _, s := range req.Body.Sentences {
 		sentence := domain.Sentence{
 			TextRU: s.TextRU, // Русский перевод
 			TextEN: s.TextEN, // Английский текст
@@ -227,7 +274,7 @@ func newDictionaryByRequest(req DictionaryStoreRequest) domain.Dictionary {
 		dictionary.Sentences = append(dictionary.Sentences, sentence)
 	}
 
-	for _, t := range req.Translations {
+	for _, t := range req.Body.Translations {
 		transDict := domain.Dictionary{
 			Name: t.Name,
 			Type: t.Type,

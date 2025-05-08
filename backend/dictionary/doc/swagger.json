@@ -26,12 +26,79 @@
         "operationId": "storeDictionary",
         "parameters": [
           {
-            "x-go-name": "Body",
-            "name": "body",
+            "name": "Body",
             "in": "body",
-            "required": true,
             "schema": {
-              "$ref": "#/definitions/DictionaryStoreRequest"
+              "type": "object",
+              "required": [
+                "lang",
+                "name",
+                "type",
+                "translations"
+              ],
+              "properties": {
+                "lang": {
+                  "$ref": "#/definitions/DictionaryLang"
+                },
+                "name": {
+                  "description": "Name - название словаря",
+                  "type": "string",
+                  "x-go-name": "Name"
+                },
+                "sentences": {
+                  "description": "Sentences - предложения словаря",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text_ru",
+                      "text_en"
+                    ],
+                    "properties": {
+                      "text_en": {
+                        "description": "TextEN - текст на английском",
+                        "type": "string",
+                        "x-go-name": "TextEN"
+                      },
+                      "text_ru": {
+                        "description": "TextRU - текст на русском",
+                        "type": "string",
+                        "x-go-name": "TextRU"
+                      }
+                    }
+                  },
+                  "x-go-name": "Sentences"
+                },
+                "translations": {
+                  "description": "Translations - переводы словаря",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "lang",
+                      "name",
+                      "type"
+                    ],
+                    "properties": {
+                      "lang": {
+                        "$ref": "#/definitions/DictionaryLang"
+                      },
+                      "name": {
+                        "description": "Name - название перевода",
+                        "type": "string",
+                        "x-go-name": "Name"
+                      },
+                      "type": {
+                        "$ref": "#/definitions/DictionaryType"
+                      }
+                    }
+                  },
+                  "x-go-name": "Translations"
+                },
+                "type": {
+                  "$ref": "#/definitions/DictionaryType"
+                }
+              }
             }
           }
         ],
@@ -40,6 +107,103 @@
             "$ref": "#/responses/dictionaryResponse"
           },
           "400": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    },
+    "/v1/dictionary/{id}": {
+      "get": {
+        "description": "Удаляет словарь с указанным идентификатором.",
+        "tags": [
+          "dictionary"
+        ],
+        "summary": "Удаление словаря",
+        "operationId": "getDictionaryByID",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "uint64",
+            "x-go-name": "ID",
+            "description": "ID словаря",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      },
+      "delete": {
+        "description": "Удаляет словарь с указанным идентификатором.",
+        "tags": [
+          "dictionary"
+        ],
+        "summary": "Удаление словаря",
+        "operationId": "getDictionaryByID",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "uint64",
+            "x-go-name": "ID",
+            "description": "ID словаря",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    },
+    "/v1/dictionary/{id}/name": {
+      "post": {
+        "description": "Обновляет название словаря с указанным идентификатором.",
+        "tags": [
+          "dictionary"
+        ],
+        "summary": "Изменение названия словаря",
+        "operationId": "changeDictionaryName",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "uint64",
+            "x-go-name": "ID",
+            "description": "ID словаря",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Новое название словаря",
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DictionaryChangeNameRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dictionaryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/errorResponse"
+          },
+          "404": {
             "$ref": "#/responses/errorResponse"
           }
         }
@@ -80,6 +244,20 @@
       },
       "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
     },
+    "DictionaryChangeNameRequest": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name - название перевода",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+    },
     "DictionaryID": {
       "type": "integer",
       "format": "uint64",
@@ -88,87 +266,6 @@
     "DictionaryLang": {
       "type": "string",
       "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "DictionarySentence": {
-      "type": "object",
-      "required": [
-        "text_ru",
-        "text_en"
-      ],
-      "properties": {
-        "text_en": {
-          "description": "TextEN - текст на английском",
-          "type": "string",
-          "x-go-name": "TextEN"
-        },
-        "text_ru": {
-          "description": "TextRU - текст на русском",
-          "type": "string",
-          "x-go-name": "TextRU"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
-    },
-    "DictionaryStoreRequest": {
-      "type": "object",
-      "required": [
-        "lang",
-        "name",
-        "type",
-        "translations"
-      ],
-      "properties": {
-        "lang": {
-          "$ref": "#/definitions/DictionaryLang"
-        },
-        "name": {
-          "description": "Name - название словаря",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "sentences": {
-          "description": "Sentences - предложения словаря",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DictionarySentence"
-          },
-          "x-go-name": "Sentences"
-        },
-        "translations": {
-          "description": "Translations - переводы словаря",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DictionaryTranslation"
-          },
-          "x-go-name": "Translations"
-        },
-        "type": {
-          "$ref": "#/definitions/DictionaryType"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
-    },
-    "DictionaryTranslation": {
-      "type": "object",
-      "required": [
-        "lang",
-        "name",
-        "type"
-      ],
-      "properties": {
-        "lang": {
-          "$ref": "#/definitions/DictionaryLang"
-        },
-        "name": {
-          "description": "Name - название перевода",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "type": {
-          "$ref": "#/definitions/DictionaryType"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
     },
     "DictionaryType": {
       "type": "integer",
@@ -220,12 +317,17 @@
     },
     "errorResponse": {
       "description": "",
-      "headers": {
-        "error": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
+      "schema": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "x-go-name": "Error"
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
         }
       }
     }
