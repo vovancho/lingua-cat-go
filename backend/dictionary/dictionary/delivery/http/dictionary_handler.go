@@ -28,6 +28,10 @@ type DictionaryChangeNameRequest struct {
 	Name string `json:"name" validate:"required,min=2"`
 }
 
+type DictionaryData struct {
+	Dictionary domain.Dictionary `json:"dictionary"`
+}
+
 type DictionaryHandler struct {
 	DUseCase domain.DictionaryUseCase
 	validate *validator.Validate
@@ -53,7 +57,7 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 // @Accept json
 // @Produce json
 // @Param id path uint64 true "ID словаря"
-// @Success 200 {object} response.APIResponse{data=map[string]domain.Dictionary} "Словарь найден"
+// @Success 200 {object} response.APIResponse{data=DictionaryData} "Словарь найден"
 // @Failure 404 {object} response.APIResponse "Словарь не найден"
 // @Router /v1/dictionary/{id} [get]
 func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
@@ -86,7 +90,7 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 // @Accept json
 // @Produce json
 // @Param dictionary body DictionaryStoreRequest true "Данные словаря"
-// @Success 201 {object} response.APIResponse{data=map[string]domain.Dictionary} "Словарь создан"
+// @Success 201 {object} response.APIResponse{data=DictionaryData} "Словарь создан"
 // @Failure 400 {object} response.APIResponse "Некорректный запрос"
 // @Router /v1/dictionary [post]
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +132,7 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path uint64 true "ID словаря"
 // @Param name body DictionaryChangeNameRequest true "Новое имя словаря"
-// @Success 200 {object} response.APIResponse{data=map[string]domain.Dictionary} "Имя словаря обновлено"
+// @Success 200 {object} response.APIResponse{data=DictionaryData} "Имя словаря обновлено"
 // @Failure 400 {object} response.APIResponse "Некорректный запрос"
 // @Failure 404 {object} response.APIResponse "Словарь не найден"
 // @Router /v1/dictionary/{id}/name [post]

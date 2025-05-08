@@ -49,10 +49,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "$ref": "#/definitions/domain.Dictionary"
-                                            }
+                                            "$ref": "#/definitions/http.DictionaryData"
                                         }
                                     }
                                 }
@@ -107,10 +104,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "$ref": "#/definitions/domain.Dictionary"
-                                            }
+                                            "$ref": "#/definitions/http.DictionaryData"
                                         }
                                     }
                                 }
@@ -215,10 +209,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "$ref": "#/definitions/domain.Dictionary"
-                                            }
+                                            "$ref": "#/definitions/http.DictionaryData"
                                         }
                                     }
                                 }
@@ -337,6 +328,14 @@
                 "name": {
                     "type": "string",
                     "minLength": 2
+                }
+            }
+        },
+        "http.DictionaryData": {
+            "type": "object",
+            "properties": {
+                "dictionary": {
+                    "$ref": "#/definitions/domain.Dictionary"
                 }
             }
         },
