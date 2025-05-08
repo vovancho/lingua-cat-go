@@ -1,335 +1,429 @@
 {
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "schemes": [
-    "http"
-  ],
-  "swagger": "2.0",
-  "info": {
-    "title": "Documentation.",
-    "version": "1.0.0"
-  },
-  "host": "api.lingua-cat-go.localhost",
-  "basePath": "/dictionary",
-  "paths": {
-    "/v1/dictionary": {
-      "post": {
-        "description": "Добавляет новый словарь с переводами и предложениями.",
-        "tags": [
-          "dictionary"
-        ],
-        "summary": "Создание нового словаря",
-        "operationId": "storeDictionary",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "required": [
+    "swagger": "2.0",
+    "info": {
+        "title": "Документация сервиса Dictionary",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "api.lingua-cat-go.localhost",
+    "basePath": "/dictionary",
+    "paths": {
+        "/v1/dictionary": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает новый словарь с предоставленными данными",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dictionary"
+                ],
+                "summary": "Создать новый словарь",
+                "parameters": [
+                    {
+                        "description": "Данные словаря",
+                        "name": "dictionary",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.DictionaryStoreRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Словарь создан",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/definitions/domain.Dictionary"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dictionary/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает словарь по указанному идентификатору",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dictionary"
+                ],
+                "summary": "Получить словарь по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID словаря",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Словарь найден",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/definitions/domain.Dictionary"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Словарь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаляет словарь по указанному идентификатору",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dictionary"
+                ],
+                "summary": "Удалить словарь",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID словаря",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Словарь удален",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Словарь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dictionary/{id}/name": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Изменяет имя словаря по указанному идентификатору",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dictionary"
+                ],
+                "summary": "Изменить имя словаря",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID словаря",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новое имя словаря",
+                        "name": "name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.DictionaryChangeNameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Имя словаря обновлено",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/definitions/domain.Dictionary"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Словарь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.Dictionary": {
+            "type": "object",
+            "required": [
                 "lang",
                 "name",
-                "type",
-                "translations"
-              ],
-              "properties": {
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "lang": {
-                  "$ref": "#/definitions/DictionaryLang"
+                    "$ref": "#/definitions/domain.DictionaryLang"
                 },
                 "name": {
-                  "description": "Name - название словаря",
-                  "type": "string",
-                  "x-go-name": "Name"
+                    "type": "string",
+                    "minLength": 2
                 },
                 "sentences": {
-                  "description": "Sentences - предложения словаря",
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "text_ru",
-                      "text_en"
-                    ],
-                    "properties": {
-                      "text_en": {
-                        "description": "TextEN - текст на английском",
-                        "type": "string",
-                        "x-go-name": "TextEN"
-                      },
-                      "text_ru": {
-                        "description": "TextRU - текст на русском",
-                        "type": "string",
-                        "x-go-name": "TextRU"
-                      }
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Sentence"
                     }
-                  },
-                  "x-go-name": "Sentences"
                 },
                 "translations": {
-                  "description": "Translations - переводы словаря",
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "lang",
-                      "name",
-                      "type"
-                    ],
-                    "properties": {
-                      "lang": {
-                        "$ref": "#/definitions/DictionaryLang"
-                      },
-                      "name": {
-                        "description": "Name - название перевода",
-                        "type": "string",
-                        "x-go-name": "Name"
-                      },
-                      "type": {
-                        "$ref": "#/definitions/DictionaryType"
-                      }
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Translation"
                     }
-                  },
-                  "x-go-name": "Translations"
                 },
                 "type": {
-                  "$ref": "#/definitions/DictionaryType"
+                    "$ref": "#/definitions/domain.DictionaryType"
                 }
-              }
             }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/dictionaryResponse"
-          },
-          "400": {
-            "$ref": "#/responses/errorResponse"
-          }
-        }
-      }
-    },
-    "/v1/dictionary/{id}": {
-      "get": {
-        "description": "Удаляет словарь с указанным идентификатором.",
-        "tags": [
-          "dictionary"
-        ],
-        "summary": "Удаление словаря",
-        "operationId": "getDictionaryByID",
-        "parameters": [
-          {
+        },
+        "domain.DictionaryLang": {
+            "type": "string",
+            "enum": [
+                "ru",
+                "en"
+            ],
+            "x-enum-varnames": [
+                "RuDictionary",
+                "EnDictionary"
+            ]
+        },
+        "domain.DictionaryType": {
             "type": "integer",
-            "format": "uint64",
-            "x-go-name": "ID",
-            "description": "ID словаря",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "404": {
-            "$ref": "#/responses/errorResponse"
-          }
-        }
-      },
-      "delete": {
-        "description": "Удаляет словарь с указанным идентификатором.",
-        "tags": [
-          "dictionary"
-        ],
-        "summary": "Удаление словаря",
-        "operationId": "getDictionaryByID",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "uint64",
-            "x-go-name": "ID",
-            "description": "ID словаря",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "404": {
-            "$ref": "#/responses/errorResponse"
-          }
-        }
-      }
-    },
-    "/v1/dictionary/{id}/name": {
-      "post": {
-        "description": "Обновляет название словаря с указанным идентификатором.",
-        "tags": [
-          "dictionary"
-        ],
-        "summary": "Изменение названия словаря",
-        "operationId": "changeDictionaryName",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "uint64",
-            "x-go-name": "ID",
-            "description": "ID словаря",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "description": "Новое название словаря",
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/DictionaryChangeNameRequest"
+            "enum": [
+                1,
+                2,
+                3,
+                4
+            ],
+            "x-enum-varnames": [
+                "SimpleDictionary",
+                "PhrasalVerbDictionary",
+                "IrregularVerbDictionary",
+                "PhraseDictionary"
+            ]
+        },
+        "domain.Sentence": {
+            "type": "object",
+            "required": [
+                "text_en",
+                "text_ru"
+            ],
+            "properties": {
+                "text_en": {
+                    "type": "string",
+                    "minLength": 5
+                },
+                "text_ru": {
+                    "type": "string",
+                    "minLength": 5
+                }
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dictionaryResponse"
-          },
-          "400": {
-            "$ref": "#/responses/errorResponse"
-          },
-          "404": {
-            "$ref": "#/responses/errorResponse"
-          }
-        }
-      }
-    }
-  },
-  "definitions": {
-    "Dictionary": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "$ref": "#/definitions/DictionaryID"
         },
-        "lang": {
-          "$ref": "#/definitions/DictionaryLang"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "sentences": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Sentence"
-          },
-          "x-go-name": "Sentences"
-        },
-        "translations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Translation"
-          },
-          "x-go-name": "Translations"
-        },
-        "type": {
-          "$ref": "#/definitions/DictionaryType"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "DictionaryChangeNameRequest": {
-      "type": "object",
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "description": "Name - название перевода",
-          "type": "string",
-          "x-go-name": "Name"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
-    },
-    "DictionaryID": {
-      "type": "integer",
-      "format": "uint64",
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "DictionaryLang": {
-      "type": "string",
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "DictionaryType": {
-      "type": "integer",
-      "format": "uint16",
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "Sentence": {
-      "type": "object",
-      "properties": {
-        "text_en": {
-          "type": "string",
-          "x-go-name": "TextEN"
-        },
-        "text_ru": {
-          "type": "string",
-          "x-go-name": "TextRU"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    },
-    "Translation": {
-      "type": "object",
-      "properties": {
-        "dictionary": {
-          "$ref": "#/definitions/Dictionary"
-        }
-      },
-      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
-    }
-  },
-  "responses": {
-    "dictionaryResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "description": "Data содержит возвращаемый словарь",
+        "domain.Translation": {
             "type": "object",
             "properties": {
-              "dictionary": {
-                "$ref": "#/definitions/Dictionary"
-              }
-            },
-            "x-go-name": "Data"
-          }
+                "dictionary": {
+                    "$ref": "#/definitions/domain.Dictionary"
+                }
+            }
+        },
+        "http.DictionaryChangeNameRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                }
+            }
+        },
+        "http.DictionaryStoreRequest": {
+            "type": "object",
+            "required": [
+                "lang",
+                "name",
+                "translations",
+                "type"
+            ],
+            "properties": {
+                "lang": {
+                    "$ref": "#/definitions/domain.DictionaryLang"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "sentences": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "text_en",
+                            "text_ru"
+                        ],
+                        "properties": {
+                            "text_en": {
+                                "type": "string",
+                                "minLength": 5
+                            },
+                            "text_ru": {
+                                "type": "string",
+                                "minLength": 5
+                            }
+                        }
+                    }
+                },
+                "translations": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "lang",
+                            "name",
+                            "type"
+                        ],
+                        "properties": {
+                            "lang": {
+                                "$ref": "#/definitions/domain.DictionaryLang"
+                            },
+                            "name": {
+                                "type": "string",
+                                "minLength": 2
+                            },
+                            "type": {
+                                "$ref": "#/definitions/domain.DictionaryType"
+                            }
+                        }
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.DictionaryType"
+                }
+            }
+        },
+        "response.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
         }
-      }
     },
-    "errorResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "x-go-name": "Error"
-          },
-          "message": {
-            "type": "string",
-            "x-go-name": "Message"
-          }
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
-      }
     }
-  }
 }

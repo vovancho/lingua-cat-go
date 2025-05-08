@@ -230,7 +230,8 @@ docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1
 
 
 
-
+docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init -h
+docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
 
 
 

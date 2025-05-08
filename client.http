@@ -175,6 +175,13 @@ Authorization: Bearer {{token}}
 
 ###
 
+// @no-cookie-jar
+OPTIONS http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/1
+Content-Type: application/json
+Accept: application/json
+
+###
+
 POST http://api.lingua-cat-go.localhost/dictionary/v1/dictionary/12/test
 Authorization: Bearer {{token}}
 
@@ -266,7 +273,7 @@ Authorization: Bearer {{token}}
 
 ###
 
-GET http://api.lingua-cat-go.localhost/analytics/swagger.json
+GET http://api.lingua-cat-go.localhost/dictionary/swagger.json
 Origin: http://example.com
 
 ###
