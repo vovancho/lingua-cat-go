@@ -149,7 +149,7 @@ echo '{"event":"exercise_completed","user_id":123}' |  /opt/kafka/bin/kafka-cons
 
 
 
- docker ps --format "{{.Names}}"
+docker ps --format "{{.Names}}"
 
 
 ------------------------------------- Получить KEYCLOAK_ADMIN_TOKEN ----------------------------------------------------
