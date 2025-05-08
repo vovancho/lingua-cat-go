@@ -1,4 +1,233 @@
 {
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http"
+  ],
   "swagger": "2.0",
-  "paths": {}
+  "info": {
+    "title": "Documentation.",
+    "version": "1.0.0"
+  },
+  "host": "api.lingua-cat-go.localhost",
+  "basePath": "/dictionary",
+  "paths": {
+    "/v1/dictionary": {
+      "post": {
+        "description": "Добавляет новый словарь с переводами и предложениями.",
+        "tags": [
+          "dictionary"
+        ],
+        "summary": "Создание нового словаря",
+        "operationId": "storeDictionary",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DictionaryStoreRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/dictionaryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Dictionary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/DictionaryID"
+        },
+        "lang": {
+          "$ref": "#/definitions/DictionaryLang"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "sentences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Sentence"
+          },
+          "x-go-name": "Sentences"
+        },
+        "translations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Translation"
+          },
+          "x-go-name": "Translations"
+        },
+        "type": {
+          "$ref": "#/definitions/DictionaryType"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    },
+    "DictionaryID": {
+      "type": "integer",
+      "format": "uint64",
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    },
+    "DictionaryLang": {
+      "type": "string",
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    },
+    "DictionarySentence": {
+      "type": "object",
+      "required": [
+        "text_ru",
+        "text_en"
+      ],
+      "properties": {
+        "text_en": {
+          "description": "TextEN - текст на английском",
+          "type": "string",
+          "x-go-name": "TextEN"
+        },
+        "text_ru": {
+          "description": "TextRU - текст на русском",
+          "type": "string",
+          "x-go-name": "TextRU"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+    },
+    "DictionaryStoreRequest": {
+      "type": "object",
+      "required": [
+        "lang",
+        "name",
+        "type",
+        "translations"
+      ],
+      "properties": {
+        "lang": {
+          "$ref": "#/definitions/DictionaryLang"
+        },
+        "name": {
+          "description": "Name - название словаря",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "sentences": {
+          "description": "Sentences - предложения словаря",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DictionarySentence"
+          },
+          "x-go-name": "Sentences"
+        },
+        "translations": {
+          "description": "Translations - переводы словаря",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DictionaryTranslation"
+          },
+          "x-go-name": "Translations"
+        },
+        "type": {
+          "$ref": "#/definitions/DictionaryType"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+    },
+    "DictionaryTranslation": {
+      "type": "object",
+      "required": [
+        "lang",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "lang": {
+          "$ref": "#/definitions/DictionaryLang"
+        },
+        "name": {
+          "description": "Name - название перевода",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "type": {
+          "$ref": "#/definitions/DictionaryType"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+    },
+    "DictionaryType": {
+      "type": "integer",
+      "format": "uint16",
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    },
+    "Sentence": {
+      "type": "object",
+      "properties": {
+        "text_en": {
+          "type": "string",
+          "x-go-name": "TextEN"
+        },
+        "text_ru": {
+          "type": "string",
+          "x-go-name": "TextRU"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    },
+    "Translation": {
+      "type": "object",
+      "properties": {
+        "dictionary": {
+          "$ref": "#/definitions/Dictionary"
+        }
+      },
+      "x-go-package": "github.com/vovancho/lingua-cat-go/dictionary/domain"
+    }
+  },
+  "responses": {
+    "dictionaryResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Data содержит возвращаемый словарь",
+            "type": "object",
+            "properties": {
+              "dictionary": {
+                "$ref": "#/definitions/Dictionary"
+              }
+            },
+            "x-go-name": "Data"
+          }
+        }
+      }
+    },
+    "errorResponse": {
+      "description": "",
+      "headers": {
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
 }

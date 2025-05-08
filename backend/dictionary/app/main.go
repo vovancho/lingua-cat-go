@@ -1,3 +1,17 @@
+// Package doc Documentation.
+//
+//	Schemes: http
+//	Host: api.lingua-cat-go.localhost
+//	BasePath: /dictionary
+//	Version: 1.0.0
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+// swagger:meta
 package main
 
 import (

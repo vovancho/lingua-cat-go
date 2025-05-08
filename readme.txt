@@ -225,7 +225,7 @@ docker run --rm -v ${PWD}/backend/dictionary:/app -w /app golang:1.24-alpine sh 
 
 
 docker run --rm -v ${PWD}/backend/dictionary:/app golang:1.24-alpine3.21 sh -c "go list -m -versions github.com/go-swagger/go-swagger"
-docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger generate spec -o /app/doc/swagger.json --scan-models"
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger generate spec -o /app/doc/swagger.json --scan-models"
 docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger"
 
 

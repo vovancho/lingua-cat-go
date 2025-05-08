@@ -9,19 +9,69 @@ import (
 	"net/http"
 )
 
+// swagger:response dictionaryResponse
+type dictionaryResponse struct {
+	// in:body
+	Body struct {
+		// Data содержит возвращаемый словарь
+		Data struct {
+			Dictionary domain.Dictionary `json:"dictionary"`
+		} `json:"data"`
+	}
+}
+
+// swagger:response errorResponse
+type errorResponse struct {
+	Message string `json:"message"`
+	Error   string `json:"error,omitempty"`
+}
+
+// swagger:model
+type DictionaryTranslation struct {
+	// Lang - язык перевода
+	// Required: true
+	Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang,valid_dict_translation_lang"`
+	// Name - название перевода
+	// Required: true
+	Name string `json:"name" validate:"required,min=2"`
+	// Type - тип перевода
+	// Required: true
+	Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
+}
+
+// swagger:model
+type DictionarySentence struct {
+	// TextRU - текст на русском
+	// Required: true
+	TextRU string `json:"text_ru" validate:"required,min=5"`
+	// TextEN - текст на английском
+	// Required: true
+	TextEN string `json:"text_en" validate:"required,min=5"`
+}
+
+// swagger:model
 type DictionaryStoreRequest struct {
-	Lang         domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
-	Name         string                `json:"name" validate:"required,min=2"`
-	Type         domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-	Translations []struct {
-		Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang,valid_dict_translation_lang"`
-		Name string                `json:"name" validate:"required,min=2"`
-		Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-	} `json:"translations" validate:"required,min=1,dive"`
-	Sentences []struct {
-		TextRU string `json:"text_ru" validate:"required,min=5"`
-		TextEN string `json:"text_en" validate:"required,min=5"`
-	} `json:"sentences" validate:"dive"`
+	// Lang - язык словаря
+	// Required: true
+	Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
+	// Name - название словаря
+	// Required: true
+	Name string `json:"name" validate:"required,min=2"`
+	// Type - тип словаря
+	// Required: true
+	Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
+	// Translations - переводы словаря
+	// Required: true
+	Translations []DictionaryTranslation `json:"translations" validate:"required,min=1,dive"`
+	// Sentences - предложения словаря
+	Sentences []DictionarySentence `json:"sentences" validate:"dive"`
+}
+
+// swagger:parameters storeDictionary
+type StoreDictionaryParams struct {
+	// in:body
+	// required: true
+	Body DictionaryStoreRequest `json:"body"`
 }
 
 type DictionaryChangeNameRequest struct {
@@ -67,6 +117,16 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 	})
 }
 
+// swagger:route POST /v1/dictionary dictionary storeDictionary
+//
+// # Создание нового словаря
+//
+// Добавляет новый словарь с переводами и предложениями.
+//
+// Responses:
+//
+//	201: dictionaryResponse
+//	400: errorResponse
 func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
 	if err := d.validateRequest(r, &requestBody); err != nil {

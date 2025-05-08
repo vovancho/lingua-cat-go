@@ -155,7 +155,7 @@ Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "a"
+  "name": "aaa"
 }
 
 ###
