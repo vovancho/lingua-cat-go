@@ -221,6 +221,37 @@ docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs name
 docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods
 
 
+docker run --rm -v ${PWD}/backend/dictionary:/app -w /app golang:1.24-alpine sh -c "go install github.com/swaggo/swag/cmd/swag@latest && swag init -g app/main.go -o doc"
+
+
+docker run --rm -v ${PWD}/backend/dictionary:/app golang:1.24-alpine3.21 sh -c "go list -m -versions github.com/go-swagger/go-swagger"
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger generate spec -o /app/doc/swagger.json --scan-models"
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

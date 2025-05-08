@@ -135,9 +135,14 @@ func newHTTPServer(
 	router := http.NewServeMux()
 	_internalHttp.NewExerciseHandler(router, validate, authService, exerciseUcase)
 	_internalHttp.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
+
+	mainMux := http.NewServeMux()
+	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
-		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
+		Handler: mainMux,
 	}
 }
 
