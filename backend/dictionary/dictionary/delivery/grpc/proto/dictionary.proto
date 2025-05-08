@@ -2,15 +2,25 @@ syntax = "proto3";
 
 package dictionary;
 
+import "google/api/annotations.proto";
+
 option go_package = "./gen;dictionary";
 
 // Сервис для работы со словарями
 service DictionaryService {
   // Метод для получения случайных словарей
-  rpc GetRandomDictionaries (GetRandomDictionariesRequest) returns (GetRandomDictionariesResponse);
+  rpc GetRandomDictionaries (GetRandomDictionariesRequest) returns (GetRandomDictionariesResponse) {
+    option (google.api.http) = {
+      get: "/grpc-gateway/v1/dictionary/random"
+    };
+  }
 
   // Метод для получения словарей по ID
-  rpc GetDictionaries (GetDictionariesRequest) returns (GetDictionariesResponse);
+  rpc GetDictionaries (GetDictionariesRequest) returns (GetDictionariesResponse) {
+    option (google.api.http) = {
+      get: "/grpc-gateway/v1/dictionary"
+    };
+  }
 }
 
 // Запрос для получения случайных словарей

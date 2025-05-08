@@ -192,6 +192,38 @@ docker run --rm -v $(pwd):/defs -w /defs namely/protoc-all:1.51_2 \
   --grpc-gateway_opt=paths=source_relative
 
 
+powershell:
+docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -l openapi -o . --with-openapi-json-names
+
+Вывод:
+Language openapi is not supported. Please specify one of: go ruby csharp java python objc gogo php node typescript web cpp descriptor_set scala
+
+
+docker run --rm -v ${PWD}/backend/dictionary:/defs namely/gen-grpc-gateway:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -s DictionaryService
+
+
+docker run --rm quay.io/skopeo/stable list-tags docker://ghcr.io/grpc-ecosystem/grpc-gateway/protoc-gen-openapiv2
+
+
+powershell:
+docker run --rm -v ${PWD}:/defs ghcr.io/grpc-ecosystem/grpc-gateway/protoc-gen-openapiv2:latest -I /defs -I /usr/include --openapiv2_out /defs/backend/dictionary/openapi --openapiv2_opt logtostderr=true /defs/backend/dictionary/delivery/grpc/proto/dictionary.proto
+
+Вывод:
+Unable to find image 'ghcr.io/grpc-ecosystem/grpc-gateway/protoc-gen-openapiv2:latest' locally
+docker: Error response from daemon: Head "https://ghcr.io/v2/grpc-ecosystem/grpc-gateway/protoc-gen-openapiv2/manifests/latest": denied
+
+docker run --rm -v ${PWD}:/defs ghcr.io/grpc-ecosystem/grpc-gateway/dev protoc -I /defs -I /go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v2.25.1/third_party/googleapis --openapiv2_out /defs/backend/dictionary/openapi --openapiv2_opt logtostderr=true /defs/backend/dictionary/delivery/grpc/proto/dictionary.proto
+
+
+docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs
+
+Сгенерировать grpc-gateway и swagger.json:
+docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods
+
+
+
+
+
 
 
 

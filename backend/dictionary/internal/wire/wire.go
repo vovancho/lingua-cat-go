@@ -4,9 +4,11 @@
 package wire
 
 import (
+	"context"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
 	_internalGrpc "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc"
 	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
@@ -110,9 +112,21 @@ func newHTTPServer(
 ) *http.Server {
 	router := http.NewServeMux()
 	_internalHttp.NewDictionaryHandler(router, validate, dictionaryUcase)
+
+	// Register gRPC-Gateway handlers
+	gwmux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	if err := pb.RegisterDictionaryServiceHandlerFromEndpoint(context.Background(), gwmux, cfg.GRPCPort, opts); err != nil {
+		panic(err)
+	}
+
+	mainMux := http.NewServeMux()
+	mainMux.Handle("/grpc-gateway/", gwmux)
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
-		Handler: response.ErrorMiddleware(authService.AuthMiddleware(router), trans),
+		Handler: mainMux,
 	}
 }
 

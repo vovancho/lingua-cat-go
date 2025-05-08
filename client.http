@@ -250,6 +250,20 @@ Authorization: Bearer {{token}}
 
 ###
 
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/dictionary/grpc-gateway/v1/dictionary/random?lang=en&limit=4
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
 
+###
+
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/dictionary/grpc-gateway/v1/dictionary?ids=53&ids=57&ids=60&ids=48
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
 
 
