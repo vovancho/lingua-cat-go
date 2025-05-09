@@ -229,7 +229,7 @@ docker run --rm -v ${PWD}/docker/secrets:/src httpd:alpine sh -c "htpasswd -nbB 
 
 
 
-
+docker run --rm -v ${PWD}/project/ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh
 
 
 
