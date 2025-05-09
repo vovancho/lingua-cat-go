@@ -203,31 +203,12 @@ docker run --rm -v ${PWD}:/defs ghcr.io/grpc-ecosystem/grpc-gateway/dev protoc -
 docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs
 
 Сгенерировать grpc-gateway и swagger.json:
-docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods
-
-
-docker run --rm -v ${PWD}/backend/dictionary:/app -w /app golang:1.24-alpine sh -c "go install github.com/swaggo/swag/cmd/swag@latest && swag init -g app/main.go -o doc"
-
-
-docker run --rm -v ${PWD}/backend/dictionary:/app golang:1.24-alpine3.21 sh -c "go list -m -versions github.com/go-swagger/go-swagger"
-docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger generate spec -o /app/doc/swagger.json --scan-models"
-docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1.24-alpine3.21 sh -c "go install github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 && swagger"
-
-
-
-docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init -h
 docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
 docker run --rm -v ${PWD}/backend/exercise:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
 docker run --rm -v ${PWD}/backend/analytics:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
 
-
-
-docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods
-docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 sh -c "protoc-all -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods"
-
-
-docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/doc/grpc-gw-swagger.json && rm -r dictionary/dictionary/delivery/grpc/proto"
-docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o exercise/exercise/repository/grpc"
+docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/doc/grpc-gw-swagger.json && rm -r dictionary/delivery/grpc/proto"
+docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o exercise/repository/grpc"
 
 
 docker run --rm -v ${PWD}/docker/secrets:/src httpd:alpine sh -c "htpasswd -nbB jaeger secret | sed -e s/\\$/\\$\\$/g > /src/backend_jaeger_ui_password"
@@ -237,7 +218,6 @@ docker run --rm -v ${PWD}/docker/secrets:/src httpd:alpine sh -c "htpasswd -nbB 
 docker run --rm -v ${PWD}/project/ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh
 
 
-docker run --rm -v ${PWD}/backend:/src -w /src johnfmorton/tree-cli sh -c "tree /src > /src/backend.txt"
 docker run --rm -v ${PWD}/backend:/src -w /src johnfmorton/tree-cli tree -o backend.txt -l 10
 
 

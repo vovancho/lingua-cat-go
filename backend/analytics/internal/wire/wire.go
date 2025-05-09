@@ -12,11 +12,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
-	_internalHttp "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/http"
-	_internalKafka "github.com/vovancho/lingua-cat-go/analytics/analytics/delivery/kafka"
-	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/clickhouse"
-	_httpRepo "github.com/vovancho/lingua-cat-go/analytics/analytics/repository/http"
-	"github.com/vovancho/lingua-cat-go/analytics/analytics/usecase"
+	_internalHttp "github.com/vovancho/lingua-cat-go/analytics/delivery/http"
+	_internalKafka "github.com/vovancho/lingua-cat-go/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
@@ -24,6 +21,9 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/analytics/internal/validator"
+	"github.com/vovancho/lingua-cat-go/analytics/repository/clickhouse"
+	_httpRepo "github.com/vovancho/lingua-cat-go/analytics/repository/http"
+	usecase2 "github.com/vovancho/lingua-cat-go/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -94,8 +94,8 @@ func InitializeApp() (*App, error) {
 
 		//// Use case
 		ProvideUseCaseTimeout,
-		usecase.NewExerciseCompleteUseCase,
-		usecase.NewUserUseCase,
+		usecase2.NewExerciseCompleteUseCase,
+		usecase2.NewUserUseCase,
 
 		// Tracing
 		ProvideTracingEndpoint,
@@ -136,8 +136,8 @@ func getClickHouseDB(db *sqlx.DB) db.DB {
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideUseCaseTimeout(cfg *config.Config) usecase2.Timeout {
+	return usecase2.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {

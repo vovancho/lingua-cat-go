@@ -5,7 +5,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	rutranslations "github.com/go-playground/validator/v10/translations/ru"
-	"github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
+	"github.com/vovancho/lingua-cat-go/dictionary/delivery/http"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 

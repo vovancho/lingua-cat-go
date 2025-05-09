@@ -8,16 +8,16 @@ import (
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
+	http2 "github.com/vovancho/lingua-cat-go/exercise/delivery/http"
+	_internalGrpc "github.com/vovancho/lingua-cat-go/exercise/repository/grpc"
+	postgres2 "github.com/vovancho/lingua-cat-go/exercise/repository/postgres"
+	usecase2 "github.com/vovancho/lingua-cat-go/exercise/usecase"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	_internalHttp "github.com/vovancho/lingua-cat-go/exercise/exercise/delivery/http"
-	_internalGrpc "github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc"
-	"github.com/vovancho/lingua-cat-go/exercise/exercise/repository/postgres"
-	"github.com/vovancho/lingua-cat-go/exercise/exercise/usecase"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/config"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
@@ -84,15 +84,15 @@ func InitializeApp() (*App, error) {
 		ProvideGRPCConn,
 
 		// Репозиторий
-		postgres.NewPostgresExerciseRepository,
-		postgres.NewPostgresTaskRepository,
+		postgres2.NewPostgresExerciseRepository,
+		postgres2.NewPostgresTaskRepository,
 		_internalGrpc.NewGrpcDictionaryRepository,
 
 		// Use case
 		ProvideUseCaseTimeout,
-		usecase.NewExerciseUseCase,
-		usecase.NewTaskUseCase,
-		usecase.NewDictionaryUseCase,
+		usecase2.NewExerciseUseCase,
+		usecase2.NewTaskUseCase,
+		usecase2.NewDictionaryUseCase,
 
 		// Tracing
 		ProvideTracingEndpoint,
@@ -132,8 +132,8 @@ func getPostgresDB(db *sqlx.DB) db.DB {
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideUseCaseTimeout(cfg *config.Config) usecase2.Timeout {
+	return usecase2.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
@@ -162,8 +162,8 @@ func newHTTPServer(
 	taskUcase domain.TaskUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseHandler(router, validate, authService, exerciseUcase)
-	_internalHttp.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
+	http2.NewExerciseHandler(router, validate, authService, exerciseUcase)
+	http2.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
@@ -176,8 +176,8 @@ func newHTTPServer(
 }
 
 // ProvideKafkaExerciseCompletedTopic возвращает имя топика о выполненных упражнениях
-func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase.ExerciseCompletedTopic {
-	return usecase.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
+func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase2.ExerciseCompletedTopic {
+	return usecase2.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
 }
 
 // ProvideLogger создает Watermill логгер

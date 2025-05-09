@@ -3,20 +3,20 @@ package grpc
 import (
 	"context"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	pb "github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc/gen"
+	"github.com/vovancho/lingua-cat-go/exercise/repository/grpc/gen"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
 type grpcDictionaryRepository struct {
-	client pb.DictionaryServiceClient
+	client dictionary.DictionaryServiceClient
 	auth   *auth.AuthService
 }
 
 func NewGrpcDictionaryRepository(conn *grpc.ClientConn, auth *auth.AuthService) domain.DictionaryRepository {
 	return &grpcDictionaryRepository{
-		client: pb.NewDictionaryServiceClient(conn),
+		client: dictionary.NewDictionaryServiceClient(conn),
 		auth:   auth,
 	}
 }
@@ -28,7 +28,7 @@ func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lan
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
-	resp, err := d.client.GetRandomDictionaries(ctx, &pb.GetRandomDictionariesRequest{
+	resp, err := d.client.GetRandomDictionaries(ctx, &dictionary.GetRandomDictionariesRequest{
 		Lang:  string(lang),
 		Limit: int32(limit),
 	})
@@ -53,7 +53,7 @@ func (d grpcDictionaryRepository) GetDictionariesByIds(ctx context.Context, dict
 		intIDs[i] = int64(id)
 	}
 
-	resp, err := d.client.GetDictionaries(ctx, &pb.GetDictionariesRequest{
+	resp, err := d.client.GetDictionaries(ctx, &dictionary.GetDictionariesRequest{
 		Ids: intIDs,
 	})
 	if err != nil {
@@ -65,7 +65,7 @@ func (d grpcDictionaryRepository) GetDictionariesByIds(ctx context.Context, dict
 	return dictionaries, nil
 }
 
-func (d grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*pb.Dictionary) []domain.Dictionary {
+func (d grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*dictionary.Dictionary) []domain.Dictionary {
 	var dictionaries []domain.Dictionary
 	for _, dt := range dicts {
 		dict := domain.Dictionary{

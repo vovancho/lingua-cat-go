@@ -10,11 +10,9 @@ import (
 	"github.com/google/wire"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
-	_internalGrpc "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc"
-	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
-	_internalHttp "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/http"
-	"github.com/vovancho/lingua-cat-go/dictionary/dictionary/repository/postgres"
-	"github.com/vovancho/lingua-cat-go/dictionary/dictionary/usecase"
+	_internalGrpc "github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc"
+	"github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc/gen"
+	_internalHttp "github.com/vovancho/lingua-cat-go/dictionary/delivery/http"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
@@ -22,6 +20,8 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	"github.com/vovancho/lingua-cat-go/dictionary/repository/postgres"
+	"github.com/vovancho/lingua-cat-go/dictionary/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -141,7 +141,7 @@ func newHTTPServer(
 	// Register gRPC-Gateway handlers
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	if err := pb.RegisterDictionaryServiceHandlerFromEndpoint(context.Background(), gwmux, cfg.GRPCPort, opts); err != nil {
+	if err := dictionary.RegisterDictionaryServiceHandlerFromEndpoint(context.Background(), gwmux, cfg.GRPCPort, opts); err != nil {
 		panic(err)
 	}
 
@@ -171,6 +171,6 @@ func newGRPCServer(
 		),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
-	pb.RegisterDictionaryServiceServer(grpcServer, _internalGrpc.NewDictionaryHandler(validate, dictionaryUcase))
+	dictionary.RegisterDictionaryServiceServer(grpcServer, _internalGrpc.NewDictionaryHandler(validate, dictionaryUcase))
 	return grpcServer
 }

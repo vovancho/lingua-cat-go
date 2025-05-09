@@ -2,9 +2,9 @@ package grpc
 
 import (
 	"context"
+	pb "github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc/gen"
 
 	"github.com/go-playground/validator/v10"
-	pb "github.com/vovancho/lingua-cat-go/dictionary/dictionary/delivery/grpc/gen"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 
