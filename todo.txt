@@ -30,11 +30,8 @@ debug
 Refactoring
 -----------
 pkg
-app -> cmd
-proto вынести
-jaeger,kafka,swagger,keyclock -> infra
-
-
+убрать лишние папки dictionary, etc
+изменить имена файлов
 
 
 
