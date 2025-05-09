@@ -23,7 +23,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "dictionary"
+                    "Dictionary"
                 ],
                 "summary": "Создать новый словарь",
                 "parameters": [
@@ -80,7 +80,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "dictionary"
+                    "Dictionary"
                 ],
                 "summary": "Получить словарь по ID",
                 "parameters": [
@@ -133,7 +133,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "dictionary"
+                    "Dictionary"
                 ],
                 "summary": "Удалить словарь",
                 "parameters": [
@@ -176,7 +176,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "dictionary"
+                    "Dictionary"
                 ],
                 "summary": "Изменить имя словаря",
                 "parameters": [

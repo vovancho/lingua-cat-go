@@ -53,7 +53,7 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 // @Summary Получить словарь по ID
 // @Description Получает словарь по указанному идентификатору
 // @Security BearerAuth
-// @Tags dictionary
+// @Tags Dictionary
 // @Accept json
 // @Produce json
 // @Param id path uint64 true "ID словаря"
@@ -86,7 +86,7 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 // @Summary Создать новый словарь
 // @Description Создает новый словарь с предоставленными данными
 // @Security BearerAuth
-// @Tags dictionary
+// @Tags Dictionary
 // @Accept json
 // @Produce json
 // @Param dictionary body DictionaryStoreRequest true "Данные словаря"
@@ -127,7 +127,7 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 // @Summary Изменить имя словаря
 // @Description Изменяет имя словаря по указанному идентификатору
 // @Security BearerAuth
-// @Tags dictionary
+// @Tags Dictionary
 // @Accept json
 // @Produce json
 // @Param id path uint64 true "ID словаря"
@@ -173,7 +173,7 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 // @Summary Удалить словарь
 // @Description Удаляет словарь по указанному идентификатору
 // @Security BearerAuth
-// @Tags dictionary
+// @Tags Dictionary
 // @Accept json
 // @Produce json
 // @Param id path uint64 true "ID словаря"

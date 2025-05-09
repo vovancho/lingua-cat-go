@@ -121,7 +121,7 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/grpc-gateway/", gwmux)
+	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(gwmux))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
 	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))

@@ -235,10 +235,11 @@ docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /cod
 
 
 
+docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods
+docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 sh -c "protoc-all -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods"
 
 
-
-
+docker run --rm --entrypoint sh -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods && mv /defs/dictionary/delivery/grpc/proto/dictionary.swagger.json /defs/doc/grpc-gw-swagger.json"
 
 
 
