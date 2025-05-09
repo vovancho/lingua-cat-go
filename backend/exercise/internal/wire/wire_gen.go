@@ -23,8 +23,12 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/internal/config"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/translator"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/sdk/trace"
 	grpc2 "google.golang.org/grpc"
 	"net/http"
 	"time"
@@ -82,7 +86,13 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	app := NewApp(configConfig, server, sqlxDB, router)
+	serviceName := ProvideServiceName(configConfig)
+	endpoint := ProvideTracingEndpoint(configConfig)
+	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	app := NewApp(configConfig, server, sqlxDB, router, tracerProvider)
 	return app, nil
 }
 
@@ -94,16 +104,27 @@ type App struct {
 	HTTPServer *http.Server
 	DB         *sqlx.DB
 	Outbox     *message.Router
+	Tracer     *trace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db2 *sqlx.DB, outbox *message.Router) *App {
+func NewApp(
+	cfg *config.Config,
+	httpServer *http.Server, db2 *sqlx.DB,
+	outbox *message.Router,
+	tracer *trace.TracerProvider,
+) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		DB:         db2,
 		Outbox:     outbox,
+		Tracer:     tracer,
 	}
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -124,8 +145,12 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
+}
+
 func ProvideGRPCConn(cfg *config.Config) (*grpc2.ClientConn, error) {
-	conn, err := grpc2.Dial(cfg.DictionaryGRPCAddress, grpc2.WithInsecure())
+	conn, err := grpc2.Dial(cfg.DictionaryGRPCAddress, grpc2.WithInsecure(), grpc2.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()), grpc2.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +172,7 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "exercise-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

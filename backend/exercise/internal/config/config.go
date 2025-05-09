@@ -8,14 +8,18 @@ import (
 	"strconv"
 )
 
+type ServiceName string
+
 type Config struct {
+	ServiceName                 ServiceName
 	DBDSN                       string
 	HTTPPort                    string
 	DictionaryGRPCAddress       string
 	AuthPublicKeyPath           string
-	Timeout                     int // in seconds
 	KafkaBroker                 string
 	KafkaExerciseCompletedTopic string
+	JaegerCollectorEndpoint     string
+	Timeout                     int // in seconds
 }
 
 func Load() (*Config, error) {
@@ -29,13 +33,15 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
+		ServiceName:                 ServiceName(os.Getenv("SERVICE_NAME")),
 		DBDSN:                       os.Getenv("DB_DSN"),
 		HTTPPort:                    os.Getenv("HTTP_PORT"),
 		DictionaryGRPCAddress:       os.Getenv("DICTIONARY_GRPC_HOST"),
 		AuthPublicKeyPath:           os.Getenv("AUTH_PUBLIC_KEY_PATH"),
-		Timeout:                     timeout,
 		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
 		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
+		JaegerCollectorEndpoint:     os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
+		Timeout:                     timeout,
 	}
 
 	if cfg.DBDSN == "" {

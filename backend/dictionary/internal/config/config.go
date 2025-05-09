@@ -8,12 +8,16 @@ import (
 	"strconv"
 )
 
+type ServiceName string
+
 type Config struct {
-	DBDSN             string
-	HTTPPort          string
-	GRPCPort          string
-	AuthPublicKeyPath string
-	Timeout           int // in seconds
+	ServiceName             ServiceName
+	DBDSN                   string
+	HTTPPort                string
+	GRPCPort                string
+	AuthPublicKeyPath       string
+	JaegerCollectorEndpoint string
+	Timeout                 int // in seconds
 }
 
 func Load() (*Config, error) {
@@ -27,11 +31,13 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		DBDSN:             os.Getenv("DB_DSN"),
-		HTTPPort:          os.Getenv("HTTP_PORT"),
-		GRPCPort:          os.Getenv("GRPC_PORT"),
-		AuthPublicKeyPath: os.Getenv("AUTH_PUBLIC_KEY_PATH"),
-		Timeout:           timeout,
+		ServiceName:             ServiceName(os.Getenv("SERVICE_NAME")),
+		DBDSN:                   os.Getenv("DB_DSN"),
+		HTTPPort:                os.Getenv("HTTP_PORT"),
+		GRPCPort:                os.Getenv("GRPC_PORT"),
+		AuthPublicKeyPath:       os.Getenv("AUTH_PUBLIC_KEY_PATH"),
+		JaegerCollectorEndpoint: os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
+		Timeout:                 timeout,
 	}
 
 	if cfg.DBDSN == "" {

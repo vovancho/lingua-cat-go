@@ -24,8 +24,11 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
+	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/sdk/trace"
 	http2 "net/http"
 	"time"
 )
@@ -74,7 +77,13 @@ func InitializeApp() (*App, error) {
 	userRepository := http.NewHttpUserRepository(httpConfig, client)
 	userUseCase := usecase.NewUserUseCase(userRepository, timeout)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
-	app := NewApp(configConfig, server, sqlxDB, subscriber, v, exerciseCompleteHandler)
+	serviceName := ProvideServiceName(configConfig)
+	endpoint := ProvideTracingEndpoint(configConfig)
+	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	app := NewApp(configConfig, server, sqlxDB, subscriber, v, exerciseCompleteHandler, tracerProvider)
 	return app, nil
 }
 
@@ -88,6 +97,7 @@ type App struct {
 	Consumer         *kafka2.Subscriber
 	ConsumerMessages <-chan *message.Message
 	ConsumerHandler  *kafka.ExerciseCompleteHandler
+	Tracer           *trace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
@@ -97,6 +107,7 @@ func NewApp(
 	consumer *kafka2.Subscriber,
 	consumerMessages <-chan *message.Message,
 	consumerHandler *kafka.ExerciseCompleteHandler,
+	tracer *trace.TracerProvider,
 ) *App {
 	return &App{
 		Config:           cfg,
@@ -105,7 +116,12 @@ func NewApp(
 		Consumer:         consumer,
 		ConsumerMessages: consumerMessages,
 		ConsumerHandler:  consumerHandler,
+		Tracer:           tracer,
 	}
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -126,6 +142,10 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
+}
+
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
@@ -139,7 +159,7 @@ func newHTTPServer(
 
 	mainMux := http2.NewServeMux()
 	mainMux.Handle("/swagger.json", http2.FileServer(http2.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "analytics-http"))
 
 	return &http2.Server{
 		Addr:    cfg.HTTPPort,
@@ -179,5 +199,7 @@ func ProvideKeycloakConfig(cfg *config.Config) http.Config {
 
 // ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
 func ProvideUserHttpClient() *http2.Client {
-	return &http2.Client{}
+	return &http2.Client{
+		Transport: otelhttp.NewTransport(http2.DefaultTransport),
+	}
 }

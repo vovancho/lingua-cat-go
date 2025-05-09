@@ -22,8 +22,12 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"net/http"
 	"time"
@@ -60,7 +64,13 @@ func InitializeApp() (*App, error) {
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
 	grpcServer := newGRPCServer(validate, authService, dictionaryUseCase)
-	app := NewApp(configConfig, server, grpcServer, sqlxDB)
+	serviceName := ProvideServiceName(configConfig)
+	endpoint := ProvideTracingEndpoint(configConfig)
+	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	app := NewApp(configConfig, server, grpcServer, sqlxDB, tracerProvider)
 	return app, nil
 }
 
@@ -72,16 +82,27 @@ type App struct {
 	HTTPServer *http.Server
 	GRPCServer *grpc.Server
 	DB         *sqlx.DB
+	Tracer     *trace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, grpcServer *grpc.Server, db2 *sqlx.DB) *App {
+func NewApp(
+	cfg *config.Config,
+	httpServer *http.Server,
+	grpcServer *grpc.Server, db2 *sqlx.DB,
+	tracer *trace.TracerProvider,
+) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		GRPCServer: grpcServer,
 		DB:         db2,
+		Tracer:     tracer,
 	}
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -100,6 +121,10 @@ func getPostgresDB(db2 *sqlx.DB) db.DB {
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
 func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+}
+
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
 }
 
 // newHTTPServer создаёт новый HTTP-сервер
@@ -121,10 +146,10 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(gwmux))
+	mainMux.Handle("/grpc-gateway/", otelhttp.NewHandler(authService.AuthMiddleware(gwmux), "grpc-gateway"))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "dictionary-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
@@ -138,7 +163,8 @@ func newGRPCServer(
 	authService *auth.AuthService,
 	dictionaryUcase domain.DictionaryUseCase,
 ) *grpc.Server {
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authService.AuthInterceptor))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(otelgrpc.UnaryServerInterceptor(), authService.AuthInterceptor), grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+	)
 	dictionary.RegisterDictionaryServiceServer(grpcServer, grpc2.NewDictionaryHandler(validate, dictionaryUcase))
 	return grpcServer
 }

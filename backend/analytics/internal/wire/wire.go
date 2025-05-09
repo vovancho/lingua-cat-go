@@ -22,8 +22,11 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
+	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/analytics/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"net/http"
 	"time"
 )
@@ -36,6 +39,7 @@ type App struct {
 	Consumer         *kafka.Subscriber
 	ConsumerMessages <-chan *message.Message
 	ConsumerHandler  *_internalKafka.ExerciseCompleteHandler
+	Tracer           *sdktrace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
@@ -46,6 +50,7 @@ func NewApp(
 	consumer *kafka.Subscriber,
 	consumerMessages <-chan *message.Message,
 	consumerHandler *_internalKafka.ExerciseCompleteHandler,
+	tracer *sdktrace.TracerProvider,
 ) *App {
 	return &App{
 		Config:           cfg,
@@ -54,6 +59,7 @@ func NewApp(
 		Consumer:         consumer,
 		ConsumerMessages: consumerMessages,
 		ConsumerHandler:  consumerHandler,
+		Tracer:           tracer,
 	}
 }
 
@@ -61,6 +67,7 @@ func InitializeApp() (*App, error) {
 	wire.Build(
 		// Конфигурация
 		config.Load,
+		ProvideServiceName,
 
 		// База данных
 		ProvideDSN,
@@ -90,6 +97,10 @@ func InitializeApp() (*App, error) {
 		usecase.NewExerciseCompleteUseCase,
 		usecase.NewUserUseCase,
 
+		// Tracing
+		ProvideTracingEndpoint,
+		tracing.NewTracer,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -105,6 +116,10 @@ func InitializeApp() (*App, error) {
 		NewApp,
 	)
 	return &App{}, nil
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -125,6 +140,10 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
+}
+
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
@@ -138,7 +157,7 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router), trans), "analytics-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
@@ -180,5 +199,7 @@ func ProvideKeycloakConfig(cfg *config.Config) _httpRepo.Config {
 
 // ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
 func ProvideUserHttpClient() *http.Client {
-	return &http.Client{}
+	return &http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+	}
 }

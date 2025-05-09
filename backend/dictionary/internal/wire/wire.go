@@ -20,8 +20,12 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
+	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"net/http"
 	"time"
@@ -33,15 +37,23 @@ type App struct {
 	HTTPServer *http.Server
 	GRPCServer *grpc.Server
 	DB         *sqlx.DB
+	Tracer     *sdktrace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, grpcServer *grpc.Server, db *sqlx.DB) *App {
+func NewApp(
+	cfg *config.Config,
+	httpServer *http.Server,
+	grpcServer *grpc.Server,
+	db *sqlx.DB,
+	tracer *sdktrace.TracerProvider,
+) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		GRPCServer: grpcServer,
 		DB:         db,
+		Tracer:     tracer,
 	}
 }
 
@@ -49,6 +61,7 @@ func InitializeApp() (*App, error) {
 	wire.Build(
 		// Конфигурация
 		config.Load,
+		ProvideServiceName,
 
 		// База данных
 		ProvideDSN,
@@ -72,6 +85,10 @@ func InitializeApp() (*App, error) {
 		ProvideUseCaseTimeout,
 		usecase.NewDictionaryUseCase,
 
+		// Tracing
+		ProvideTracingEndpoint,
+		tracing.NewTracer,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -82,6 +99,10 @@ func InitializeApp() (*App, error) {
 		NewApp,
 	)
 	return &App{}, nil
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -100,6 +121,10 @@ func getPostgresDB(db *sqlx.DB) db.DB {
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
 func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+}
+
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
 }
 
 // newHTTPServer создаёт новый HTTP-сервер
@@ -122,10 +147,10 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(gwmux))
+	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(otelhttp.NewHandler(gwmux), "grpc-gateway"))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router), trans), "dictionary-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
@@ -139,7 +164,13 @@ func newGRPCServer(
 	authService *auth.AuthService,
 	dictionaryUcase domain.DictionaryUseCase,
 ) *grpc.Server {
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authService.AuthInterceptor))
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(),
+			authService.AuthInterceptor,
+		),
+		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+	)
 	pb.RegisterDictionaryServiceServer(grpcServer, _internalGrpc.NewDictionaryHandler(validate, dictionaryUcase))
 	return grpcServer
 }

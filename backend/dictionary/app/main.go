@@ -34,6 +34,13 @@ func main() {
 	}
 	defer app.DB.Close() // Закрытие соединения с базой данных
 
+	// Завершение трейсера
+	defer func() {
+		if err := app.Tracer.Shutdown(context.Background()); err != nil {
+			slog.Error("Failed to shutdown tracer provider", "error", err)
+		}
+	}()
+
 	// Graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

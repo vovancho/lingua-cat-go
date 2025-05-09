@@ -22,8 +22,12 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/internal/config"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
+	"github.com/vovancho/lingua-cat-go/exercise/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/exercise/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"net/http"
 	"time"
@@ -35,15 +39,23 @@ type App struct {
 	HTTPServer *http.Server
 	DB         *sqlx.DB
 	Outbox     *message.Router
+	Tracer     *sdktrace.TracerProvider
 }
 
 // NewApp создаёт новый экземпляр App
-func NewApp(cfg *config.Config, httpServer *http.Server, db *sqlx.DB, outbox *message.Router) *App {
+func NewApp(
+	cfg *config.Config,
+	httpServer *http.Server,
+	db *sqlx.DB,
+	outbox *message.Router,
+	tracer *sdktrace.TracerProvider,
+) *App {
 	return &App{
 		Config:     cfg,
 		HTTPServer: httpServer,
 		DB:         db,
 		Outbox:     outbox,
+		Tracer:     tracer,
 	}
 }
 
@@ -51,6 +63,7 @@ func InitializeApp() (*App, error) {
 	wire.Build(
 		// Конфигурация
 		config.Load,
+		ProvideServiceName,
 
 		// База данных
 		ProvideDSN,
@@ -81,6 +94,10 @@ func InitializeApp() (*App, error) {
 		usecase.NewTaskUseCase,
 		usecase.NewDictionaryUseCase,
 
+		// Tracing
+		ProvideTracingEndpoint,
+		tracing.NewTracer,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -95,6 +112,10 @@ func InitializeApp() (*App, error) {
 		NewApp,
 	)
 	return &App{}, nil
+}
+
+func ProvideServiceName(cfg *config.Config) config.ServiceName {
+	return cfg.ServiceName
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
@@ -115,8 +136,16 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
+	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
+}
+
 func ProvideGRPCConn(cfg *config.Config) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(cfg.DictionaryGRPCAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(cfg.DictionaryGRPCAddress,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +167,7 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(router), trans))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router), trans), "exercise-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

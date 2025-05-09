@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
+	"go.opentelemetry.io/otel"
 	"time"
 )
 
@@ -40,7 +41,8 @@ func NewExerciseCompleteHandler(
 }
 
 func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
-	ctx := context.Background()
+	ctx, span := otel.Tracer("kafka-consumer").Start(context.Background(), "Handle Kafka Message")
+	defer span.End()
 
 	var ecMsg ExerciseCompleteMessage
 	if err := json.Unmarshal(msg.Payload, &ecMsg); err != nil {
