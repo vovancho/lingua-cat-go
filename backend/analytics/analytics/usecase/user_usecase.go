@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"time"
 )
 

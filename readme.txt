@@ -37,18 +37,14 @@ docker run --rm -v .\backend\example:/go golang:1.24-alpine3.21 go -C sync-wait-
 docker run --rm -v .\backend\example:/go golang:1.24-alpine3.21 go -C sync-once run main.go
 
 ---
-docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/dictionary
-docker run --rm -v .\backend\dictionary:/app -w /app golang:1.24-alpine3.21 go run app/main.go
-docker compose run lcg-dictionary-backend go run app/main.go
-
-docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/dictionary
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/dictionary
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "apk add --no-cache git && go -C dictionary mod tidy"
 
-docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/exercise
-docker run --rm -v .\backend\exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
+docker run --rm -v ${PWD}/backend/exercise:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/exercise
+docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "apk add --no-cache git && go -C exercise mod tidy"
 
-docker run --rm -v .\backend\analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/analytics
-docker run --rm -v .\backend\analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod tidy
+docker run --rm -v ${PWD}/backend/analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/analytics
+docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "apk add --no-cache git && go -C analytics mod tidy"
 
 docker run --rm -v ${PWD}/backend/pkg/auth:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/pkg/auth
 docker run --rm -v ${PWD}/backend/pkg/auth:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go mod tidy
@@ -135,7 +131,7 @@ docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24
 
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/exercise/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
-docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary/analytics/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
+docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/analytics/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 
 
 docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase

@@ -3,10 +3,10 @@ package http
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/analytics/internal/error"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/request"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"net/http"
 )
 

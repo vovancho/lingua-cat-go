@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"time"
 )
 

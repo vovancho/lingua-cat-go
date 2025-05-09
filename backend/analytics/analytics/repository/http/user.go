@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"net/http"
 )
 

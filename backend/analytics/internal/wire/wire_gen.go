@@ -20,13 +20,13 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/repository/http"
 	"github.com/vovancho/lingua-cat-go/analytics/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/validator"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
 	http2 "net/http"
@@ -159,7 +159,7 @@ func newHTTPServer(
 
 	mainMux := http2.NewServeMux()
 	mainMux.Handle("/swagger.json", http2.FileServer(http2.Dir("doc")))
-	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "analytics-http"))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "analytics-http")), trans))
 
 	return &http2.Server{
 		Addr:    cfg.HTTPPort,

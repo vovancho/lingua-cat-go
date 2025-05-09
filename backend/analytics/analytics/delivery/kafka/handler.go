@@ -8,7 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"time"

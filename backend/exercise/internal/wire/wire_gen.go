@@ -19,13 +19,13 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc"
 	"github.com/vovancho/lingua-cat-go/exercise/exercise/repository/postgres"
 	"github.com/vovancho/lingua-cat-go/exercise/exercise/usecase"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/config"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/response"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/translator"
 	"github.com/vovancho/lingua-cat-go/exercise/internal/validator"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -172,7 +172,7 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "exercise-http"))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "exercise-http")), trans))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

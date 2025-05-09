@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/analytics/internal/error"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"net/http"
 )
 

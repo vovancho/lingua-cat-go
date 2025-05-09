@@ -5,6 +5,7 @@ services:
             AUTH_PUBLIC_KEY_PATH: /run/secrets/auth_public_key
         volumes:
             - ./:/app
+            - ../pkg:/pkg:/pkg
             - analytics-backend-pkg-mod:/go/pkg/mod
         secrets:
             - auth_public_key

@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"time"
 )
 

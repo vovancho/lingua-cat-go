@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	pb "github.com/vovancho/lingua-cat-go/exercise/exercise/repository/grpc/gen"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
