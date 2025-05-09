@@ -225,7 +225,7 @@ docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 sh -
 docker run --rm --entrypoint sh -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods && mv /defs/dictionary/delivery/grpc/proto/dictionary.swagger.json /defs/doc/grpc-gw-swagger.json"
 
 
-
+docker run --rm -v ${PWD}/docker/secrets:/src httpd:alpine sh -c "htpasswd -nbB jaeger secret | sed -e s/\\$/\\$\\$/g > /src/backend_jaeger_ui_password"
 
 
 

@@ -17,6 +17,8 @@ cache
 Заменить KEYCLOAK_ADMIN_TOKEN на долгоживущий refresh_token в backend/analytics/.env
 поправить миграцию sql загруженных слов (нет обратных переводов с ru на en)
 ждать БД до запуска сервиса
+prometheus
+lcg-jaeger basic auth
 
 swagger:
 https://chatgpt.com/share/6813011e-287c-8013-b8a3-d2de0e7054f8
