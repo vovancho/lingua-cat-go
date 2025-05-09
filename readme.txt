@@ -230,8 +230,8 @@ docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -f d
 docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 sh -c "protoc-all -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods"
 
 
-docker run --rm --entrypoint sh -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f dictionary/delivery/grpc/proto/dictionary.proto -l go -o /defs --with-gateway --with-openapi-json-names --generate-unbound-methods && mv /defs/dictionary/delivery/grpc/proto/dictionary.swagger.json /defs/doc/grpc-gw-swagger.json"
 docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/doc/grpc-gw-swagger.json && rm -r dictionary/dictionary/delivery/grpc/proto"
+docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o exercise/exercise/repository/grpc"
 
 
 docker run --rm -v ${PWD}/docker/secrets:/src httpd:alpine sh -c "htpasswd -nbB jaeger secret | sed -e s/\\$/\\$\\$/g > /src/backend_jaeger_ui_password"
