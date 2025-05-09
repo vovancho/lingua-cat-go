@@ -18,13 +18,13 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/dictionary/repository/postgres"
 	"github.com/vovancho/lingua-cat-go/dictionary/dictionary/usecase"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/auth"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -146,10 +146,10 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/grpc-gateway/", otelhttp.NewHandler(authService.AuthMiddleware(gwmux), "grpc-gateway"))
+	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(otelhttp.NewHandler(gwmux, "grpc-gateway")))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
-	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router), trans), "dictionary-http"))
+	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "dictionary-http")), trans))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

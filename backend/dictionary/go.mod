@@ -14,6 +14,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.31
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
+	github.com/vovancho/lingua-cat-go/pkg/auth v0.0.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
 	go.opentelemetry.io/otel v1.35.0
@@ -23,6 +24,8 @@ require (
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 )
+
+replace github.com/vovancho/lingua-cat-go/pkg/auth => ../pkg/auth
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
