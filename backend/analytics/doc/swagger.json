@@ -1,4 +1,145 @@
 {
-  "swagger": "2.0",
-  "paths": {}
+    "swagger": "2.0",
+    "info": {
+        "title": "Документация сервиса Analytics",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "api.lingua-cat-go.localhost",
+    "basePath": "/analytics",
+    "paths": {
+        "/v1/analytics/user/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает аналитику завершенных упражнений для указанного пользователя.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Получить аналитику по пользователю",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Аналитика найдена",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.AnalyticsData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Аналитика не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.ExerciseComplete": {
+            "type": "object",
+            "required": [
+                "exercise_id",
+                "exercise_lang",
+                "spent_time",
+                "user_id",
+                "user_name",
+                "words_corrected_count",
+                "words_count"
+            ],
+            "properties": {
+                "event_time": {
+                    "type": "string"
+                },
+                "exercise_id": {
+                    "type": "integer"
+                },
+                "exercise_lang": {
+                    "$ref": "#/definitions/domain.ExerciseLang"
+                },
+                "spent_time": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "user_name": {
+                    "type": "string"
+                },
+                "words_corrected_count": {
+                    "type": "integer"
+                },
+                "words_count": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "domain.ExerciseLang": {
+            "type": "string",
+            "enum": [
+                "ru",
+                "en"
+            ],
+            "x-enum-varnames": [
+                "RuExercise",
+                "EnExercise"
+            ]
+        },
+        "http.AnalyticsData": {
+            "type": "object",
+            "properties": {
+                "analytics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ExerciseComplete"
+                    }
+                }
+            }
+        },
+        "response.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }

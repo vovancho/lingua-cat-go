@@ -54,8 +54,6 @@ func NewDictionaryHandler(router *http.ServeMux, v *validator.Validate, d domain
 // @Description Получает словарь по указанному идентификатору
 // @Security BearerAuth
 // @Tags Dictionary
-// @Accept json
-// @Produce json
 // @Param id path uint64 true "ID словаря"
 // @Success 200 {object} response.APIResponse{data=DictionaryData} "Словарь найден"
 // @Failure 404 {object} response.APIResponse "Словарь не найден"
@@ -87,8 +85,6 @@ func (d *DictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 // @Description Создает новый словарь с предоставленными данными
 // @Security BearerAuth
 // @Tags Dictionary
-// @Accept json
-// @Produce json
 // @Param dictionary body DictionaryStoreRequest true "Данные словаря"
 // @Success 201 {object} response.APIResponse{data=DictionaryData} "Словарь создан"
 // @Failure 400 {object} response.APIResponse "Некорректный запрос"
@@ -128,8 +124,6 @@ func (d *DictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 // @Description Изменяет имя словаря по указанному идентификатору
 // @Security BearerAuth
 // @Tags Dictionary
-// @Accept json
-// @Produce json
 // @Param id path uint64 true "ID словаря"
 // @Param name body DictionaryChangeNameRequest true "Новое имя словаря"
 // @Success 200 {object} response.APIResponse{data=DictionaryData} "Имя словаря обновлено"
@@ -174,8 +168,6 @@ func (d *DictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 // @Description Удаляет словарь по указанному идентификатору
 // @Security BearerAuth
 // @Tags Dictionary
-// @Accept json
-// @Produce json
 // @Param id path uint64 true "ID словаря"
 // @Success 204 {object} response.APIResponse "Словарь удален"
 // @Failure 404 {object} response.APIResponse "Словарь не найден"

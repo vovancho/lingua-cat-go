@@ -15,6 +15,10 @@ type ExerciseStoreRequest struct {
 	TaskAmount uint16              `json:"task_amount" validate:"required,min=1,max=100"`
 }
 
+type ExerciseData struct {
+	Exercise domain.Exercise `json:"exercise"`
+}
+
 type ExerciseHandler struct {
 	EUseCase domain.ExerciseUseCase
 	validate *validator.Validate
@@ -32,6 +36,15 @@ func NewExerciseHandler(router *http.ServeMux, v *validator.Validate, auth *auth
 	router.HandleFunc("POST /v1/exercise", handler.Store)
 }
 
+// GetByID godoc
+// @Summary Получить упражнение по ID
+// @Description Получает упражнение по указанному идентификатору.
+// @Security BearerAuth
+// @Tags Exercise
+// @Param id path uint64 true "ID упражнения"
+// @Success 200 {object} response.APIResponse{data=ExerciseData} "Упражнение найдено"
+// @Failure 404 {object} response.APIResponse "Упражнение не найдено"
+// @Router /v1/exercise/{id} [get]
 func (d *ExerciseHandler) GetByID(w http.ResponseWriter, r *http.Request, id uint64) {
 	exercise, err := d.EUseCase.GetByID(r.Context(), domain.ExerciseID(id))
 	if err != nil {
@@ -47,6 +60,16 @@ func (d *ExerciseHandler) GetByID(w http.ResponseWriter, r *http.Request, id uin
 	})
 }
 
+// Store godoc
+// @Summary Создать новое упражнение
+// @Description Создает новое упражнение с предоставленными данными.
+// @Security BearerAuth
+// @Tags Exercise
+// @Param exercise body ExerciseStoreRequest true "Данные упражнения"
+// @Success 201 {object} response.APIResponse{data=ExerciseData} "Упражнение создано"
+// @Failure 400 {object} response.APIResponse "Некорректный запрос"
+// @Failure 401 {object} response.APIResponse "Неавторизованный доступ"
+// @Router /v1/exercise [post]
 func (e *ExerciseHandler) Store(w http.ResponseWriter, r *http.Request) {
 	userID, err := e.auth.GetUserID(r.Context())
 	if err != nil {

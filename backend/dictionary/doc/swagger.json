@@ -16,12 +16,6 @@
                     }
                 ],
                 "description": "Создает новый словарь с предоставленными данными",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Dictionary"
                 ],
@@ -73,12 +67,6 @@
                     }
                 ],
                 "description": "Получает словарь по указанному идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Dictionary"
                 ],
@@ -126,12 +114,6 @@
                     }
                 ],
                 "description": "Удаляет словарь по указанному идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Dictionary"
                 ],
@@ -169,12 +151,6 @@
                     }
                 ],
                 "description": "Изменяет имя словаря по указанному идентификатору",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Dictionary"
                 ],

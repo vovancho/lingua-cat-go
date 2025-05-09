@@ -155,7 +155,7 @@ docker ps --format "{{.Names}}"
 ------------------------------------- Получить KEYCLOAK_ADMIN_TOKEN ----------------------------------------------------
 docker compose exec lcg-exercise-backend sh
 
-curl -X POST --location "http://lcg-keycloak/realms/lingua-cat-go/protocol/openid-connect/token" \
+apk add --no-cache curl && curl -X POST --location "http://lcg-keycloak/realms/lingua-cat-go/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -H "Accept: application/json" \
     -d 'grant_type=client_credentials&client_id=lingua-cat-go-admin&client_secret=OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR'
@@ -178,25 +178,6 @@ docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs 
 
 docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/gen-grpc-gateway:1.51_2 -f proto/dictionary.proto -s DictionaryService
 docker run --rm -v .\backend\dictionary\dictionary\delivery\grpc:/defs -w /defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -I /defs --go_out=/defs/gen --go_opt=paths=source_relative --go-grpc_out=/defs/gen --go-grpc_opt=paths=source_relative --grpc-gateway_out=/defs/gen --grpc-gateway_opt=paths=source_relative
-
-
-docker run --rm -v $(pwd):/defs -w /defs namely/protoc-all:1.51_2 \
-  -f dictionary.proto \
-  -l go \
-  -I /defs \
-  --go_out=./gen \
-  --go_opt=paths=source_relative \
-  --go-grpc_out=./gen \
-  --go-grpc_opt=paths=source_relative \
-  --grpc-gateway_out=./gen \
-  --grpc-gateway_opt=paths=source_relative
-
-
-powershell:
-docker run --rm -v ${PWD}/backend/dictionary:/defs namely/protoc-all:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -l openapi -o . --with-openapi-json-names
-
-Вывод:
-Language openapi is not supported. Please specify one of: go ruby csharp java python objc gogo php node typescript web cpp descriptor_set scala
 
 
 docker run --rm -v ${PWD}/backend/dictionary:/defs namely/gen-grpc-gateway:1.51_2 -f dictionary/delivery/grpc/proto/dictionary.proto -s DictionaryService
@@ -232,6 +213,8 @@ docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod golang:1
 
 docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init -h
 docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
+docker run --rm -v ${PWD}/backend/exercise:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
+docker run --rm -v ${PWD}/backend/analytics:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
 
 
 

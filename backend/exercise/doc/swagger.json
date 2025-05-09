@@ -1,4 +1,525 @@
 {
-  "swagger": "2.0",
-  "paths": {}
+    "swagger": "2.0",
+    "info": {
+        "title": "Документация сервиса Exercise",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "api.lingua-cat-go.localhost",
+    "basePath": "/exercise",
+    "paths": {
+        "/v1/exercise": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает новое упражнение с предоставленными данными.",
+                "tags": [
+                    "Exercise"
+                ],
+                "summary": "Создать новое упражнение",
+                "parameters": [
+                    {
+                        "description": "Данные упражнения",
+                        "name": "exercise",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ExerciseStoreRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Упражнение создано",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.ExerciseData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/exercise/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает упражнение по указанному идентификатору.",
+                "tags": [
+                    "Exercise"
+                ],
+                "summary": "Получить упражнение по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID упражнения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Упражнение найдено",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.ExerciseData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Упражнение не найдено",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/exercise/{id}/task": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает новую задачу для указанного упражнения. Требуется, чтобы пользователь был автором упражнения",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Создать новую задачу",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID упражнения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Задача создана",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TaskData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка генерации задачи",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Только автор упражнения может создать задачу",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/exercise/{id}/task/{taskId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получает задачу по идентификатору упражнения и идентификатору задачи.",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Получить задачу по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID упражнения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID задачи",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Задача найдена",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TaskData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный формат ID задачи",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Задача не найдена или не принадлежит упражнению",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/exercise/{id}/task/{taskId}/word-selected": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Выбирает слово задачи в указанном упражнении. Требуется, чтобы пользователь был автором упражнения и задачи",
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Выбрать слово задачи",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID упражнения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID задачи",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ID выбранного слова",
+                        "name": "word_select",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.TaskWordSelectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Слово выбрано, задача обновлена",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TaskData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Только автор упражнения или задачи может выбрать слово",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.Dictionary": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "lang": {
+                    "$ref": "#/definitions/domain.DictionaryLang"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sentences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Sentence"
+                    }
+                },
+                "translations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Translation"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.DictionaryType"
+                }
+            }
+        },
+        "domain.DictionaryLang": {
+            "type": "string",
+            "enum": [
+                "ru",
+                "en"
+            ],
+            "x-enum-varnames": [
+                "RuDictionary",
+                "EnDictionary"
+            ]
+        },
+        "domain.DictionaryType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4
+            ],
+            "x-enum-varnames": [
+                "SimpleDictionary",
+                "PhrasalVerbDictionary",
+                "IrregularVerbDictionary",
+                "PhraseDictionary"
+            ]
+        },
+        "domain.Exercise": {
+            "type": "object",
+            "required": [
+                "lang",
+                "task_amount",
+                "user_id"
+            ],
+            "properties": {
+                "corrected_counter": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lang": {
+                    "$ref": "#/definitions/domain.ExerciseLang"
+                },
+                "processed_counter": {
+                    "type": "integer"
+                },
+                "selected_counter": {
+                    "type": "integer"
+                },
+                "task_amount": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ExerciseLang": {
+            "type": "string",
+            "enum": [
+                "ru",
+                "en"
+            ],
+            "x-enum-varnames": [
+                "RuExercise",
+                "EnExercise"
+            ]
+        },
+        "domain.Sentence": {
+            "type": "object",
+            "properties": {
+                "text_en": {
+                    "type": "string"
+                },
+                "text_ru": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Task": {
+            "type": "object",
+            "properties": {
+                "exercise": {
+                    "$ref": "#/definitions/domain.Exercise"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "word_correct": {
+                    "$ref": "#/definitions/domain.Dictionary"
+                },
+                "word_selected": {
+                    "$ref": "#/definitions/domain.Dictionary"
+                },
+                "words": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Dictionary"
+                    }
+                }
+            }
+        },
+        "domain.Translation": {
+            "type": "object",
+            "properties": {
+                "dictionary": {
+                    "$ref": "#/definitions/domain.Dictionary"
+                }
+            }
+        },
+        "http.ExerciseData": {
+            "type": "object",
+            "properties": {
+                "exercise": {
+                    "$ref": "#/definitions/domain.Exercise"
+                }
+            }
+        },
+        "http.ExerciseStoreRequest": {
+            "type": "object",
+            "required": [
+                "lang",
+                "task_amount"
+            ],
+            "properties": {
+                "lang": {
+                    "$ref": "#/definitions/domain.ExerciseLang"
+                },
+                "task_amount": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                }
+            }
+        },
+        "http.TaskData": {
+            "type": "object",
+            "properties": {
+                "task": {
+                    "$ref": "#/definitions/domain.Task"
+                }
+            }
+        },
+        "http.TaskWordSelectRequest": {
+            "type": "object",
+            "required": [
+                "word_select"
+            ],
+            "properties": {
+                "word_select": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }

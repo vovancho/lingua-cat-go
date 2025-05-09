@@ -10,6 +10,10 @@ import (
 	"net/http"
 )
 
+type AnalyticsData struct {
+	Analytics []domain.ExerciseComplete `json:"analytics"`
+}
+
 type ExerciseCompleteHandler struct {
 	ECUseCase domain.ExerciseCompleteUseCase
 	validate  *validator.Validate
@@ -26,6 +30,15 @@ func NewExerciseCompleteHandler(router *http.ServeMux, v *validator.Validate, au
 	router.HandleFunc("GET /v1/analytics/user/{id}", request.WithID(handler.GetByUserID))
 }
 
+// GetByUserID godoc
+// @Summary Получить аналитику по пользователю
+// @Description Получает аналитику завершенных упражнений для указанного пользователя.
+// @Security BearerAuth
+// @Tags Analytics
+// @Param id path string true "ID пользователя" format(uuid)
+// @Success 200 {object} response.APIResponse{data=AnalyticsData} "Аналитика найдена"
+// @Failure 404 {object} response.APIResponse "Аналитика не найдена"
+// @Router /v1/analytics/user/{id} [get]
 func (ec *ExerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Request, id auth.UserID) {
 	exerciseCompleteList, err := ec.ECUseCase.GetByUserID(r.Context(), id)
 	if err != nil {

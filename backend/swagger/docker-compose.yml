@@ -13,11 +13,11 @@ services:
                     "url": "http://api.lingua-cat-go.localhost/dictionary/grpc-gw-swagger.json"
                   },
                   {
-                    "name": "Exercise API",
+                    "name": "Exercise HTTP API",
                     "url": "http://api.lingua-cat-go.localhost/exercise/swagger.json"
                   },
                   {
-                    "name": "Analytics API",
+                    "name": "Analytics HTTP API",
                     "url": "http://api.lingua-cat-go.localhost/analytics/swagger.json"
                   }
                 ]
