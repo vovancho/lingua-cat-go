@@ -1,11 +1,11 @@
 include:
-    - backend/keycloak/docker-compose.yml
-    - backend/kafka/docker-compose.yml
+    - infra/keycloak/docker-compose.yml
+    - infra/kafka/docker-compose.yml
+    - infra/swagger/docker-compose.yml
+    - infra/jaeger/docker-compose.yml
     - backend/dictionary/docker-compose.yml
     - backend/exercise/docker-compose.yml
     - backend/analytics/docker-compose.yml
-    - backend/swagger/docker-compose.yml
-    - backend/jaeger/docker-compose.yml
 #    - backend/api/docker-compose.yml
 
 services:

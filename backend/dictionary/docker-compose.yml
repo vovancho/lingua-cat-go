@@ -21,7 +21,7 @@ services:
             - traefik.tcp.routers.lcg-dictionary-grpc.service=lcg-dictionary-grpc
             - traefik.tcp.routers.lcg-dictionary-grpc.rule=HostSNI(`*`)
             - traefik.tcp.services.lcg-dictionary-grpc.loadbalancer.server.port=50051
-        command: sh -c "go build -o /tmp/main app/main.go && exec /tmp/main"
+        command: sh -c "go build -o /tmp/main cmd/main.go && exec /tmp/main"
         depends_on:
             - lcg-dictionary-db
 

@@ -18,3 +18,30 @@ cache
 lcg-jaeger basic auth
 prometheus
 тесты
+logger
+debug
+
+
+
+
+
+
+
+Refactoring
+-----------
+pkg
+app -> cmd
+proto вынести
+jaeger,kafka,swagger,keyclock -> infra
+
+
+
+
+
+
+
+
+
+
+
+
