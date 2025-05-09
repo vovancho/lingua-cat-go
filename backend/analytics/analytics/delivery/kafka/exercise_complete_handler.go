@@ -10,6 +10,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/auth"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"time"
 )
 
@@ -41,8 +42,17 @@ func NewExerciseCompleteHandler(
 }
 
 func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
-	ctx, span := otel.Tracer("kafka-consumer").Start(context.Background(), "Handle Kafka Message")
+	ctx := context.Background()
+
+	// Extract tracing context
+	propagator := otel.GetTextMapPropagator()
+	ctx = propagator.Extract(ctx, propagation.MapCarrier(msg.Metadata))
+
+	ctx, span := otel.Tracer("kafka-consumer").Start(ctx, "Handle Kafka Message")
 	defer span.End()
+
+	//ctx, span := otel.Tracer("kafka-consumer").Start(context.Background(), "Handle Kafka Message")
+	//defer span.End()
 
 	var ecMsg ExerciseCompleteMessage
 	if err := json.Unmarshal(msg.Payload, &ecMsg); err != nil {

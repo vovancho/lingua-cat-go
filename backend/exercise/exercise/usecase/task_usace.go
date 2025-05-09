@@ -11,6 +11,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"math/rand"
 	"slices"
 	"time"
@@ -222,6 +224,15 @@ func (tuc taskUseCase) SelectWord(ctx context.Context, exerciseID domain.Exercis
 			}
 
 			msg := message.NewMessage(watermill.NewUUID(), payload)
+
+			// Inject tracing context
+			propagator := otel.GetTextMapPropagator()
+			carrier := propagation.MapCarrier{}
+			propagator.Inject(ctx, carrier)
+			for k, v := range carrier {
+				msg.Metadata[k] = v
+			}
+
 			txPublisher, err := sql.NewPublisher(
 				ce,
 				sql.PublisherConfig{

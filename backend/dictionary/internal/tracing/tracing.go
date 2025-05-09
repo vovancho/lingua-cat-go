@@ -4,6 +4,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
@@ -24,5 +25,11 @@ func NewTracer(sn config.ServiceName, e Endpoint) (*sdktrace.TracerProvider, err
 		)),
 	)
 	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
+	)
 	return tp, nil
 }
