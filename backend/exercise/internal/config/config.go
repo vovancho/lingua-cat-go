@@ -8,10 +8,8 @@ import (
 	"strconv"
 )
 
-type ServiceName string
-
 type Config struct {
-	ServiceName                 ServiceName
+	ServiceName                 string
 	DBDSN                       string
 	HTTPPort                    string
 	DictionaryGRPCAddress       string
@@ -33,7 +31,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServiceName:                 ServiceName(os.Getenv("SERVICE_NAME")),
+		ServiceName:                 os.Getenv("SERVICE_NAME"),
 		DBDSN:                       os.Getenv("DB_DSN"),
 		HTTPPort:                    os.Getenv("HTTP_PORT"),
 		DictionaryGRPCAddress:       os.Getenv("DICTIONARY_GRPC_HOST"),

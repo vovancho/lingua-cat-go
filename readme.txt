@@ -46,8 +46,29 @@ docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24
 docker run --rm -v ${PWD}/backend/analytics:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/analytics
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "apk add --no-cache git && go -C analytics mod tidy"
 
-docker run --rm -v ${PWD}/backend/pkg/auth:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go mod init github.com/vovancho/lingua-cat-go/pkg/auth
-docker run --rm -v ${PWD}/backend/pkg/auth:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go mod tidy
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C auth mod init github.com/vovancho/lingua-cat-go/pkg/auth
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C auth mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C db mod init github.com/vovancho/lingua-cat-go/pkg/db
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C db mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C error mod init github.com/vovancho/lingua-cat-go/pkg/error
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C error mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C request mod init github.com/vovancho/lingua-cat-go/pkg/request
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C request mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C response mod init github.com/vovancho/lingua-cat-go/pkg/response
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C response mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C tracing mod init github.com/vovancho/lingua-cat-go/pkg/tracing
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C tracing mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C translator mod init github.com/vovancho/lingua-cat-go/pkg/translator
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C translator mod tidy
+
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C validator mod init github.com/vovancho/lingua-cat-go/pkg/validator
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C validator mod tidy
 
 
 

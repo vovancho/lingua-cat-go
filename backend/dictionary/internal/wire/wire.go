@@ -10,19 +10,21 @@ import (
 	"github.com/google/wire"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	_internalGrpc "github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc"
 	"github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc/gen"
 	_internalHttp "github.com/vovancho/lingua-cat-go/dictionary/delivery/http"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
 	"github.com/vovancho/lingua-cat-go/dictionary/repository/postgres"
 	"github.com/vovancho/lingua-cat-go/dictionary/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
+	"github.com/vovancho/lingua-cat-go/pkg/tracing"
+	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	_pkgValidator "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -61,9 +63,9 @@ func InitializeApp() (*App, error) {
 	wire.Build(
 		// Конфигурация
 		config.Load,
-		ProvideServiceName,
 
 		// База данных
+		ProvideDriverName,
 		ProvideDSN,
 		db.NewDB,
 		getPostgresDB,
@@ -72,7 +74,7 @@ func InitializeApp() (*App, error) {
 		translator.NewTranslator,
 
 		// Валидатор
-		_internalValidator.NewValidator,
+		ProvideInternalValidator,
 
 		// Аутентификация
 		ProvidePublicKeyPath,
@@ -86,6 +88,7 @@ func InitializeApp() (*App, error) {
 		usecase.NewDictionaryUseCase,
 
 		// Tracing
+		ProvideTracingServiceName,
 		ProvideTracingEndpoint,
 		tracing.NewTracer,
 
@@ -101,12 +104,26 @@ func InitializeApp() (*App, error) {
 	return &App{}, nil
 }
 
-func ProvideServiceName(cfg *config.Config) config.ServiceName {
-	return cfg.ServiceName
+func ProvideDriverName(cfg *config.Config) db.DriverName {
+	return db.DriverName("postgres")
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
 	return db.DSN(cfg.DBDSN)
+}
+
+func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
+	pkgValidator, err := _pkgValidator.NewValidator(trans)
+	if err != nil {
+		panic(err)
+	}
+
+	internalValidator, err := _internalValidator.NewValidator(pkgValidator, trans)
+	if err != nil {
+		panic(err)
+	}
+
+	return internalValidator
 }
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
@@ -121,6 +138,10 @@ func getPostgresDB(db *sqlx.DB) db.DB {
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
 func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+}
+
+func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
+	return tracing.ServiceName(cfg.ServiceName)
 }
 
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {

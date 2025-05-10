@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
 )
 
 type postgresExerciseRepository struct {

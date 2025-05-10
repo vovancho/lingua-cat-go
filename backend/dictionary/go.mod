@@ -3,7 +3,6 @@ module github.com/vovancho/lingua-cat-go/dictionary
 go 1.24.2
 
 require (
-	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/wire v0.6.0
@@ -13,17 +12,31 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	github.com/vovancho/lingua-cat-go/pkg/auth v0.0.0
+	github.com/vovancho/lingua-cat-go/pkg/db v0.0.0-00010101000000-000000000000
+	github.com/vovancho/lingua-cat-go/pkg/error v0.0.0
+	github.com/vovancho/lingua-cat-go/pkg/request v0.0.0-00010101000000-000000000000
+	github.com/vovancho/lingua-cat-go/pkg/response v0.0.0
+	github.com/vovancho/lingua-cat-go/pkg/tracing v0.0.0-00010101000000-000000000000
+	github.com/vovancho/lingua-cat-go/pkg/translator v0.0.0-00010101000000-000000000000
+	github.com/vovancho/lingua-cat-go/pkg/validator v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
-	go.opentelemetry.io/otel v1.35.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.35.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 )
 
-replace github.com/vovancho/lingua-cat-go/pkg/auth => ../pkg/auth
+replace (
+	github.com/vovancho/lingua-cat-go/pkg/auth => ../pkg/auth
+	github.com/vovancho/lingua-cat-go/pkg/db => ../pkg/db
+	github.com/vovancho/lingua-cat-go/pkg/error => ../pkg/error
+	github.com/vovancho/lingua-cat-go/pkg/request => ../pkg/request
+	github.com/vovancho/lingua-cat-go/pkg/response => ../pkg/response
+	github.com/vovancho/lingua-cat-go/pkg/tracing => ../pkg/tracing
+	github.com/vovancho/lingua-cat-go/pkg/translator => ../pkg/translator
+	github.com/vovancho/lingua-cat-go/pkg/validator => ../pkg/validator
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -32,6 +45,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -46,6 +60,8 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect

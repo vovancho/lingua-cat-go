@@ -3,10 +3,10 @@ package http
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
-	_internalError "github.com/vovancho/lingua-cat-go/analytics/internal/error"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/request"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
+	"github.com/vovancho/lingua-cat-go/pkg/request"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"net/http"
 )
 
@@ -27,7 +27,7 @@ func NewExerciseCompleteHandler(router *http.ServeMux, v *validator.Validate, au
 		auth:      auth,
 	}
 
-	router.HandleFunc("GET /v1/analytics/user/{id}", request.WithID(handler.GetByUserID))
+	router.HandleFunc("GET /v1/analytics/user/{id}", request.WithUserID(handler.GetByUserID))
 }
 
 // GetByUserID godoc

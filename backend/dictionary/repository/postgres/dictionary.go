@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
 	"time"
 
 	"github.com/jmoiron/sqlx"

@@ -9,7 +9,7 @@ package wire
 import (
 	"context"
 	"github.com/go-playground/universal-translator"
-	validator2 "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
 	grpc2 "github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc"
@@ -17,20 +17,25 @@ import (
 	http2 "github.com/vovancho/lingua-cat-go/dictionary/delivery/http"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/db"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/tracing"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/translator"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
+	validator3 "github.com/vovancho/lingua-cat-go/dictionary/internal/validator"
 	"github.com/vovancho/lingua-cat-go/dictionary/repository/postgres"
 	"github.com/vovancho/lingua-cat-go/dictionary/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
+	"github.com/vovancho/lingua-cat-go/pkg/tracing"
+	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	validator2 "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"net/http"
 	"time"
+)
+
+import (
+	_ "github.com/lib/pq"
 )
 
 // Injectors from wire.go:
@@ -44,17 +49,15 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	validate, err := validator.NewValidator(utTranslator)
-	if err != nil {
-		return nil, err
-	}
+	validate := ProvideInternalValidator(utTranslator)
 	publicKeyPath := ProvidePublicKeyPath(configConfig)
 	authService, err := auth.NewAuthService(publicKeyPath)
 	if err != nil {
 		return nil, err
 	}
+	driverName := ProvideDriverName(configConfig)
 	dsn := ProvideDSN(configConfig)
-	sqlxDB, err := db.NewDB(dsn)
+	sqlxDB, err := db.NewDB(driverName, dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,7 @@ func InitializeApp() (*App, error) {
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
 	grpcServer := newGRPCServer(validate, authService, dictionaryUseCase)
-	serviceName := ProvideServiceName(configConfig)
+	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
 	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
 	if err != nil {
@@ -101,12 +104,26 @@ func NewApp(
 	}
 }
 
-func ProvideServiceName(cfg *config.Config) config.ServiceName {
-	return cfg.ServiceName
+func ProvideDriverName(cfg *config.Config) db.DriverName {
+	return db.DriverName("postgres")
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
 	return db.DSN(cfg.DBDSN)
+}
+
+func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
+	pkgValidator, err := validator2.NewValidator(trans)
+	if err != nil {
+		panic(err)
+	}
+
+	internalValidator, err := validator3.NewValidator(pkgValidator, trans)
+	if err != nil {
+		panic(err)
+	}
+
+	return internalValidator
 }
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
@@ -123,6 +140,10 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
+	return tracing.ServiceName(cfg.ServiceName)
+}
+
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
 }
@@ -130,7 +151,7 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator2.Validate,
+	validate *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
 	dictionaryUcase domain.DictionaryUseCase,
@@ -159,7 +180,7 @@ func newHTTPServer(
 
 // newGRPCServer создаёт новый gRPC-сервер
 func newGRPCServer(
-	validate *validator2.Validate,
+	validate *validator.Validate,
 	authService *auth.AuthService,
 	dictionaryUcase domain.DictionaryUseCase,
 ) *grpc.Server {

@@ -5,6 +5,7 @@ package wire
 
 import (
 	"context"
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -16,15 +17,16 @@ import (
 	_internalKafka "github.com/vovancho/lingua-cat-go/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
 	_internalValidator "github.com/vovancho/lingua-cat-go/analytics/internal/validator"
 	"github.com/vovancho/lingua-cat-go/analytics/repository/clickhouse"
 	_httpRepo "github.com/vovancho/lingua-cat-go/analytics/repository/http"
-	usecase2 "github.com/vovancho/lingua-cat-go/analytics/usecase"
+	usecase "github.com/vovancho/lingua-cat-go/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
+	"github.com/vovancho/lingua-cat-go/pkg/tracing"
+	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	_pkgValidator "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"net/http"
@@ -67,9 +69,9 @@ func InitializeApp() (*App, error) {
 	wire.Build(
 		// Конфигурация
 		config.Load,
-		ProvideServiceName,
 
 		// База данных
+		ProvideDriverName,
 		ProvideDSN,
 		db.NewDB,
 		getClickHouseDB,
@@ -78,7 +80,7 @@ func InitializeApp() (*App, error) {
 		translator.NewTranslator,
 
 		// Валидатор
-		_internalValidator.NewValidator,
+		ProvideInternalValidator,
 
 		// Аутентификация
 		ProvidePublicKeyPath,
@@ -94,10 +96,11 @@ func InitializeApp() (*App, error) {
 
 		//// Use case
 		ProvideUseCaseTimeout,
-		usecase2.NewExerciseCompleteUseCase,
-		usecase2.NewUserUseCase,
+		usecase.NewExerciseCompleteUseCase,
+		usecase.NewUserUseCase,
 
 		// Tracing
+		ProvideTracingServiceName,
 		ProvideTracingEndpoint,
 		tracing.NewTracer,
 
@@ -118,12 +121,26 @@ func InitializeApp() (*App, error) {
 	return &App{}, nil
 }
 
-func ProvideServiceName(cfg *config.Config) config.ServiceName {
-	return cfg.ServiceName
+func ProvideDriverName(cfg *config.Config) db.DriverName {
+	return db.DriverName("clickhouse")
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
 	return db.DSN(cfg.DBDSN)
+}
+
+func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
+	pkgValidator, err := _pkgValidator.NewValidator(trans)
+	if err != nil {
+		panic(err)
+	}
+
+	internalValidator, err := _internalValidator.NewValidator(pkgValidator, trans)
+	if err != nil {
+		panic(err)
+	}
+
+	return internalValidator
 }
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
@@ -136,8 +153,12 @@ func getClickHouseDB(db *sqlx.DB) db.DB {
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase2.Timeout {
-	return usecase2.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
+	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+}
+
+func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
+	return tracing.ServiceName(cfg.ServiceName)
 }
 
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {

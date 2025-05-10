@@ -27,7 +27,7 @@ services:
             - "54321:54321" # dictionary-db
             - "54322:54322" # exercise-db
             - "59000:59000" # analytics-db
-#            - "8080:8080" # traefik dashboard
+            - "8080:8080" # traefik dashboard
             - "50051:50051" # dictionary-grpc
         secrets:
             - jaeger_ui_password

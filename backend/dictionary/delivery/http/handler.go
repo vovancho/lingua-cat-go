@@ -3,9 +3,9 @@ package http
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
-	_internalError "github.com/vovancho/lingua-cat-go/dictionary/internal/error"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/request"
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/response"
+	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
+	"github.com/vovancho/lingua-cat-go/pkg/request"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"net/http"
 )
 

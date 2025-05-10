@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	"github.com/vovancho/lingua-cat-go/exercise/internal/db"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
 	"slices"
 )
 

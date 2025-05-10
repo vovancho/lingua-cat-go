@@ -12,25 +12,30 @@ import (
 	kafka2 "github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/universal-translator"
-	validator2 "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
 	http3 "github.com/vovancho/lingua-cat-go/analytics/delivery/http"
 	"github.com/vovancho/lingua-cat-go/analytics/delivery/kafka"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/analytics/internal/config"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/db"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/response"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/tracing"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/translator"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/validator"
+	validator3 "github.com/vovancho/lingua-cat-go/analytics/internal/validator"
 	"github.com/vovancho/lingua-cat-go/analytics/repository/clickhouse"
 	"github.com/vovancho/lingua-cat-go/analytics/repository/http"
 	"github.com/vovancho/lingua-cat-go/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/response"
+	"github.com/vovancho/lingua-cat-go/pkg/tracing"
+	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	validator2 "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
 	http2 "net/http"
 	"time"
+)
+
+import (
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 )
 
 // Injectors from wire.go:
@@ -44,17 +49,15 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	validate, err := validator.NewValidator(utTranslator)
-	if err != nil {
-		return nil, err
-	}
+	validate := ProvideInternalValidator(utTranslator)
 	publicKeyPath := ProvidePublicKeyPath(configConfig)
 	authService, err := auth.NewAuthService(publicKeyPath)
 	if err != nil {
 		return nil, err
 	}
+	driverName := ProvideDriverName(configConfig)
 	dsn := ProvideDSN(configConfig)
-	sqlxDB, err := db.NewDB(dsn)
+	sqlxDB, err := db.NewDB(driverName, dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +80,7 @@ func InitializeApp() (*App, error) {
 	userRepository := http.NewHttpUserRepository(httpConfig, client)
 	userUseCase := usecase.NewUserUseCase(userRepository, timeout)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
-	serviceName := ProvideServiceName(configConfig)
+	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
 	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
 	if err != nil {
@@ -120,12 +123,26 @@ func NewApp(
 	}
 }
 
-func ProvideServiceName(cfg *config.Config) config.ServiceName {
-	return cfg.ServiceName
+func ProvideDriverName(cfg *config.Config) db.DriverName {
+	return db.DriverName("clickhouse")
 }
 
 func ProvideDSN(cfg *config.Config) db.DSN {
 	return db.DSN(cfg.DBDSN)
+}
+
+func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
+	pkgValidator, err := validator2.NewValidator(trans)
+	if err != nil {
+		panic(err)
+	}
+
+	internalValidator, err := validator3.NewValidator(pkgValidator, trans)
+	if err != nil {
+		panic(err)
+	}
+
+	return internalValidator
 }
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
@@ -142,6 +159,10 @@ func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
 	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
+func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
+	return tracing.ServiceName(cfg.ServiceName)
+}
+
 func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 	return tracing.Endpoint(cfg.JaegerCollectorEndpoint)
 }
@@ -149,7 +170,7 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator2.Validate,
+	validate *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseCompleteUcase domain.ExerciseCompleteUseCase,

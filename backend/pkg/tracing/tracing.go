@@ -1,7 +1,6 @@
 package tracing
 
 import (
-	"github.com/vovancho/lingua-cat-go/dictionary/internal/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
@@ -11,8 +10,9 @@ import (
 )
 
 type Endpoint string
+type ServiceName string
 
-func NewTracer(sn config.ServiceName, e Endpoint) (*sdktrace.TracerProvider, error) {
+func NewTracer(sn ServiceName, e Endpoint) (*sdktrace.TracerProvider, error) {
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(string(e))))
 	if err != nil {
 		return nil, err

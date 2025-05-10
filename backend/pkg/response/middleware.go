@@ -3,7 +3,7 @@ package response
 import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	_internalError "github.com/vovancho/lingua-cat-go/exercise/internal/error"
+	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
 	"log/slog"
 	"net/http"
 	"strings"
