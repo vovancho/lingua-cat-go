@@ -61,8 +61,7 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbDB := getPostgresDB(sqlxDB)
-	dictionaryRepository := postgres.NewPostgresDictionaryRepository(dbDB)
+	dictionaryRepository := postgres.NewPostgresDictionaryRepository(sqlxDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
@@ -128,11 +127,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getPostgresDB возвращает *sqlx.DB как db.DB
-func getPostgresDB(db2 *sqlx.DB) db.DB {
-	return db2
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации

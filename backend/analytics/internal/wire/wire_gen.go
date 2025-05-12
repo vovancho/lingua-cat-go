@@ -61,8 +61,7 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbDB := getClickHouseDB(sqlxDB)
-	exerciseCompleteRepository := clickhouse.NewClickhouseExerciseCompleteRepository(dbDB)
+	exerciseCompleteRepository := clickhouse.NewClickhouseExerciseCompleteRepository(sqlxDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseCompleteUseCase)
@@ -147,11 +146,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getPostgresDB возвращает *sqlx.DB как db.DB
-func getClickHouseDB(db2 *sqlx.DB) db.DB {
-	return db2
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации

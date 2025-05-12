@@ -4,16 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
-	"github.com/vovancho/lingua-cat-go/pkg/db"
 )
 
 type clickhouseExerciseCompleteRepository struct {
-	Conn db.DB
+	conn *sqlx.DB
 }
 
-func NewClickhouseExerciseCompleteRepository(conn db.DB) domain.ExerciseCompleteRepository {
+func NewClickhouseExerciseCompleteRepository(conn *sqlx.DB) domain.ExerciseCompleteRepository {
 	return &clickhouseExerciseCompleteRepository{conn}
 }
 
@@ -25,7 +25,7 @@ func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context,
 
 	var ecList []domain.ExerciseComplete
 
-	if err := ecr.Conn.SelectContext(ctx, &ecList, query, userId); err != nil {
+	if err := ecr.conn.SelectContext(ctx, &ecList, query, userId); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("analytics not found: %w", err)
 		}
@@ -42,7 +42,7 @@ func (ecr clickhouseExerciseCompleteRepository) Store(ctx context.Context, ec *d
 		VALUES 
 		    (:user_id, :user_name, :exercise_id, :exercise_lang, :spent_time, :words_count, :words_corrected_count)`
 
-	_, err := ecr.Conn.NamedExecContext(ctx, query, ec)
+	_, err := ecr.conn.NamedExecContext(ctx, query, ec)
 	if err != nil {
 		return fmt.Errorf("insert exercise_complete: %w", err)
 	}

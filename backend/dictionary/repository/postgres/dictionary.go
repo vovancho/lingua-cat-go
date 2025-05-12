@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"github.com/vovancho/lingua-cat-go/pkg/db"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -13,10 +12,10 @@ import (
 )
 
 type postgresDictionaryRepository struct {
-	Conn db.DB
+	conn *sqlx.DB
 }
 
-func NewPostgresDictionaryRepository(conn db.DB) domain.DictionaryRepository {
+func NewPostgresDictionaryRepository(conn *sqlx.DB) domain.DictionaryRepository {
 	return &postgresDictionaryRepository{conn}
 }
 
@@ -83,7 +82,7 @@ func (p postgresDictionaryRepository) IsExistsByNameAndLang(ctx context.Context,
 	const query = `SELECT id FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL`
 
 	var id domain.DictionaryID
-	err := p.Conn.GetContext(ctx, &id, query, name, lang)
+	err := p.conn.GetContext(ctx, &id, query, name, lang)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -196,7 +195,7 @@ func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dicti
 
 func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
 	const query = `UPDATE dictionary SET name = :name WHERE id = :id AND deleted_at IS NULL`
-	res, err := p.Conn.NamedExecContext(ctx, query, map[string]any{
+	res, err := p.conn.NamedExecContext(ctx, query, map[string]any{
 		"id":   id,
 		"name": name,
 	})
@@ -316,13 +315,13 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 	if err != nil {
 		return nil, fmt.Errorf("prepare IN query: %w", err)
 	}
-	query = p.Conn.Rebind(query)
+	query = p.conn.Rebind(query)
 
 	var results []struct {
 		domain.Sentence
 		DictionaryID domain.DictionaryID `db:"dictionary_id"`
 	}
-	if err := p.Conn.SelectContext(ctx, &results, query, args...); err != nil {
+	if err := p.conn.SelectContext(ctx, &results, query, args...); err != nil {
 		return nil, fmt.Errorf("query sentences: %w", err)
 	}
 
@@ -427,7 +426,7 @@ func (p postgresDictionaryRepository) deleteDictionaries(ctx context.Context, tx
 
 // withTransaction выполняет callback в контексте транзакции
 func (p postgresDictionaryRepository) withTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error {
-	tx, err := p.Conn.BeginTxx(ctx, nil)
+	tx, err := p.conn.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -457,7 +456,7 @@ func (p postgresDictionaryRepository) getDictionariesByIDs(ctx context.Context, 
 	`
 
 	var dictionaries []*domain.Dictionary
-	if err := p.Conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
+	if err := p.conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
 		return nil, fmt.Errorf("get dictionaries: %w", err)
 	}
 
@@ -468,7 +467,7 @@ func (p postgresDictionaryRepository) getDictionariesByLangAndRandomIDs(ctx cont
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE lang = $1 AND deleted_at IS NULL ORDER BY RANDOM() LIMIT $2`
 	var dicts []domain.Dictionary
 
-	if err := p.Conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
+	if err := p.conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("dictionaries not found: %w", err)
 		}
@@ -503,13 +502,13 @@ func (p postgresDictionaryRepository) getTranslationsByDictionariesIDs(ctx conte
 	if err != nil {
 		return nil, fmt.Errorf("prepare IN query: %w", err)
 	}
-	query = p.Conn.Rebind(query)
+	query = p.conn.Rebind(query)
 
 	var results []struct {
 		domain.Translation
 		DictionaryID domain.DictionaryID `db:"dictionary_id"`
 	}
-	if err := p.Conn.SelectContext(ctx, &results, query, args...); err != nil {
+	if err := p.conn.SelectContext(ctx, &results, query, args...); err != nil {
 		return nil, fmt.Errorf("query translations: %w", err)
 	}
 

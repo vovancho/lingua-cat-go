@@ -70,7 +70,6 @@ func InitializeApp() (*App, error) {
 		ProvideDriverName,
 		ProvideDSN,
 		db.NewDB,
-		getPostgresDB,
 
 		// Переводчик
 		translator.NewTranslator,
@@ -141,11 +140,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getPostgresDB возвращает *sqlx.DB как db.DB
-func getPostgresDB(db *sqlx.DB) db.DB {
-	return db
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации

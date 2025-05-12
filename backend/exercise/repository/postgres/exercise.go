@@ -4,16 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
-	"github.com/vovancho/lingua-cat-go/pkg/db"
 )
 
 type postgresExerciseRepository struct {
-	Conn db.DB
+	conn *sqlx.DB
 }
 
-func NewPostgresExerciseRepository(conn db.DB) domain.ExerciseRepository {
+func NewPostgresExerciseRepository(conn *sqlx.DB) domain.ExerciseRepository {
 	return &postgresExerciseRepository{conn}
 }
 
@@ -23,7 +23,7 @@ func (p postgresExerciseRepository) GetByID(ctx context.Context, id domain.Exerc
 		FROM exercise WHERE id = $1`
 
 	var exercise domain.Exercise
-	if err := p.Conn.GetContext(ctx, &exercise, query, id); err != nil {
+	if err := p.conn.GetContext(ctx, &exercise, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("exercise not found: %w", err)
 		}
@@ -36,7 +36,7 @@ func (p postgresExerciseRepository) IsExerciseOwner(ctx context.Context, exercis
 	const query = `SELECT id FROM exercise WHERE id = $1 AND user_id = $2`
 
 	var id domain.DictionaryID
-	err := p.Conn.GetContext(ctx, &id, query, exerciseID, userID)
+	err := p.conn.GetContext(ctx, &id, query, exerciseID, userID)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -53,7 +53,7 @@ func (p postgresExerciseRepository) Store(ctx context.Context, exercise *domain.
 		VALUES (:user_id, :lang, :task_amount)
 		RETURNING id, created_at, updated_at, user_id, lang, task_amount, processed_counter, selected_counter, corrected_counter`
 
-	rows, err := p.Conn.NamedQueryContext(ctx, query, exercise)
+	rows, err := p.conn.NamedQueryContext(ctx, query, exercise)
 	if err != nil {
 		return fmt.Errorf("insert exercise: %w", err)
 	}

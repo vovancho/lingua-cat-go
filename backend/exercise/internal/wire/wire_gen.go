@@ -62,8 +62,7 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbDB := getPostgresDB(sqlxDB)
-	exerciseRepository := postgres.NewPostgresExerciseRepository(dbDB)
+	exerciseRepository := postgres.NewPostgresExerciseRepository(sqlxDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseUseCase := usecase.NewExerciseUseCase(exerciseRepository, validate, timeout)
 	clientConn, err := ProvideGRPCConn(configConfig)
@@ -72,7 +71,7 @@ func InitializeApp() (*App, error) {
 	}
 	dictionaryRepository := grpc.NewGrpcDictionaryRepository(clientConn, authService)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
-	taskRepository := postgres.NewPostgresTaskRepository(dbDB)
+	taskRepository := postgres.NewPostgresTaskRepository(sqlxDB)
 	exerciseCompletedTopic := ProvideKafkaExerciseCompletedTopic(configConfig)
 	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout, exerciseCompletedTopic)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
@@ -150,11 +149,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getPostgresDB возвращает *sqlx.DB как db.DB
-func getPostgresDB(db2 *sqlx.DB) db.DB {
-	return db2
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации

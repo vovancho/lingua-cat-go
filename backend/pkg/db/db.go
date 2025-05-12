@@ -1,21 +1,9 @@
 package db
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	//_ "github.com/lib/pq"
 )
-
-type DB interface {
-	GetContext(ctx context.Context, dest any, query string, args ...any) error
-	SelectContext(ctx context.Context, dest any, query string, args ...any) error
-	NamedExecContext(ctx context.Context, query string, arg any) (sql.Result, error)
-	NamedQueryContext(ctx context.Context, query string, arg any) (*sqlx.Rows, error)
-	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
-	Rebind(query string) string
-}
 
 type DriverName string
 type DSN string

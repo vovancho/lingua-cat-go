@@ -8,15 +8,14 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	"github.com/vovancho/lingua-cat-go/pkg/db"
 	"slices"
 )
 
 type postgresTaskRepository struct {
-	Conn db.DB
+	conn *sqlx.DB
 }
 
-func NewPostgresTaskRepository(conn db.DB) domain.TaskRepository {
+func NewPostgresTaskRepository(conn *sqlx.DB) domain.TaskRepository {
 	return &postgresTaskRepository{conn}
 }
 
@@ -53,7 +52,7 @@ func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
 		WordSelectedID *domain.DictionaryID `db:"word_selected"`
 	}
 
-	if err := p.Conn.GetContext(ctx, &raw, query, id); err != nil {
+	if err := p.conn.GetContext(ctx, &raw, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil, 0, 0, fmt.Errorf("task not found: %w", err)
 		}
@@ -84,7 +83,7 @@ func (p postgresTaskRepository) IsTaskOwnerExercise(ctx context.Context, exercis
 	const query = `SELECT id FROM task WHERE id = $1 AND exercise_id = $2`
 
 	var id domain.TaskID
-	err := p.Conn.GetContext(ctx, &id, query, taskID, exerciseID)
+	err := p.conn.GetContext(ctx, &id, query, taskID, exerciseID)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -175,7 +174,7 @@ func (p postgresTaskRepository) SetWordSelected(
 
 // withTransaction выполняет callback в контексте транзакции
 func (p postgresTaskRepository) withTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error {
-	tx, err := p.Conn.BeginTxx(ctx, nil)
+	tx, err := p.conn.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
