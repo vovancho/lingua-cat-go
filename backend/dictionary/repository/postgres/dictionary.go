@@ -98,6 +98,10 @@ func (r dictionaryRepository) GetRandomDictionaries(ctx context.Context, lang do
 		return nil, err
 	}
 
+	if len(dicts) != int(limit) {
+		return nil, fmt.Errorf("the number of dictionaries is less than the limit")
+	}
+
 	// Собираем ID словарей (основные)
 	dictIDs := []domain.DictionaryID{}
 	for _, dict := range dicts {

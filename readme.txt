@@ -61,6 +61,9 @@ docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C response mod init github.com/vovancho/lingua-cat-go/pkg/response
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C response mod tidy
 
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C timeout mod init github.com/vovancho/lingua-cat-go/pkg/timeout
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C timeout mod tidy
+
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C tracing mod init github.com/vovancho/lingua-cat-go/pkg/tracing
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C tracing mod tidy
 

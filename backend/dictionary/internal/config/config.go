@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -15,7 +17,7 @@ type Config struct {
 	GRPCPort                string
 	AuthPublicKeyPath       string
 	JaegerCollectorEndpoint string
-	Timeout                 int // in seconds
+	Timeout                 time.Duration
 }
 
 func Load() (*Config, error) {
@@ -35,7 +37,7 @@ func Load() (*Config, error) {
 		GRPCPort:                os.Getenv("GRPC_PORT"),
 		AuthPublicKeyPath:       os.Getenv("AUTH_PUBLIC_KEY_PATH"),
 		JaegerCollectorEndpoint: os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
-		Timeout:                 timeout,
+		Timeout:                 time.Duration(timeout) * time.Second,
 	}
 
 	if cfg.DBDSN == "" {

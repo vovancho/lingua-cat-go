@@ -32,7 +32,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"net/http"
-	"time"
 )
 
 import (
@@ -64,8 +63,7 @@ func InitializeApp() (*App, error) {
 	}
 	manager := txmanager.New(sqlxDB)
 	dictionaryRepository := postgres.NewDictionaryRepository(sqlxDB, manager)
-	timeout := ProvideUseCaseTimeout(configConfig)
-	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
+	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
 	grpcServer := newGRPCServer(validate, authService, dictionaryUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
@@ -129,11 +127,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
