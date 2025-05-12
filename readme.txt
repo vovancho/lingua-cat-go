@@ -224,9 +224,9 @@ docker run --rm -v ${PWD}:/defs ghcr.io/grpc-ecosystem/grpc-gateway/dev protoc -
 docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs
 
 Сгенерировать grpc-gateway и swagger.json:
-docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
-docker run --rm -v ${PWD}/backend/exercise:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
-docker run --rm -v ${PWD}/backend/analytics:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./doc
+docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
+docker run --rm -v ${PWD}/backend/exercise:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
+docker run --rm -v ${PWD}/backend/analytics:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
 
 docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/doc/grpc-gw-swagger.json && rm -r dictionary/delivery/grpc/proto"
 docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o exercise/repository/grpc"

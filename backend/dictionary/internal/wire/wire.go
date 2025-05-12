@@ -167,10 +167,10 @@ func newHTTPServer(
 	}
 
 	mainMux := http.NewServeMux()
-	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("doc")))
+	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("docs")))
 	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(otelhttp.NewHandler(gwmux, "grpc-gateway")))
 
-	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
+	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
 	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "dictionary-http")), trans))
 
 	return &http.Server{

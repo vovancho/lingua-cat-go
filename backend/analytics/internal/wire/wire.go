@@ -177,7 +177,7 @@ func newHTTPServer(
 	_internalHttp.NewExerciseCompleteHandler(router, validate, authService, exerciseCompleteUcase)
 
 	mainMux := http.NewServeMux()
-	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
+	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
 	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "analytics-http")), trans))
 
 	return &http.Server{

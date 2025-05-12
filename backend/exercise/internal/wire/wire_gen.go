@@ -192,7 +192,7 @@ func newHTTPServer(
 	http2.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
 
 	mainMux := http.NewServeMux()
-	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("doc")))
+	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
 	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "exercise-http")), trans))
 
 	return &http.Server{
