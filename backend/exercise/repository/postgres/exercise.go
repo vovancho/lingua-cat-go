@@ -4,20 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 )
 
-type exerciseRepository struct {
+type repository struct {
 	conn *sqlx.DB
 }
 
 func NewExerciseRepository(conn *sqlx.DB) domain.ExerciseRepository {
-	return &exerciseRepository{conn}
+	return &repository{conn}
 }
 
-func (r exerciseRepository) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
+func (r repository) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
 	const query = `
 		SELECT id, created_at, updated_at, user_id, lang, task_amount, processed_counter, selected_counter, corrected_counter
 		FROM exercise WHERE id = $1`
@@ -27,44 +28,33 @@ func (r exerciseRepository) GetByID(ctx context.Context, id domain.ExerciseID) (
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("exercise not found: %w", err)
 		}
+
 		return nil, fmt.Errorf("get exercise: %w", err)
 	}
+
 	return &exercise, nil
 }
 
-func (r exerciseRepository) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
-	const query = `SELECT id FROM exercise WHERE id = $1 AND user_id = $2`
+func (r repository) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
+	const query = `SELECT EXISTS(SELECT 1 FROM exercise WHERE id = $1 AND user_id = $2)`
 
-	var id domain.DictionaryID
-	err := r.conn.GetContext(ctx, &id, query, exerciseID, userID)
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
+	var exists bool
+	if err := r.conn.GetContext(ctx, &exists, query, exerciseID, userID); err != nil {
+		return false, fmt.Errorf("check exercise owner: %w", err)
 	}
 
-	return true, nil
+	return exists, nil
 }
 
-func (r exerciseRepository) Store(ctx context.Context, exercise *domain.Exercise) error {
+func (r repository) Store(ctx context.Context, exercise *domain.Exercise) error {
 	const query = `
-		INSERT INTO exercise (user_id, lang, task_amount)
-		VALUES (:user_id, :lang, :task_amount)
-		RETURNING id, created_at, updated_at, user_id, lang, task_amount, processed_counter, selected_counter, corrected_counter`
+        INSERT INTO exercise (user_id, lang, task_amount)
+        VALUES ($1, $2, $3)
+        RETURNING id, created_at, updated_at, user_id, lang, task_amount, processed_counter, selected_counter, corrected_counter`
 
-	rows, err := r.conn.NamedQueryContext(ctx, query, exercise)
-	if err != nil {
+	if err := r.conn.GetContext(ctx, exercise, query, exercise.UserID, exercise.Lang, exercise.TaskAmount); err != nil {
 		return fmt.Errorf("insert exercise: %w", err)
 	}
-	defer rows.Close()
 
-	if rows.Next() {
-		if err := rows.StructScan(exercise); err != nil {
-			return fmt.Errorf("scan exercise: %w", err)
-		}
-		return nil
-	}
-
-	return fmt.Errorf("no rows returned after insert")
+	return nil
 }

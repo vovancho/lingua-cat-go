@@ -11,17 +11,17 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 )
 
-type dictionaryRepository struct {
+type repository struct {
 	conn *sqlx.DB
 	tx   *txmanager.Manager
 }
 
 func NewDictionaryRepository(conn *sqlx.DB, tx *txmanager.Manager) domain.DictionaryRepository {
-	return &dictionaryRepository{conn, tx}
+	return &repository{conn, tx}
 }
 
 // GetByIDs возвращает словари по множеству ID с переводами и предложениями
-func (r dictionaryRepository) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
+func (r repository) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -79,7 +79,7 @@ func (r dictionaryRepository) GetByIDs(ctx context.Context, ids []domain.Diction
 	return result, nil
 }
 
-func (r dictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
+func (r repository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
 	const query = `SELECT EXISTS(SELECT 1 FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL)`
 
 	var exists bool
@@ -91,7 +91,7 @@ func (r dictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name st
 }
 
 // GetRandomDictionaries возвращает случайный набор словарей по определенному языку с переводами и предложениями
-func (r dictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+func (r repository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
 	// Получаем набор случайных словарей
 	dicts, err := r.getDictionariesByLangAndRandomIDs(ctx, lang, limit)
 	if err != nil {
@@ -140,7 +140,7 @@ func (r dictionaryRepository) GetRandomDictionaries(ctx context.Context, lang do
 	return dicts, nil
 }
 
-func (r dictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) error {
+func (r repository) Store(ctx context.Context, d *domain.Dictionary) error {
 	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Вставка основного словаря
 		dictID, err := r.insertDictionary(ctx, tx, d)
@@ -190,7 +190,7 @@ func (r dictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) e
 	})
 }
 
-func (r dictionaryRepository) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
+func (r repository) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
 	const query = `UPDATE dictionary SET name = :name WHERE id = :id AND deleted_at IS NULL`
 	res, err := r.conn.NamedExecContext(ctx, query, map[string]any{
 		"id":   id,
@@ -211,7 +211,7 @@ func (r dictionaryRepository) ChangeName(ctx context.Context, id domain.Dictiona
 	return nil
 }
 
-func (r dictionaryRepository) Delete(ctx context.Context, id domain.DictionaryID) error {
+func (r repository) Delete(ctx context.Context, id domain.DictionaryID) error {
 	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Проверка существования словаря
 		if err := r.checkDictionaryExists(ctx, tx, id); err != nil {
@@ -243,7 +243,7 @@ func (r dictionaryRepository) Delete(ctx context.Context, id domain.DictionaryID
 	})
 }
 
-func (r dictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (domain.DictionaryID, error) {
+func (r repository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (domain.DictionaryID, error) {
 	const query = `INSERT INTO dictionary (lang, name, type) VALUES (:lang, :name, :type) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
 	if err != nil {
@@ -258,7 +258,7 @@ func (r dictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx,
 	return id, nil
 }
 
-func (r dictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID domain.DictionaryID) error {
+func (r repository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID domain.DictionaryID) error {
 	arg := map[string]any{
 		"dictionary_id":  dictID,
 		"translation_id": transID,
@@ -272,7 +272,7 @@ func (r dictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx
 	return nil
 }
 
-func (r dictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
+func (r repository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
 	const query = `INSERT INTO sentence (text_ru, text_en) VALUES (:text_ru, :text_en) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
 	if err != nil {
@@ -287,7 +287,7 @@ func (r dictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s
 	return id, nil
 }
 
-func (r dictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID domain.DictionaryID, sentenceID int64) error {
+func (r repository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID domain.DictionaryID, sentenceID int64) error {
 	arg := map[string]any{
 		"dictionary_id": dictID,
 		"sentence_id":   sentenceID,
@@ -302,7 +302,7 @@ func (r dictionaryRepository) insertDictionarySentence(ctx context.Context, tx *
 }
 
 // getSentencesByDictionaryIDs получает предложения для списка ID словарей
-func (r dictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Sentence, error) {
+func (r repository) getSentencesByDictionaryIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Sentence, error) {
 	if len(dictIDs) == 0 {
 		return make(map[domain.DictionaryID][]domain.Sentence), nil
 	}
@@ -340,7 +340,7 @@ func (r dictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, d
 }
 
 // checkDictionaryExists проверяет существование словаря
-func (r dictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) error {
+func (r repository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) error {
 	const query = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
 
 	var dictID domain.DictionaryID
@@ -356,7 +356,7 @@ func (r dictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sql
 }
 
 // getDictionariesToDelete получает ID словарей для удаления
-func (r dictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) ([]domain.DictionaryID, error) {
+func (r repository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) ([]domain.DictionaryID, error) {
 	const query = `
 		SELECT d.id
 		FROM dictionary d
@@ -382,7 +382,7 @@ func (r dictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *s
 }
 
 // deleteTranslations удаляет переводы
-func (r dictionaryRepository) deleteTranslations(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r repository) deleteTranslations(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -402,7 +402,7 @@ func (r dictionaryRepository) deleteTranslations(ctx context.Context, tx *sqlx.T
 }
 
 // deleteSentences удаляет предложения
-func (r dictionaryRepository) deleteSentences(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r repository) deleteSentences(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -422,7 +422,7 @@ func (r dictionaryRepository) deleteSentences(ctx context.Context, tx *sqlx.Tx, 
 }
 
 // deleteDictionaries удаляет словари
-func (r dictionaryRepository) deleteDictionaries(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r repository) deleteDictionaries(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -441,7 +441,7 @@ func (r dictionaryRepository) deleteDictionaries(ctx context.Context, tx *sqlx.T
 	return nil
 }
 
-func (r dictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []domain.DictionaryID) ([]*domain.Dictionary, error) {
+func (r repository) getDictionariesByIDs(ctx context.Context, ids []domain.DictionaryID) ([]*domain.Dictionary, error) {
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("dictionaries not found")
 	}
@@ -466,7 +466,7 @@ func (r dictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []do
 	return dictionaries, nil
 }
 
-func (r dictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
+func (r repository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE lang = $1 AND deleted_at IS NULL ORDER BY RANDOM() LIMIT $2`
 
 	var dicts []domain.Dictionary
@@ -480,7 +480,7 @@ func (r dictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Cont
 	return dicts, nil
 }
 
-func (r dictionaryRepository) getTranslationsByDictionariesIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Translation, error) {
+func (r repository) getTranslationsByDictionariesIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Translation, error) {
 	query := `
 		SELECT t.id,
 		       t.deleted_at,
