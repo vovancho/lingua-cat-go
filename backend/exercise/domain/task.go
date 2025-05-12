@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 )
 
@@ -15,6 +16,13 @@ type Task struct {
 	Exercise     Exercise     `json:"exercise" db:"exercise"`
 }
 
+type TaskWithDetails struct {
+	Task           *Task
+	WordIDs        []DictionaryID
+	WordCorrectID  DictionaryID
+	WordSelectedID DictionaryID
+}
+
 type TaskUseCase interface {
 	GetByID(ctx context.Context, id TaskID) (*Task, error)
 	IsTaskOwnerExercise(ctx context.Context, exerciseID ExerciseID, taskID TaskID) (bool, error)
@@ -23,7 +31,7 @@ type TaskUseCase interface {
 }
 
 type TaskRepository interface {
-	GetByID(ctx context.Context, id TaskID) (*Task, []DictionaryID, DictionaryID, DictionaryID, error)
+	GetByID(ctx context.Context, id TaskID) (*TaskWithDetails, error)
 	IsTaskOwnerExercise(ctx context.Context, exerciseID ExerciseID, taskID TaskID) (bool, error)
 	Store(ctx context.Context, task *Task) error
 	SetWordSelected(ctx context.Context, task *Task, dictId DictionaryID, afterWordSetCallback func(ce sql.ContextExecutor, t Task) error) error

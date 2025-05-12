@@ -10,15 +10,15 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 )
 
-type repository struct {
+type exerciseRepository struct {
 	conn *sqlx.DB
 }
 
 func NewExerciseRepository(conn *sqlx.DB) domain.ExerciseRepository {
-	return &repository{conn}
+	return &exerciseRepository{conn}
 }
 
-func (r repository) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
+func (r exerciseRepository) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
 	const query = `
 		SELECT id, created_at, updated_at, user_id, lang, task_amount, processed_counter, selected_counter, corrected_counter
 		FROM exercise WHERE id = $1`
@@ -35,7 +35,7 @@ func (r repository) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.
 	return &exercise, nil
 }
 
-func (r repository) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
+func (r exerciseRepository) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
 	const query = `SELECT EXISTS(SELECT 1 FROM exercise WHERE id = $1 AND user_id = $2)`
 
 	var exists bool
@@ -46,7 +46,7 @@ func (r repository) IsExerciseOwner(ctx context.Context, exerciseID domain.Exerc
 	return exists, nil
 }
 
-func (r repository) Store(ctx context.Context, exercise *domain.Exercise) error {
+func (r exerciseRepository) Store(ctx context.Context, exercise *domain.Exercise) error {
 	const query = `
         INSERT INTO exercise (user_id, lang, task_amount)
         VALUES ($1, $2, $3)

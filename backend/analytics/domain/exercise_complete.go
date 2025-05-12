@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"time"
+
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 )
 
 type ExerciseID uint64
@@ -30,11 +31,11 @@ type ExerciseComplete struct {
 }
 
 type ExerciseCompleteUseCase interface {
-	GetByUserID(ctx context.Context, userId auth.UserID) ([]ExerciseComplete, error)
+	GetItemsByUserID(ctx context.Context, userId auth.UserID) ([]ExerciseComplete, error)
 	Store(ctx context.Context, ec *ExerciseComplete) error
 }
 
 type ExerciseCompleteRepository interface {
-	GetByUserID(ctx context.Context, userId auth.UserID) ([]ExerciseComplete, error)
+	GetItemsByUserID(ctx context.Context, userId auth.UserID) ([]ExerciseComplete, error)
 	Store(ctx context.Context, ec *ExerciseComplete) error
 }

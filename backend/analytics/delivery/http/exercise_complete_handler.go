@@ -1,13 +1,14 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
 	"github.com/vovancho/lingua-cat-go/pkg/request"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
-	"net/http"
 )
 
 type AnalyticsData struct {
@@ -40,7 +41,7 @@ func NewExerciseCompleteHandler(router *http.ServeMux, v *validator.Validate, au
 // @Failure 404 {object} response.APIResponse "Аналитика не найдена"
 // @Router /v1/analytics/user/{id} [get]
 func (ec *ExerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Request, id auth.UserID) {
-	exerciseCompleteList, err := ec.ECUseCase.GetByUserID(r.Context(), id)
+	exerciseCompleteList, err := ec.ECUseCase.GetItemsByUserID(r.Context(), id)
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Аналитика не найдена", err)
 		response.Error(appError, r)

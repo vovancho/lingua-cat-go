@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
-	"net/http"
 )
 
 type keycloakUser struct {
@@ -47,21 +48,27 @@ func (r userRepository) GetByID(ctx context.Context, userId auth.UserID) (*domai
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, domain.UserNotFoundError
+	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get user: status %d, %v", resp.StatusCode, url)
+		return nil, fmt.Errorf("failed to get user: status %d", resp.StatusCode)
 	}
 
 	var ku keycloakUser
 	if err := json.NewDecoder(resp.Body).Decode(&ku); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
+
 	parsedID, err := uuid.Parse(ku.ID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	return &domain.User{
+	user := &domain.User{
 		ID:       auth.UserID(parsedID),
 		Username: ku.Username,
-	}, nil
+	}
+
+	return user, nil
 }

@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
+	"slices"
+	"time"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	_watermillSql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
@@ -13,9 +17,6 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"math/rand"
-	"slices"
-	"time"
 )
 
 type ExerciseCompletedTopic string
@@ -54,7 +55,7 @@ func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Tas
 	ctx, cancel := context.WithTimeout(ctx, t.contextTimeout)
 	defer cancel()
 
-	task, wordIDs, wordCorrectID, wordSelectedID, err := t.taskRepo.GetByID(ctx, id)
+	taskWithDetails, err := t.taskRepo.GetByID(ctx, id)
 	if err != nil {
 		// Если это таймаут — не затираем ошибку
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
@@ -67,13 +68,13 @@ func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Tas
 	}
 
 	// получить словари в dictionaryService по ID
-	dictionaries, err := t.dUseCase.GetDictionariesByIds(ctx, wordIDs)
+	dictionaries, err := t.dUseCase.GetDictionariesByIds(ctx, taskWithDetails.WordIDs)
 	if err != nil {
 		return nil, err
 	}
 
 	// если какие-то словари были удалены, то задача невалидна
-	if len(dictionaries) != len(wordIDs) {
+	if len(dictionaries) != len(taskWithDetails.WordIDs) {
 		return nil, domain.TaskNotFoundError
 	}
 
@@ -83,24 +84,24 @@ func (t taskUseCase) GetByID(ctx context.Context, id domain.TaskID) (*domain.Tas
 	)
 
 	for _, dict := range dictionaries {
-		if dict.ID == wordCorrectID {
+		if dict.ID == taskWithDetails.WordCorrectID {
 			wordCorrect = &dict
 		}
-		if dict.ID == wordSelectedID {
+		if dict.ID == taskWithDetails.WordSelectedID {
 			// так как wordSelected может быть nil, проверим, что ID задан
 			wordSelected = &dict
 		}
 	}
 
 	if wordCorrect == nil {
-		return nil, fmt.Errorf("не найден словарь с ID wordCorrect = %d", wordCorrectID)
+		return nil, fmt.Errorf("не найден словарь с ID wordCorrect = %d", taskWithDetails.WordCorrectID)
 	}
 
-	task.Words = dictionaries
-	task.WordCorrect = *wordCorrect
-	task.WordSelected = wordSelected
+	taskWithDetails.Task.Words = dictionaries
+	taskWithDetails.Task.WordCorrect = *wordCorrect
+	taskWithDetails.Task.WordSelected = wordSelected
 
-	return task, nil
+	return taskWithDetails.Task, nil
 }
 
 func (t taskUseCase) Create(ctx context.Context, exerciseID domain.ExerciseID) (*domain.Task, error) {
