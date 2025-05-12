@@ -9,26 +9,26 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type grpcDictionaryRepository struct {
+type dictionaryRepository struct {
 	client dictionary.DictionaryServiceClient
 	auth   *auth.AuthService
 }
 
-func NewGrpcDictionaryRepository(conn *grpc.ClientConn, auth *auth.AuthService) domain.DictionaryRepository {
-	return &grpcDictionaryRepository{
+func NewDictionaryRepository(conn *grpc.ClientConn, auth *auth.AuthService) domain.DictionaryRepository {
+	return &dictionaryRepository{
 		client: dictionary.NewDictionaryServiceClient(conn),
 		auth:   auth,
 	}
 }
 
-func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
-	token, err := d.auth.GetJWTToken(ctx)
+func (r dictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+	token, err := r.auth.GetJWTToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
-	resp, err := d.client.GetRandomDictionaries(ctx, &dictionary.GetRandomDictionariesRequest{
+	resp, err := r.client.GetRandomDictionaries(ctx, &dictionary.GetRandomDictionariesRequest{
 		Lang:  string(lang),
 		Limit: int32(limit),
 	})
@@ -36,13 +36,13 @@ func (d grpcDictionaryRepository) GetRandomDictionaries(ctx context.Context, lan
 		return nil, err
 	}
 
-	dictionaries := d.newDictionariesByGrpcResponse(resp.Dictionaries)
+	dictionaries := r.newDictionariesByGrpcResponse(resp.Dictionaries)
 
 	return dictionaries, nil
 }
 
-func (d grpcDictionaryRepository) GetDictionariesByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
-	token, err := d.auth.GetJWTToken(ctx)
+func (r dictionaryRepository) GetDictionariesByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
+	token, err := r.auth.GetJWTToken(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +53,19 @@ func (d grpcDictionaryRepository) GetDictionariesByIds(ctx context.Context, dict
 		intIDs[i] = int64(id)
 	}
 
-	resp, err := d.client.GetDictionaries(ctx, &dictionary.GetDictionariesRequest{
+	resp, err := r.client.GetDictionaries(ctx, &dictionary.GetDictionariesRequest{
 		Ids: intIDs,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	dictionaries := d.newDictionariesByGrpcResponse(resp.Dictionaries)
+	dictionaries := r.newDictionariesByGrpcResponse(resp.Dictionaries)
 
 	return dictionaries, nil
 }
 
-func (d grpcDictionaryRepository) newDictionariesByGrpcResponse(dicts []*dictionary.Dictionary) []domain.Dictionary {
+func (r dictionaryRepository) newDictionariesByGrpcResponse(dicts []*dictionary.Dictionary) []domain.Dictionary {
 	var dictionaries []domain.Dictionary
 	for _, dt := range dicts {
 		dict := domain.Dictionary{

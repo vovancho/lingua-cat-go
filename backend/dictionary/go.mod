@@ -18,6 +18,7 @@ require (
 	github.com/vovancho/lingua-cat-go/pkg/response v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/tracing v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/translator v0.0.0-00010101000000-000000000000
+	github.com/vovancho/lingua-cat-go/pkg/txmanager v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/validator v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
@@ -35,6 +36,7 @@ replace (
 	github.com/vovancho/lingua-cat-go/pkg/response => ../pkg/response
 	github.com/vovancho/lingua-cat-go/pkg/tracing => ../pkg/tracing
 	github.com/vovancho/lingua-cat-go/pkg/translator => ../pkg/translator
+	github.com/vovancho/lingua-cat-go/pkg/txmanager => ../pkg/txmanager
 	github.com/vovancho/lingua-cat-go/pkg/validator => ../pkg/validator
 )
 

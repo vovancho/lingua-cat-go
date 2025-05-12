@@ -26,6 +26,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	validator2 "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -62,16 +63,17 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	exerciseRepository := postgres.NewPostgresExerciseRepository(sqlxDB)
+	exerciseRepository := postgres.NewExerciseRepository(sqlxDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseUseCase := usecase.NewExerciseUseCase(exerciseRepository, validate, timeout)
 	clientConn, err := ProvideGRPCConn(configConfig)
 	if err != nil {
 		return nil, err
 	}
-	dictionaryRepository := grpc.NewGrpcDictionaryRepository(clientConn, authService)
+	dictionaryRepository := grpc.NewDictionaryRepository(clientConn, authService)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
-	taskRepository := postgres.NewPostgresTaskRepository(sqlxDB)
+	manager := txmanager.New(sqlxDB)
+	taskRepository := postgres.NewTaskRepository(sqlxDB, manager)
 	exerciseCompletedTopic := ProvideKafkaExerciseCompletedTopic(configConfig)
 	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout, exerciseCompletedTopic)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)

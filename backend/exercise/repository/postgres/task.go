@@ -8,18 +8,20 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	"slices"
 )
 
-type postgresTaskRepository struct {
+type taskRepository struct {
 	conn *sqlx.DB
+	tx   *txmanager.Manager
 }
 
-func NewPostgresTaskRepository(conn *sqlx.DB) domain.TaskRepository {
-	return &postgresTaskRepository{conn}
+func NewTaskRepository(conn *sqlx.DB, tx *txmanager.Manager) domain.TaskRepository {
+	return &taskRepository{conn, tx}
 }
 
-func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
+func (r taskRepository) GetByID(ctx context.Context, id domain.TaskID) (
 	*domain.Task,
 	[]domain.DictionaryID,
 	domain.DictionaryID,
@@ -52,7 +54,7 @@ func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
 		WordSelectedID *domain.DictionaryID `db:"word_selected"`
 	}
 
-	if err := p.conn.GetContext(ctx, &raw, query, id); err != nil {
+	if err := r.conn.GetContext(ctx, &raw, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil, 0, 0, fmt.Errorf("task not found: %w", err)
 		}
@@ -79,11 +81,11 @@ func (p postgresTaskRepository) GetByID(ctx context.Context, id domain.TaskID) (
 	return task, wordIDs, raw.WordCorrectID, wordSelectedID, nil
 }
 
-func (p postgresTaskRepository) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.ExerciseID, taskID domain.TaskID) (bool, error) {
+func (r taskRepository) IsTaskOwnerExercise(ctx context.Context, exerciseID domain.ExerciseID, taskID domain.TaskID) (bool, error) {
 	const query = `SELECT id FROM task WHERE id = $1 AND exercise_id = $2`
 
 	var id domain.TaskID
-	err := p.conn.GetContext(ctx, &id, query, taskID, exerciseID)
+	err := r.conn.GetContext(ctx, &id, query, taskID, exerciseID)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -94,17 +96,17 @@ func (p postgresTaskRepository) IsTaskOwnerExercise(ctx context.Context, exercis
 	return true, nil
 }
 
-func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) error {
-	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
+func (r taskRepository) Store(ctx context.Context, task *domain.Task) error {
+	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Вставка задачи
-		taskID, err := p.insertTask(ctx, tx, task)
+		taskID, err := r.insertTask(ctx, tx, task)
 		if err != nil {
 			return err
 		}
 		task.ID = taskID
 
 		// Инкремент счетчика получения задачи
-		counter, err := p.incrementProcessedCounter(ctx, tx, task.Exercise.ID)
+		counter, err := r.incrementProcessedCounter(ctx, tx, task.Exercise.ID)
 		if err != nil {
 			return err
 		}
@@ -114,7 +116,7 @@ func (p postgresTaskRepository) Store(ctx context.Context, task *domain.Task) er
 	})
 }
 
-func (p postgresTaskRepository) SetWordSelected(
+func (r taskRepository) SetWordSelected(
 	ctx context.Context,
 	task *domain.Task,
 	dictId domain.DictionaryID,
@@ -129,7 +131,7 @@ func (p postgresTaskRepository) SetWordSelected(
 	dict := task.Words[found]
 	task.WordSelected = &dict
 
-	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
+	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// обновить поле word_selected в таблице task
 		_, err := tx.ExecContext(ctx, `UPDATE task SET word_selected = $1 WHERE id = $2`, dictId, task.ID)
 		if err != nil {
@@ -172,27 +174,7 @@ func (p postgresTaskRepository) SetWordSelected(
 	})
 }
 
-// withTransaction выполняет callback в контексте транзакции
-func (p postgresTaskRepository) withTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error {
-	tx, err := p.conn.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	if err = callback(tx); err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return fmt.Errorf("failed to rollback transaction: %v; original error: %w", rollbackErr, err)
-		}
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-	return nil
-}
-
-func (p postgresTaskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *domain.Task) (domain.TaskID, error) {
+func (r taskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *domain.Task) (domain.TaskID, error) {
 	var id domain.TaskID
 
 	wordIDs := make([]int64, len(t.Words))
@@ -225,7 +207,7 @@ func (p postgresTaskRepository) insertTask(ctx context.Context, tx *sqlx.Tx, t *
 	return id, nil
 }
 
-func (p postgresTaskRepository) incrementProcessedCounter(ctx context.Context, tx *sqlx.Tx, exerciseId domain.ExerciseID) (uint16, error) {
+func (r taskRepository) incrementProcessedCounter(ctx context.Context, tx *sqlx.Tx, exerciseId domain.ExerciseID) (uint16, error) {
 	const query = `
 		UPDATE exercise
 		SET processed_counter = processed_counter + 1

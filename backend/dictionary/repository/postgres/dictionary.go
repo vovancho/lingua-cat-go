@@ -5,28 +5,30 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 
-type postgresDictionaryRepository struct {
+type dictionaryRepository struct {
 	conn *sqlx.DB
+	tx   *txmanager.Manager
 }
 
-func NewPostgresDictionaryRepository(conn *sqlx.DB) domain.DictionaryRepository {
-	return &postgresDictionaryRepository{conn}
+func NewDictionaryRepository(conn *sqlx.DB, tx *txmanager.Manager) domain.DictionaryRepository {
+	return &dictionaryRepository{conn, tx}
 }
 
 // GetByIDs возвращает словари по множеству ID с переводами и предложениями
-func (p postgresDictionaryRepository) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
+func (r dictionaryRepository) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	// Получаем основные словари
-	dictionaries, err := p.getDictionariesByIDs(ctx, ids)
+	dictionaries, err := r.getDictionariesByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +42,7 @@ func (p postgresDictionaryRepository) GetByIDs(ctx context.Context, ids []domain
 	}
 
 	// Получаем переводы для всех словарей
-	translationsMap, err := p.getTranslationsByDictionariesIDs(ctx, allDictIDs)
+	translationsMap, err := r.getTranslationsByDictionariesIDs(ctx, allDictIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ func (p postgresDictionaryRepository) GetByIDs(ctx context.Context, ids []domain
 	}
 
 	// Получаем предложения
-	sentencesMap, err := p.getSentencesByDictionaryIDs(ctx, allDictIDs)
+	sentencesMap, err := r.getSentencesByDictionaryIDs(ctx, allDictIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -78,25 +80,21 @@ func (p postgresDictionaryRepository) GetByIDs(ctx context.Context, ids []domain
 	return result, nil
 }
 
-func (p postgresDictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
-	const query = `SELECT id FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL`
+func (r dictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name string, lang domain.DictionaryLang) (bool, error) {
+	const query = `SELECT EXISTS(SELECT 1 FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL)`
 
-	var id domain.DictionaryID
-	err := p.conn.GetContext(ctx, &id, query, name, lang)
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
+	var exists bool
+	err := r.conn.GetContext(ctx, &exists, query, name, lang)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("check dictionary existence: %w", err)
 	}
-
-	return true, nil
+	return exists, nil
 }
 
 // GetRandomDictionaries возвращает случайный набор словарей по определенному языку с переводами и предложениями
-func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
+func (r dictionaryRepository) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
 	// Получаем набор случайных словарей
-	dicts, err := p.getDictionariesByLangAndRandomIDs(ctx, lang, limit)
+	dicts, err := r.getDictionariesByLangAndRandomIDs(ctx, lang, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +106,7 @@ func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context,
 	}
 
 	// Получаем переводы
-	translationsMap, err := p.getTranslationsByDictionariesIDs(ctx, dictIDs)
+	translationsMap, err := r.getTranslationsByDictionariesIDs(ctx, dictIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +123,7 @@ func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context,
 	}
 
 	// Получаем предложения для всех словарей
-	sentencesMap, err := p.getSentencesByDictionaryIDs(ctx, dictIDs)
+	sentencesMap, err := r.getSentencesByDictionaryIDs(ctx, dictIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +141,10 @@ func (p postgresDictionaryRepository) GetRandomDictionaries(ctx context.Context,
 	return dicts, nil
 }
 
-func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) error {
-	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
+func (r dictionaryRepository) Store(ctx context.Context, d *domain.Dictionary) error {
+	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Вставка основного словаря
-		dictID, err := p.insertDictionary(ctx, tx, d)
+		dictID, err := r.insertDictionary(ctx, tx, d)
 		if err != nil {
 			return err
 		}
@@ -154,36 +152,36 @@ func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dicti
 
 		// Вставка переводов
 		for i := range d.Translations {
-			transDictID, err := p.insertDictionary(ctx, tx, &d.Translations[i].Dictionary)
+			transDictID, err := r.insertDictionary(ctx, tx, &d.Translations[i].Dictionary)
 			if err != nil {
 				return err
 			}
 			d.Translations[i].Dictionary.ID = transDictID
 
 			// Вставка связей переводов (в обе стороны)
-			if err = p.insertTranslation(ctx, tx, d.ID, d.Translations[i].Dictionary.ID); err != nil {
+			if err = r.insertTranslation(ctx, tx, d.ID, d.Translations[i].Dictionary.ID); err != nil {
 				return err
 			}
-			if err = p.insertTranslation(ctx, tx, d.Translations[i].Dictionary.ID, d.ID); err != nil {
+			if err = r.insertTranslation(ctx, tx, d.Translations[i].Dictionary.ID, d.ID); err != nil {
 				return err
 			}
 		}
 
 		// Вставка предложений
 		for i := range d.Sentences {
-			sentenceID, err := p.insertSentence(ctx, tx, &d.Sentences[i])
+			sentenceID, err := r.insertSentence(ctx, tx, &d.Sentences[i])
 			if err != nil {
 				return err
 			}
 
 			// Вставка связей для основного словаря
-			if err = p.insertDictionarySentence(ctx, tx, d.ID, sentenceID); err != nil {
+			if err = r.insertDictionarySentence(ctx, tx, d.ID, sentenceID); err != nil {
 				return err
 			}
 
 			// Вставка связей для переводов
 			for _, trans := range d.Translations {
-				if err := p.insertDictionarySentence(ctx, tx, trans.Dictionary.ID, sentenceID); err != nil {
+				if err := r.insertDictionarySentence(ctx, tx, trans.Dictionary.ID, sentenceID); err != nil {
 					return err
 				}
 			}
@@ -193,9 +191,9 @@ func (p postgresDictionaryRepository) Store(ctx context.Context, d *domain.Dicti
 	})
 }
 
-func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
+func (r dictionaryRepository) ChangeName(ctx context.Context, id domain.DictionaryID, name string) error {
 	const query = `UPDATE dictionary SET name = :name WHERE id = :id AND deleted_at IS NULL`
-	res, err := p.conn.NamedExecContext(ctx, query, map[string]any{
+	res, err := r.conn.NamedExecContext(ctx, query, map[string]any{
 		"id":   id,
 		"name": name,
 	})
@@ -204,38 +202,41 @@ func (p postgresDictionaryRepository) ChangeName(ctx context.Context, id domain.
 	}
 
 	rowsAffected, err := res.RowsAffected()
-	if (rowsAffected == 0) || err != nil {
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
 		return fmt.Errorf("update dictionary name not affected")
 	}
 
 	return nil
 }
 
-func (p postgresDictionaryRepository) Delete(ctx context.Context, id domain.DictionaryID) error {
-	return p.withTransaction(ctx, func(tx *sqlx.Tx) error {
+func (r dictionaryRepository) Delete(ctx context.Context, id domain.DictionaryID) error {
+	return r.tx.WithTransaction(ctx, func(tx *sqlx.Tx) error {
 		// Проверка существования словаря
-		if err := p.checkDictionaryExists(ctx, tx, id); err != nil {
+		if err := r.checkDictionaryExists(ctx, tx, id); err != nil {
 			return err
 		}
 
 		// Получение ID словарей для удаления
-		dictIDs, err := p.getDictionariesToDelete(ctx, tx, id)
+		dictIDs, err := r.getDictionariesToDelete(ctx, tx, id)
 		if err != nil {
 			return err
 		}
 
 		// Удаление переводов
-		if err = p.deleteTranslations(ctx, tx, dictIDs); err != nil {
+		if err = r.deleteTranslations(ctx, tx, dictIDs); err != nil {
 			return err
 		}
 
 		// Удаление предложений
-		if err = p.deleteSentences(ctx, tx, dictIDs); err != nil {
+		if err = r.deleteSentences(ctx, tx, dictIDs); err != nil {
 			return err
 		}
 
 		// Удаление словарей
-		if err = p.deleteDictionaries(ctx, tx, dictIDs); err != nil {
+		if err = r.deleteDictionaries(ctx, tx, dictIDs); err != nil {
 			return err
 		}
 
@@ -243,7 +244,7 @@ func (p postgresDictionaryRepository) Delete(ctx context.Context, id domain.Dict
 	})
 }
 
-func (p postgresDictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (domain.DictionaryID, error) {
+func (r dictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (domain.DictionaryID, error) {
 	var id domain.DictionaryID
 	const query = `INSERT INTO dictionary (lang, name, type) VALUES (:lang, :name, :type) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
@@ -257,7 +258,7 @@ func (p postgresDictionaryRepository) insertDictionary(ctx context.Context, tx *
 	return id, nil
 }
 
-func (p postgresDictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID domain.DictionaryID) error {
+func (r dictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID domain.DictionaryID) error {
 	const query = `INSERT INTO translation (dictionary_id, translation_id) VALUES (:dictionary_id, :translation_id)`
 	_, err := tx.NamedExecContext(ctx, query, map[string]any{
 		"dictionary_id":  dictID,
@@ -269,7 +270,7 @@ func (p postgresDictionaryRepository) insertTranslation(ctx context.Context, tx 
 	return nil
 }
 
-func (p postgresDictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
+func (r dictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
 	var id int64
 	const query = `INSERT INTO sentence (text_ru, text_en) VALUES (:text_ru, :text_en) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
@@ -283,7 +284,7 @@ func (p postgresDictionaryRepository) insertSentence(ctx context.Context, tx *sq
 	return id, nil
 }
 
-func (p postgresDictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID domain.DictionaryID, sentenceID int64) error {
+func (r dictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID domain.DictionaryID, sentenceID int64) error {
 	const query = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES (:dictionary_id, :sentence_id)`
 	_, err := tx.NamedExecContext(ctx, query, map[string]any{
 		"dictionary_id": dictID,
@@ -296,7 +297,7 @@ func (p postgresDictionaryRepository) insertDictionarySentence(ctx context.Conte
 }
 
 // getSentencesByDictionaryIDs получает предложения для списка ID словарей
-func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Sentence, error) {
+func (r dictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Sentence, error) {
 	if len(dictIDs) == 0 {
 		return make(map[domain.DictionaryID][]domain.Sentence), nil
 	}
@@ -315,13 +316,13 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 	if err != nil {
 		return nil, fmt.Errorf("prepare IN query: %w", err)
 	}
-	query = p.conn.Rebind(query)
+	query = r.conn.Rebind(query)
 
 	var results []struct {
 		domain.Sentence
 		DictionaryID domain.DictionaryID `db:"dictionary_id"`
 	}
-	if err := p.conn.SelectContext(ctx, &results, query, args...); err != nil {
+	if err := r.conn.SelectContext(ctx, &results, query, args...); err != nil {
 		return nil, fmt.Errorf("query sentences: %w", err)
 	}
 
@@ -333,7 +334,7 @@ func (p postgresDictionaryRepository) getSentencesByDictionaryIDs(ctx context.Co
 }
 
 // checkDictionaryExists проверяет существование словаря
-func (p postgresDictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) error {
+func (r dictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) error {
 	var dictID domain.DictionaryID
 	const query = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
 	err := tx.GetContext(ctx, &dictID, query, id)
@@ -347,7 +348,7 @@ func (p postgresDictionaryRepository) checkDictionaryExists(ctx context.Context,
 }
 
 // getDictionariesToDelete получает ID словарей для удаления
-func (p postgresDictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) ([]domain.DictionaryID, error) {
+func (r dictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) ([]domain.DictionaryID, error) {
 	var dictIDs []domain.DictionaryID
 	const query = `
 		SELECT d.id
@@ -371,7 +372,7 @@ func (p postgresDictionaryRepository) getDictionariesToDelete(ctx context.Contex
 }
 
 // deleteTranslations удаляет переводы
-func (p postgresDictionaryRepository) deleteTranslations(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r dictionaryRepository) deleteTranslations(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -389,7 +390,7 @@ func (p postgresDictionaryRepository) deleteTranslations(ctx context.Context, tx
 }
 
 // deleteSentences удаляет предложения
-func (p postgresDictionaryRepository) deleteSentences(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r dictionaryRepository) deleteSentences(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -407,7 +408,7 @@ func (p postgresDictionaryRepository) deleteSentences(ctx context.Context, tx *s
 }
 
 // deleteDictionaries удаляет словари
-func (p postgresDictionaryRepository) deleteDictionaries(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
+func (r dictionaryRepository) deleteDictionaries(ctx context.Context, tx *sqlx.Tx, dictIDs []domain.DictionaryID) error {
 	if len(dictIDs) == 0 {
 		return nil
 	}
@@ -424,27 +425,7 @@ func (p postgresDictionaryRepository) deleteDictionaries(ctx context.Context, tx
 	return nil
 }
 
-// withTransaction выполняет callback в контексте транзакции
-func (p postgresDictionaryRepository) withTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error {
-	tx, err := p.conn.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	if err = callback(tx); err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return fmt.Errorf("failed to rollback transaction: %v; original error: %w", rollbackErr, err)
-		}
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-	return nil
-}
-
-func (p postgresDictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []domain.DictionaryID) ([]*domain.Dictionary, error) {
+func (r dictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []domain.DictionaryID) ([]*domain.Dictionary, error) {
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("dictionaries not found")
 	}
@@ -456,18 +437,18 @@ func (p postgresDictionaryRepository) getDictionariesByIDs(ctx context.Context, 
 	`
 
 	var dictionaries []*domain.Dictionary
-	if err := p.conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
+	if err := r.conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
 		return nil, fmt.Errorf("get dictionaries: %w", err)
 	}
 
 	return dictionaries, nil
 }
 
-func (p postgresDictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
+func (r dictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE lang = $1 AND deleted_at IS NULL ORDER BY RANDOM() LIMIT $2`
 	var dicts []domain.Dictionary
 
-	if err := p.conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
+	if err := r.conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("dictionaries not found: %w", err)
 		}
@@ -477,7 +458,7 @@ func (p postgresDictionaryRepository) getDictionariesByLangAndRandomIDs(ctx cont
 	return dicts, nil
 }
 
-func (p postgresDictionaryRepository) getTranslationsByDictionariesIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Translation, error) {
+func (r dictionaryRepository) getTranslationsByDictionariesIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Translation, error) {
 	var query = `
 		SELECT t.id,
 		       t.deleted_at,
@@ -502,13 +483,13 @@ func (p postgresDictionaryRepository) getTranslationsByDictionariesIDs(ctx conte
 	if err != nil {
 		return nil, fmt.Errorf("prepare IN query: %w", err)
 	}
-	query = p.conn.Rebind(query)
+	query = r.conn.Rebind(query)
 
 	var results []struct {
 		domain.Translation
 		DictionaryID domain.DictionaryID `db:"dictionary_id"`
 	}
-	if err := p.conn.SelectContext(ctx, &results, query, args...); err != nil {
+	if err := r.conn.SelectContext(ctx, &results, query, args...); err != nil {
 		return nil, fmt.Errorf("query translations: %w", err)
 	}
 

@@ -67,6 +67,9 @@ docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C translator mod init github.com/vovancho/lingua-cat-go/pkg/translator
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C translator mod tidy
 
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C txmanager mod init github.com/vovancho/lingua-cat-go/pkg/txmanager
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C txmanager mod tidy
+
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C validator mod init github.com/vovancho/lingua-cat-go/pkg/validator
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C validator mod tidy
 

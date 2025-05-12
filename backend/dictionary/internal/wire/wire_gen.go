@@ -25,6 +25,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	validator2 "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -61,7 +62,8 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	dictionaryRepository := postgres.NewPostgresDictionaryRepository(sqlxDB)
+	manager := txmanager.New(sqlxDB)
+	dictionaryRepository := postgres.NewDictionaryRepository(sqlxDB, manager)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)

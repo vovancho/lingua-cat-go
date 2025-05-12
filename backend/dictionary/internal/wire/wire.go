@@ -24,6 +24,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	_pkgValidator "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -68,6 +69,7 @@ func InitializeApp() (*App, error) {
 		ProvideDriverName,
 		ProvideDSN,
 		db.NewDB,
+		txmanager.New,
 
 		// Переводчик
 		translator.NewTranslator,
@@ -80,7 +82,7 @@ func InitializeApp() (*App, error) {
 		auth.NewAuthService,
 
 		// Репозиторий
-		postgres.NewPostgresDictionaryRepository,
+		postgres.NewDictionaryRepository,
 
 		// Use case
 		ProvideUseCaseTimeout,

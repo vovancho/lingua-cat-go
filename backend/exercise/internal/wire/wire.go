@@ -10,8 +10,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	http2 "github.com/vovancho/lingua-cat-go/exercise/delivery/http"
 	_internalGrpc "github.com/vovancho/lingua-cat-go/exercise/repository/grpc"
-	postgres2 "github.com/vovancho/lingua-cat-go/exercise/repository/postgres"
-	usecase2 "github.com/vovancho/lingua-cat-go/exercise/usecase"
+	postgres "github.com/vovancho/lingua-cat-go/exercise/repository/postgres"
+	usecase "github.com/vovancho/lingua-cat-go/exercise/usecase"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -26,6 +26,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	_pkgValidator "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -70,6 +71,7 @@ func InitializeApp() (*App, error) {
 		ProvideDriverName,
 		ProvideDSN,
 		db.NewDB,
+		txmanager.New,
 
 		// Переводчик
 		translator.NewTranslator,
@@ -85,15 +87,15 @@ func InitializeApp() (*App, error) {
 		ProvideGRPCConn,
 
 		// Репозиторий
-		postgres2.NewPostgresExerciseRepository,
-		postgres2.NewPostgresTaskRepository,
-		_internalGrpc.NewGrpcDictionaryRepository,
+		postgres.NewExerciseRepository,
+		postgres.NewTaskRepository,
+		_internalGrpc.NewDictionaryRepository,
 
 		// Use case
 		ProvideUseCaseTimeout,
-		usecase2.NewExerciseUseCase,
-		usecase2.NewTaskUseCase,
-		usecase2.NewDictionaryUseCase,
+		usecase.NewExerciseUseCase,
+		usecase.NewTaskUseCase,
+		usecase.NewDictionaryUseCase,
 
 		// Tracing
 		ProvideTracingServiceName,
@@ -143,8 +145,8 @@ func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 }
 
 // getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase2.Timeout {
-	return usecase2.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
+	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
@@ -191,8 +193,8 @@ func newHTTPServer(
 }
 
 // ProvideKafkaExerciseCompletedTopic возвращает имя топика о выполненных упражнениях
-func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase2.ExerciseCompletedTopic {
-	return usecase2.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
+func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase.ExerciseCompletedTopic {
+	return usecase.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
 }
 
 // ProvideLogger создает Watermill логгер

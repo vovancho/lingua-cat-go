@@ -88,12 +88,12 @@ func InitializeApp() (*App, error) {
 		// Keycloak
 		ProvideKeycloakConfig,
 
-		//// Репозиторий
-		clickhouse.NewClickhouseExerciseCompleteRepository,
+		// Репозиторий
+		clickhouse.NewExerciseCompleteRepository,
 		ProvideUserHttpClient,
-		_httpRepo.NewHttpUserRepository,
+		_httpRepo.NewUserRepository,
 
-		//// Use case
+		// Use case
 		ProvideUseCaseTimeout,
 		usecase.NewExerciseCompleteUseCase,
 		usecase.NewUserUseCase,

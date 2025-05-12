@@ -61,7 +61,7 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	exerciseCompleteRepository := clickhouse.NewClickhouseExerciseCompleteRepository(sqlxDB)
+	exerciseCompleteRepository := clickhouse.NewExerciseCompleteRepository(sqlxDB)
 	timeout := ProvideUseCaseTimeout(configConfig)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate, timeout)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseCompleteUseCase)
@@ -76,7 +76,7 @@ func InitializeApp() (*App, error) {
 	}
 	httpConfig := ProvideKeycloakConfig(configConfig)
 	client := ProvideUserHttpClient()
-	userRepository := http.NewHttpUserRepository(httpConfig, client)
+	userRepository := http.NewUserRepository(httpConfig, client)
 	userUseCase := usecase.NewUserUseCase(userRepository, timeout)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)

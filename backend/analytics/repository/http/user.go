@@ -20,28 +20,28 @@ type Config struct {
 	AdminToken         string
 }
 
-type httpUserRepository struct {
+type userRepository struct {
 	config Config
 	client *http.Client
 }
 
-func NewHttpUserRepository(config Config, client *http.Client) domain.UserRepository {
-	return &httpUserRepository{
+func NewUserRepository(config Config, client *http.Client) domain.UserRepository {
+	return &userRepository{
 		config: config,
 		client: client,
 	}
 }
 
-func (u httpUserRepository) GetByID(ctx context.Context, userId auth.UserID) (*domain.User, error) {
-	url := fmt.Sprintf("%susers/%s", u.config.AdminRealmEndpoint, uuid.UUID(userId).String())
+func (r userRepository) GetByID(ctx context.Context, userId auth.UserID) (*domain.User, error) {
+	url := fmt.Sprintf("%susers/%s", r.config.AdminRealmEndpoint, uuid.UUID(userId).String())
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+u.config.AdminToken)
+	req.Header.Set("Authorization", "Bearer "+r.config.AdminToken)
 
-	resp, err := u.client.Do(req)
+	resp, err := r.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}

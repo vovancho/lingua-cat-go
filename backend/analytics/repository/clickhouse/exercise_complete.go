@@ -9,15 +9,15 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 )
 
-type clickhouseExerciseCompleteRepository struct {
+type exerciseCompleteRepository struct {
 	conn *sqlx.DB
 }
 
-func NewClickhouseExerciseCompleteRepository(conn *sqlx.DB) domain.ExerciseCompleteRepository {
-	return &clickhouseExerciseCompleteRepository{conn}
+func NewExerciseCompleteRepository(conn *sqlx.DB) domain.ExerciseCompleteRepository {
+	return &exerciseCompleteRepository{conn}
 }
 
-func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context, userId auth.UserID) ([]domain.ExerciseComplete, error) {
+func (r exerciseCompleteRepository) GetByUserID(ctx context.Context, userId auth.UserID) ([]domain.ExerciseComplete, error) {
 	const query = `SELECT user_id, user_name, exercise_id, exercise_lang, spent_time, words_count, words_corrected_count, event_time
 		FROM analytics.exercise_complete
 		WHERE user_id = $1
@@ -25,7 +25,7 @@ func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context,
 
 	var ecList []domain.ExerciseComplete
 
-	if err := ecr.conn.SelectContext(ctx, &ecList, query, userId); err != nil {
+	if err := r.conn.SelectContext(ctx, &ecList, query, userId); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("analytics not found: %w", err)
 		}
@@ -35,14 +35,14 @@ func (ecr clickhouseExerciseCompleteRepository) GetByUserID(ctx context.Context,
 	return ecList, nil
 }
 
-func (ecr clickhouseExerciseCompleteRepository) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
+func (r exerciseCompleteRepository) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
 	const query = `
 		INSERT INTO analytics.exercise_complete 
 		    (user_id, user_name, exercise_id, exercise_lang, spent_time, words_count, words_corrected_count)
 		VALUES 
 		    (:user_id, :user_name, :exercise_id, :exercise_lang, :spent_time, :words_count, :words_corrected_count)`
 
-	_, err := ecr.conn.NamedExecContext(ctx, query, ec)
+	_, err := r.conn.NamedExecContext(ctx, query, ec)
 	if err != nil {
 		return fmt.Errorf("insert exercise_complete: %w", err)
 	}
