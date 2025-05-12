@@ -4,12 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/lib/pq"
-	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
+	"github.com/vovancho/lingua-cat-go/pkg/txmanager"
 )
 
 type dictionaryRepository struct {
@@ -84,10 +83,10 @@ func (r dictionaryRepository) IsExistsByNameAndLang(ctx context.Context, name st
 	const query = `SELECT EXISTS(SELECT 1 FROM dictionary WHERE name = $1 AND lang = $2 AND deleted_at IS NULL)`
 
 	var exists bool
-	err := r.conn.GetContext(ctx, &exists, query, name, lang)
-	if err != nil {
+	if err := r.conn.GetContext(ctx, &exists, query, name, lang); err != nil {
 		return false, fmt.Errorf("check dictionary existence: %w", err)
 	}
+
 	return exists, nil
 }
 
@@ -245,54 +244,60 @@ func (r dictionaryRepository) Delete(ctx context.Context, id domain.DictionaryID
 }
 
 func (r dictionaryRepository) insertDictionary(ctx context.Context, tx *sqlx.Tx, d *domain.Dictionary) (domain.DictionaryID, error) {
-	var id domain.DictionaryID
 	const query = `INSERT INTO dictionary (lang, name, type) VALUES (:lang, :name, :type) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare named query: %w", err)
 	}
-	err = nstmt.QueryRowxContext(ctx, d).Scan(&id)
-	if err != nil {
+
+	var id domain.DictionaryID
+	if err = nstmt.QueryRowxContext(ctx, d).Scan(&id); err != nil {
 		return 0, fmt.Errorf("insert dictionary: %w", err)
 	}
+
 	return id, nil
 }
 
 func (r dictionaryRepository) insertTranslation(ctx context.Context, tx *sqlx.Tx, dictID, transID domain.DictionaryID) error {
-	const query = `INSERT INTO translation (dictionary_id, translation_id) VALUES (:dictionary_id, :translation_id)`
-	_, err := tx.NamedExecContext(ctx, query, map[string]any{
+	arg := map[string]any{
 		"dictionary_id":  dictID,
 		"translation_id": transID,
-	})
-	if err != nil {
+	}
+
+	const query = `INSERT INTO translation (dictionary_id, translation_id) VALUES (:dictionary_id, :translation_id)`
+	if _, err := tx.NamedExecContext(ctx, query, arg); err != nil {
 		return fmt.Errorf("insert translation: %w", err)
 	}
+
 	return nil
 }
 
 func (r dictionaryRepository) insertSentence(ctx context.Context, tx *sqlx.Tx, s *domain.Sentence) (int64, error) {
-	var id int64
 	const query = `INSERT INTO sentence (text_ru, text_en) VALUES (:text_ru, :text_en) RETURNING id`
 	nstmt, err := tx.PrepareNamed(query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare named query: %w", err)
 	}
-	err = nstmt.QueryRowxContext(ctx, s).Scan(&id)
-	if err != nil {
+
+	var id int64
+	if err = nstmt.QueryRowxContext(ctx, s).Scan(&id); err != nil {
 		return 0, fmt.Errorf("insert sentence: %w", err)
 	}
+
 	return id, nil
 }
 
 func (r dictionaryRepository) insertDictionarySentence(ctx context.Context, tx *sqlx.Tx, dictID domain.DictionaryID, sentenceID int64) error {
-	const query = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES (:dictionary_id, :sentence_id)`
-	_, err := tx.NamedExecContext(ctx, query, map[string]any{
+	arg := map[string]any{
 		"dictionary_id": dictID,
 		"sentence_id":   sentenceID,
-	})
-	if err != nil {
+	}
+
+	const query = `INSERT INTO dictionary_sentence (dictionary_id, sentence_id) VALUES (:dictionary_id, :sentence_id)`
+	if _, err := tx.NamedExecContext(ctx, query, arg); err != nil {
 		return fmt.Errorf("insert dictionary_sentence: %w", err)
 	}
+
 	return nil
 }
 
@@ -302,7 +307,7 @@ func (r dictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, d
 		return make(map[domain.DictionaryID][]domain.Sentence), nil
 	}
 
-	var query = `
+	query := `
 		SELECT s.id,
 		       s.text_ru,
 		       s.text_en,
@@ -330,26 +335,28 @@ func (r dictionaryRepository) getSentencesByDictionaryIDs(ctx context.Context, d
 	for _, r := range results {
 		sentencesMap[r.DictionaryID] = append(sentencesMap[r.DictionaryID], r.Sentence)
 	}
+
 	return sentencesMap, nil
 }
 
 // checkDictionaryExists проверяет существование словаря
 func (r dictionaryRepository) checkDictionaryExists(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) error {
-	var dictID domain.DictionaryID
 	const query = `SELECT id FROM dictionary WHERE id = $1 AND deleted_at IS NULL`
-	err := tx.GetContext(ctx, &dictID, query, id)
-	if err != nil {
+
+	var dictID domain.DictionaryID
+	if err := tx.GetContext(ctx, &dictID, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("dictionary with id %d not found", id)
 		}
+
 		return fmt.Errorf("check dictionary existence: %w", err)
 	}
+
 	return nil
 }
 
 // getDictionariesToDelete получает ID словарей для удаления
 func (r dictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *sqlx.Tx, id domain.DictionaryID) ([]domain.DictionaryID, error) {
-	var dictIDs []domain.DictionaryID
 	const query = `
 		SELECT d.id
 		FROM dictionary d
@@ -364,10 +371,13 @@ func (r dictionaryRepository) getDictionariesToDelete(ctx context.Context, tx *s
 			  AND t2.deleted_at IS NULL
 		  )`
 
+	var dictIDs []domain.DictionaryID
 	if err := tx.GetContext(ctx, &dictIDs, query, id); err != nil {
 		return nil, fmt.Errorf("get translations: %w", err)
 	}
+
 	dictIDs = append(dictIDs, id) // Добавляем основной словарь
+
 	return dictIDs, nil
 }
 
@@ -376,16 +386,18 @@ func (r dictionaryRepository) deleteTranslations(ctx context.Context, tx *sqlx.T
 	if len(dictIDs) == 0 {
 		return nil
 	}
-	var query = `UPDATE translation SET deleted_at = ? WHERE dictionary_id IN (?)`
+
+	query := `UPDATE translation SET deleted_at = ? WHERE dictionary_id IN (?)`
 	query, args, err := sqlx.In(query, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
 	}
 	query = tx.Rebind(query)
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
+
+	if _, err = tx.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("delete translations: %w", err)
 	}
+
 	return nil
 }
 
@@ -394,16 +406,18 @@ func (r dictionaryRepository) deleteSentences(ctx context.Context, tx *sqlx.Tx, 
 	if len(dictIDs) == 0 {
 		return nil
 	}
-	var query = `UPDATE sentence s SET deleted_at = ? FROM dictionary_sentence ds WHERE ds.sentence_id = s.id AND ds.dictionary_id IN (?)`
+
+	query := `UPDATE sentence s SET deleted_at = ? FROM dictionary_sentence ds WHERE ds.sentence_id = s.id AND ds.dictionary_id IN (?)`
 	query, args, err := sqlx.In(query, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
 	}
 	query = tx.Rebind(query)
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
+
+	if _, err = tx.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("delete sentences: %w", err)
 	}
+
 	return nil
 }
 
@@ -412,16 +426,18 @@ func (r dictionaryRepository) deleteDictionaries(ctx context.Context, tx *sqlx.T
 	if len(dictIDs) == 0 {
 		return nil
 	}
-	var query = `UPDATE dictionary SET deleted_at = ? WHERE id IN (?)`
+
+	query := `UPDATE dictionary SET deleted_at = ? WHERE id IN (?)`
 	query, args, err := sqlx.In(query, time.Now(), dictIDs)
 	if err != nil {
 		return fmt.Errorf("prepare IN query: %w", err)
 	}
 	query = tx.Rebind(query)
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
+
+	if _, err = tx.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("delete dictionaries: %w", err)
 	}
+
 	return nil
 }
 
@@ -430,14 +446,20 @@ func (r dictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []do
 		return nil, fmt.Errorf("dictionaries not found")
 	}
 
-	const query = `
+	query := `
 		SELECT id, name, type, lang, deleted_at
 		FROM dictionary
-		WHERE id = ANY($1) AND deleted_at IS NULL
+		WHERE id IN (?) AND deleted_at IS NULL
 	`
 
+	query, args, err := sqlx.In(query, ids)
+	if err != nil {
+		return nil, fmt.Errorf("prepare IN query: %w", err)
+	}
+	query = r.conn.Rebind(query)
+
 	var dictionaries []*domain.Dictionary
-	if err := r.conn.SelectContext(ctx, &dictionaries, query, pq.Array(ids)); err != nil {
+	if err := r.conn.SelectContext(ctx, &dictionaries, query, args...); err != nil {
 		return nil, fmt.Errorf("get dictionaries: %w", err)
 	}
 
@@ -446,8 +468,8 @@ func (r dictionaryRepository) getDictionariesByIDs(ctx context.Context, ids []do
 
 func (r dictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Context, lang domain.DictionaryLang, count uint8) ([]domain.Dictionary, error) {
 	const query = `SELECT id, name, type, lang, deleted_at FROM dictionary WHERE lang = $1 AND deleted_at IS NULL ORDER BY RANDOM() LIMIT $2`
-	var dicts []domain.Dictionary
 
+	var dicts []domain.Dictionary
 	if err := r.conn.SelectContext(ctx, &dicts, query, lang, count); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("dictionaries not found: %w", err)
@@ -459,7 +481,7 @@ func (r dictionaryRepository) getDictionariesByLangAndRandomIDs(ctx context.Cont
 }
 
 func (r dictionaryRepository) getTranslationsByDictionariesIDs(ctx context.Context, dictIDs []domain.DictionaryID) (map[domain.DictionaryID][]domain.Translation, error) {
-	var query = `
+	query := `
 		SELECT t.id,
 		       t.deleted_at,
 		       d.id   AS "dictionary.id",
@@ -496,5 +518,6 @@ func (r dictionaryRepository) getTranslationsByDictionariesIDs(ctx context.Conte
 	for _, r := range results {
 		translationsMap[r.DictionaryID] = append(translationsMap[r.DictionaryID], r.Translation)
 	}
+
 	return translationsMap, nil
 }
