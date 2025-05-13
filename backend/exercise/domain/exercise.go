@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"time"
+
+	"github.com/vovancho/lingua-cat-go/pkg/auth"
 )
 
 type ExerciseID uint64

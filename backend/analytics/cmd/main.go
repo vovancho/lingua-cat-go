@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/vovancho/lingua-cat-go/analytics/internal/wire"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,6 +9,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/vovancho/lingua-cat-go/analytics/internal/wire"
 )
 
 // @title     Документация сервиса Analytics

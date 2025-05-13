@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/vovancho/lingua-cat-go/dictionary/internal/wire"
-	"net"
-	"net/http"
-	"time"
 )
 
 // @title     Документация сервиса Dictionary

@@ -2,6 +2,7 @@ package translator
 
 import (
 	"fmt"
+
 	"github.com/go-playground/locales/ru"
 	"github.com/go-playground/universal-translator"
 )

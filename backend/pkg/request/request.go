@@ -3,12 +3,13 @@ package request
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
-	"net/http"
-	"strconv"
 )
 
 func FromJSON(r *http.Request, dto any) error {
