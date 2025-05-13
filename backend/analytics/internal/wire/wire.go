@@ -166,9 +166,14 @@ func newHTTPServer(
 	router := http.NewServeMux()
 	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
 
+	handler := authService.AuthMiddleware(router)
+	handler = response.ErrorMiddleware(handler)
+	handler = otelhttp.NewHandler(handler, "analytics-http")
+	handler = http.TimeoutHandler(handler, cfg.Timeout, "Request timeout")
+
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "analytics-http"))
+	mainMux.Handle("/", handler)
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

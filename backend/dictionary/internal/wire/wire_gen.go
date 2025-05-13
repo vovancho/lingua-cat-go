@@ -155,12 +155,22 @@ func newHTTPServer(
 		panic(err)
 	}
 
+	gwHandler := authService.AuthMiddleware(gwmux)
+	gwHandler = response.ErrorMiddleware(gwHandler)
+	gwHandler = otelhttp.NewHandler(gwHandler, "grpc-gateway")
+	gwHandler = http.TimeoutHandler(gwHandler, cfg.Timeout, "Request timeout")
+
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/grpc-gateway/", otelhttp.NewHandler(authService.AuthMiddleware(gwmux), "grpc-gateway"))
+	mainMux.Handle("/grpc-gateway/", gwHandler)
+
+	httpHandler := authService.AuthMiddleware(router)
+	httpHandler = response.ErrorMiddleware(httpHandler)
+	httpHandler = otelhttp.NewHandler(httpHandler, "dictionary-http")
+	httpHandler = http.TimeoutHandler(httpHandler, cfg.Timeout, "Request timeout")
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "dictionary-http"))
+	mainMux.Handle("/", httpHandler)
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,
