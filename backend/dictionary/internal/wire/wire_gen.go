@@ -65,7 +65,7 @@ func InitializeApp() (*App, error) {
 	dictionaryRepository := postgres.NewDictionaryRepository(sqlxDB, manager)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
-	grpcServer := newGRPCServer(validate, authService, dictionaryUseCase)
+	grpcServer := newGRPCServer(authService, dictionaryUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
 	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
@@ -139,14 +139,13 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
-	cfg *config.Config,
-	validate *validator.Validate,
+	cfg *config.Config, validator4 *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	dictionaryUcase domain.DictionaryUseCase,
+	dictionaryUseCase domain.DictionaryUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	http2.NewDictionaryHandler(router, validate, dictionaryUcase)
+	http2.NewDictionaryHandler(router, dictionaryUseCase, validator4)
 
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -169,12 +168,12 @@ func newHTTPServer(
 
 // newGRPCServer создаёт новый gRPC-сервер
 func newGRPCServer(
-	validate *validator.Validate,
 	authService *auth.AuthService,
-	dictionaryUcase domain.DictionaryUseCase,
+	dictionaryUseCase domain.DictionaryUseCase,
 ) *grpc.Server {
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(otelgrpc.UnaryServerInterceptor(), authService.AuthInterceptor), grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
-	dictionary.RegisterDictionaryServiceServer(grpcServer, grpc2.NewDictionaryHandler(validate, dictionaryUcase))
+	dictionary.RegisterDictionaryServiceServer(grpcServer, grpc2.NewDictionaryHandler(dictionaryUseCase))
+
 	return grpcServer
 }

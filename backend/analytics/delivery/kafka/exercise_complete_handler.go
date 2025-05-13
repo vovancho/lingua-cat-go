@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
@@ -25,24 +24,21 @@ type ExerciseCompleteMessage struct {
 }
 
 type ExerciseCompleteHandler struct {
-	ECUseCase domain.ExerciseCompleteUseCase
-	UUseCase  domain.UserUseCase
-	validate  *validator.Validate
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase
+	userUseCase             domain.UserUseCase
 }
 
 func NewExerciseCompleteHandler(
-	v *validator.Validate,
-	ec domain.ExerciseCompleteUseCase,
-	u domain.UserUseCase,
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	userUseCase domain.UserUseCase,
 ) *ExerciseCompleteHandler {
 	return &ExerciseCompleteHandler{
-		ECUseCase: ec,
-		UUseCase:  u,
-		validate:  v,
+		exerciseCompleteUseCase: exerciseCompleteUseCase,
+		userUseCase:             userUseCase,
 	}
 }
 
-func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
+func (h *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 	ctx := context.Background()
 
 	// Extract tracing context
@@ -51,9 +47,6 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 
 	ctx, span := otel.Tracer("kafka-consumer").Start(ctx, "Handle Kafka Message")
 	defer span.End()
-
-	//ctx, span := otel.Tracer("kafka-consumer").Start(context.Background(), "Handle Kafka Message")
-	//defer span.End()
 
 	var ecMsg ExerciseCompleteMessage
 	if err := json.Unmarshal(msg.Payload, &ecMsg); err != nil {
@@ -65,7 +58,7 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 		return fmt.Errorf("UserID not parsed: %w", err)
 	}
 
-	user, err := ech.UUseCase.GetByID(ctx, auth.UserID(userID))
+	user, err := h.userUseCase.GetByID(ctx, auth.UserID(userID))
 	if err != nil {
 		return fmt.Errorf("failed to get user from Keycloak: %w", err)
 	}
@@ -82,7 +75,7 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 	}
 
 	// Сохранение данных через ExerciseCompleteUseCase
-	if err := ech.ECUseCase.Store(ctx, ec); err != nil {
+	if err := h.exerciseCompleteUseCase.Store(ctx, ec); err != nil {
 		return err
 	}
 

@@ -2,7 +2,7 @@ package validator
 
 import (
 	"fmt"
-	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/delivery/http"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"

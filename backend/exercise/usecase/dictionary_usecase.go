@@ -3,20 +3,17 @@ package usecase
 import (
 	"context"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 )
 
-func NewDictionaryUseCase(repo domain.DictionaryRepository, validator *validator.Validate) domain.DictionaryUseCase {
+func NewDictionaryUseCase(repo domain.DictionaryRepository) domain.DictionaryUseCase {
 	return &dictionaryUseCase{
 		dictionaryRepo: repo,
-		validate:       validator,
 	}
 }
 
 type dictionaryUseCase struct {
 	dictionaryRepo domain.DictionaryRepository
-	validate       *validator.Validate
 }
 
 func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {

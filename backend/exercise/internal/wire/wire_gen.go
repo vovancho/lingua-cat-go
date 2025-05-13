@@ -70,11 +70,11 @@ func InitializeApp() (*App, error) {
 		return nil, err
 	}
 	dictionaryRepository := grpc.NewDictionaryRepository(clientConn, authService)
-	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate)
+	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository)
 	manager := txmanager.New(sqlxDB)
 	taskRepository := postgres.NewTaskRepository(sqlxDB, manager)
 	exerciseCompletedPublisherInterface := ProvideExerciseCompletedPublisher(configConfig)
-	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, exerciseCompletedPublisherInterface)
+	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, exerciseCompletedPublisherInterface)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(sqlxDB, loggerAdapter)
@@ -176,16 +176,15 @@ func ProvideGRPCConn(cfg *config.Config) (*grpc2.ClientConn, error) {
 
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
-	cfg *config.Config,
-	validate *validator.Validate,
+	cfg *config.Config, validator4 *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	exerciseUcase domain.ExerciseUseCase,
-	taskUcase domain.TaskUseCase,
+	exerciseUseCase domain.ExerciseUseCase,
+	taskUseCase domain.TaskUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	http2.NewExerciseHandler(router, validate, authService, exerciseUcase)
-	http2.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
+	http2.NewExerciseHandler(router, exerciseUseCase, validator4, authService)
+	http2.NewTaskHandler(router, taskUseCase, exerciseUseCase, validator4, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))

@@ -1,12 +1,14 @@
 package response
 
 import (
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
 )
 
 type ValidationErrorItem struct {
@@ -18,6 +20,25 @@ type ErrorKey struct{}
 
 func ErrorMiddleware(next http.Handler, trans ut.Translator) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				var errMsg string
+				switch e := err.(type) {
+				case error:
+					errMsg = e.Error()
+				case string:
+					errMsg = e
+				default:
+					errMsg = fmt.Sprintf("%v", e)
+				}
+
+				JSON(w, http.StatusInternalServerError, APIResponse{
+					Message: "Внутренняя ошибка сервера",
+					Error:   errMsg,
+				})
+			}
+		}()
+
 		// Вызываем следующий обработчик в цепочке
 		next.ServeHTTP(w, r)
 
@@ -63,5 +84,6 @@ func formatFieldName(namespace string) string {
 	if len(parts) < 2 {
 		return namespace // Если нет точек, возвращаем как есть
 	}
+
 	return parts[1]
 }

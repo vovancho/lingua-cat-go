@@ -2,57 +2,51 @@ package grpc
 
 import (
 	"context"
+
 	pb "github.com/vovancho/lingua-cat-go/dictionary/delivery/grpc/gen"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/dictionary/domain"
 )
 
 type DictionaryHandler struct {
-	DUseCase domain.DictionaryUseCase
-	validate *validator.Validate
+	dictionaryUseCase domain.DictionaryUseCase
 }
 
-func NewDictionaryHandler(v *validator.Validate, d domain.DictionaryUseCase) *DictionaryHandler {
+func NewDictionaryHandler(dictionaryUseCase domain.DictionaryUseCase) *DictionaryHandler {
 	return &DictionaryHandler{
-		DUseCase: d,
-		validate: v,
+		dictionaryUseCase: dictionaryUseCase,
 	}
 }
 
-func (d *DictionaryHandler) GetRandomDictionaries(ctx context.Context, req *pb.GetRandomDictionariesRequest) (*pb.GetRandomDictionariesResponse, error) {
+func (h *DictionaryHandler) GetRandomDictionaries(ctx context.Context, req *pb.GetRandomDictionariesRequest) (*pb.GetRandomDictionariesResponse, error) {
 	lang := domain.DictionaryLang(req.GetLang())
 	limit := uint8(req.GetLimit())
 
-	dictionaries, err := d.DUseCase.GetRandomDictionaries(ctx, lang, limit)
+	dictionaries, err := h.dictionaryUseCase.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
 		return nil, err
 	}
 
 	protoDictionaries := buildProtoDictionaries(dictionaries)
 
-	return &pb.GetRandomDictionariesResponse{
-		Dictionaries: protoDictionaries,
-	}, nil
+	return &pb.GetRandomDictionariesResponse{Dictionaries: protoDictionaries}, nil
 }
 
-func (d *DictionaryHandler) GetDictionaries(ctx context.Context, req *pb.GetDictionariesRequest) (*pb.GetDictionariesResponse, error) {
+func (h *DictionaryHandler) GetDictionaries(ctx context.Context, req *pb.GetDictionariesRequest) (*pb.GetDictionariesResponse, error) {
 	rawIds := req.GetIds()
 	dictionaryIds := make([]domain.DictionaryID, len(rawIds))
 	for i, id := range rawIds {
 		dictionaryIds[i] = domain.DictionaryID(id)
 	}
 
-	dictionaries, err := d.DUseCase.GetByIDs(ctx, dictionaryIds)
+	dictionaries, err := h.dictionaryUseCase.GetByIDs(ctx, dictionaryIds)
 	if err != nil {
 		return nil, err
 	}
 
 	protoDictionaries := buildProtoDictionaries(dictionaries)
 
-	return &pb.GetDictionariesResponse{
-		Dictionaries: protoDictionaries,
-	}, nil
+	return &pb.GetDictionariesResponse{Dictionaries: protoDictionaries}, nil
 }
 
 // Вспомогательная функция для сборки protobuf-словарей из доменных
@@ -95,5 +89,6 @@ func buildProtoDictionaries(dictionaries []domain.Dictionary) []*pb.Dictionary {
 			Sentences:    sentences,
 		}
 	}
+
 	return protoDictionaries
 }

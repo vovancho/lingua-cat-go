@@ -12,13 +12,13 @@ import (
 func NewDictionaryUseCase(repo domain.DictionaryRepository, validator *validator.Validate) domain.DictionaryUseCase {
 	return &dictionaryUseCase{
 		dictionaryRepo: repo,
-		validate:       validator,
+		validator:      validator,
 	}
 }
 
 type dictionaryUseCase struct {
 	dictionaryRepo domain.DictionaryRepository
-	validate       *validator.Validate
+	validator      *validator.Validate
 }
 
 func (uc dictionaryUseCase) GetByIDs(ctx context.Context, ids []domain.DictionaryID) ([]domain.Dictionary, error) {
@@ -60,7 +60,7 @@ func (uc dictionaryUseCase) Store(ctx context.Context, dict *domain.Dictionary) 
 		}
 	}
 
-	if err := uc.validate.Struct(dict); err != nil {
+	if err := uc.validator.Struct(dict); err != nil {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (uc dictionaryUseCase) ChangeName(ctx context.Context, id domain.Dictionary
 	}
 	dict.Name = newDictName
 
-	if err := uc.validate.StructPartial(dict, "Name"); err != nil {
+	if err := uc.validator.StructPartial(dict, "Name"); err != nil {
 		return err
 	}
 

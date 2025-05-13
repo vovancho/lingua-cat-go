@@ -11,7 +11,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
-	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
@@ -156,13 +156,12 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	exerciseCompleteUcase domain.ExerciseCompleteUseCase,
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseCompleteHandler(router, validate, authService, exerciseCompleteUcase)
+	_internalHttp.NewExerciseCompleteHandler(router, exerciseCompleteUseCase, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))

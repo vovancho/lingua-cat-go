@@ -12,13 +12,13 @@ import (
 func NewExerciseUseCase(repo domain.ExerciseRepository, validator *validator.Validate) domain.ExerciseUseCase {
 	return &exerciseUseCase{
 		exerciseRepo: repo,
-		validate:     validator,
+		validator:    validator,
 	}
 }
 
 type exerciseUseCase struct {
 	exerciseRepo   domain.ExerciseRepository
-	validate       *validator.Validate
+	validator      *validator.Validate
 	contextTimeout time.Duration
 }
 
@@ -41,7 +41,7 @@ func (e exerciseUseCase) IsExerciseOwner(ctx context.Context, exerciseID domain.
 }
 
 func (e exerciseUseCase) Store(ctx context.Context, exercise *domain.Exercise) error {
-	if err := e.validate.Struct(exercise); err != nil {
+	if err := e.validator.Struct(exercise); err != nil {
 		return err
 	}
 

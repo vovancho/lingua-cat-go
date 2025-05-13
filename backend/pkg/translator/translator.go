@@ -3,7 +3,7 @@ package translator
 import (
 	"fmt"
 	"github.com/go-playground/locales/ru"
-	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/universal-translator"
 )
 
 func NewTranslator() (ut.Translator, error) {

@@ -48,7 +48,6 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	validate := ProvideInternalValidator(utTranslator)
 	publicKeyPath := ProvidePublicKeyPath(configConfig)
 	authService, err := auth.NewAuthService(publicKeyPath)
 	if err != nil {
@@ -61,8 +60,9 @@ func InitializeApp() (*App, error) {
 		return nil, err
 	}
 	exerciseCompleteRepository := clickhouse.NewExerciseCompleteRepository(sqlxDB)
+	validate := ProvideInternalValidator(utTranslator)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate)
-	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseCompleteUseCase)
+	server := newHTTPServer(configConfig, utTranslator, authService, exerciseCompleteUseCase)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
 	if err != nil {
@@ -76,7 +76,7 @@ func InitializeApp() (*App, error) {
 	client := ProvideUserHttpClient()
 	userRepository := http.NewUserRepository(httpConfig, client)
 	userUseCase := usecase.NewUserUseCase(userRepository)
-	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
+	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(exerciseCompleteUseCase, userUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
 	tracerProvider, err := tracing.NewTracer(serviceName, endpoint)
@@ -157,13 +157,12 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	exerciseCompleteUcase domain.ExerciseCompleteUseCase,
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
 ) *http2.Server {
 	router := http2.NewServeMux()
-	http3.NewExerciseCompleteHandler(router, validate, authService, exerciseCompleteUcase)
+	http3.NewExerciseCompleteHandler(router, exerciseCompleteUseCase, authService)
 
 	mainMux := http2.NewServeMux()
 	mainMux.Handle("/swagger.json", http2.FileServer(http2.Dir("docs")))

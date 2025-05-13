@@ -11,13 +11,13 @@ import (
 func NewExerciseCompleteUseCase(repo domain.ExerciseCompleteRepository, validator *validator.Validate) domain.ExerciseCompleteUseCase {
 	return &exerciseCompleteUseCase{
 		exerciseCompleteRepo: repo,
-		validate:             validator,
+		validator:            validator,
 	}
 }
 
 type exerciseCompleteUseCase struct {
 	exerciseCompleteRepo domain.ExerciseCompleteRepository
-	validate             *validator.Validate
+	validator            *validator.Validate
 }
 
 func (uc exerciseCompleteUseCase) GetItemsByUserID(ctx context.Context, userId auth.UserID) ([]domain.ExerciseComplete, error) {
@@ -30,7 +30,7 @@ func (uc exerciseCompleteUseCase) GetItemsByUserID(ctx context.Context, userId a
 }
 
 func (uc exerciseCompleteUseCase) Store(ctx context.Context, ec *domain.ExerciseComplete) error {
-	if err := uc.validate.Struct(ec); err != nil {
+	if err := uc.validator.Struct(ec); err != nil {
 		return err
 	}
 

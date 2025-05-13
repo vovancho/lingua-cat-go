@@ -10,12 +10,12 @@ import (
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
-	http2 "github.com/vovancho/lingua-cat-go/exercise/delivery/http"
+	_internalHttp "github.com/vovancho/lingua-cat-go/exercise/delivery/http"
 	_internalGrpc "github.com/vovancho/lingua-cat-go/exercise/repository/grpc"
 	postgres "github.com/vovancho/lingua-cat-go/exercise/repository/postgres"
 	usecase "github.com/vovancho/lingua-cat-go/exercise/usecase"
 
-	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/jmoiron/sqlx"
@@ -173,15 +173,15 @@ func ProvideGRPCConn(cfg *config.Config) (*grpc.ClientConn, error) {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator.Validate,
+	validator *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	exerciseUcase domain.ExerciseUseCase,
-	taskUcase domain.TaskUseCase,
+	exerciseUseCase domain.ExerciseUseCase,
+	taskUseCase domain.TaskUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	http2.NewExerciseHandler(router, validate, authService, exerciseUcase)
-	http2.NewTaskHandler(router, validate, authService, taskUcase, exerciseUcase)
+	_internalHttp.NewExerciseHandler(router, exerciseUseCase, validator, authService)
+	_internalHttp.NewTaskHandler(router, taskUseCase, exerciseUseCase, validator, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))

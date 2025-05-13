@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
@@ -15,17 +14,15 @@ type AnalyticsData struct {
 	Analytics []domain.ExerciseComplete `json:"analytics"`
 }
 
-type ExerciseCompleteHandler struct {
-	ECUseCase domain.ExerciseCompleteUseCase
-	validate  *validator.Validate
-	auth      *auth.AuthService
+type exerciseCompleteHandler struct {
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase
+	auth                    *auth.AuthService
 }
 
-func NewExerciseCompleteHandler(router *http.ServeMux, v *validator.Validate, auth *auth.AuthService, ec domain.ExerciseCompleteUseCase) {
-	handler := &ExerciseCompleteHandler{
-		ECUseCase: ec,
-		validate:  v,
-		auth:      auth,
+func NewExerciseCompleteHandler(router *http.ServeMux, exerciseCompleteUseCase domain.ExerciseCompleteUseCase, auth *auth.AuthService) {
+	handler := &exerciseCompleteHandler{
+		exerciseCompleteUseCase: exerciseCompleteUseCase,
+		auth:                    auth,
 	}
 
 	router.HandleFunc("GET /v1/analytics/user/{id}", request.WithUserID(handler.GetByUserID))
@@ -40,11 +37,12 @@ func NewExerciseCompleteHandler(router *http.ServeMux, v *validator.Validate, au
 // @Success 200 {object} response.APIResponse{data=AnalyticsData} "Аналитика найдена"
 // @Failure 404 {object} response.APIResponse "Аналитика не найдена"
 // @Router /v1/analytics/user/{id} [get]
-func (ec *ExerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Request, id auth.UserID) {
-	exerciseCompleteList, err := ec.ECUseCase.GetItemsByUserID(r.Context(), id)
+func (h *exerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Request, id auth.UserID) {
+	exerciseCompleteList, err := h.exerciseCompleteUseCase.GetItemsByUserID(r.Context(), id)
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Аналитика не найдена", err)
 		response.Error(appError, r)
+
 		return
 	}
 

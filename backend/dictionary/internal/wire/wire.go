@@ -7,7 +7,7 @@ import (
 	"context"
 	"net/http"
 
-	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -141,13 +141,13 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	validate *validator.Validate,
+	validator *validator.Validate,
 	trans ut.Translator,
 	authService *auth.AuthService,
-	dictionaryUcase domain.DictionaryUseCase,
+	dictionaryUseCase domain.DictionaryUseCase,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewDictionaryHandler(router, validate, dictionaryUcase)
+	_internalHttp.NewDictionaryHandler(router, dictionaryUseCase, validator)
 
 	// Register gRPC-Gateway handlers
 	gwmux := runtime.NewServeMux()
@@ -171,9 +171,8 @@ func newHTTPServer(
 
 // newGRPCServer создаёт новый gRPC-сервер
 func newGRPCServer(
-	validate *validator.Validate,
 	authService *auth.AuthService,
-	dictionaryUcase domain.DictionaryUseCase,
+	dictionaryUseCase domain.DictionaryUseCase,
 ) *grpc.Server {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -182,6 +181,8 @@ func newGRPCServer(
 		),
 		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
 	)
-	dictionary.RegisterDictionaryServiceServer(grpcServer, _internalGrpc.NewDictionaryHandler(validate, dictionaryUcase))
+
+	dictionary.RegisterDictionaryServiceServer(grpcServer, _internalGrpc.NewDictionaryHandler(dictionaryUseCase))
+
 	return grpcServer
 }

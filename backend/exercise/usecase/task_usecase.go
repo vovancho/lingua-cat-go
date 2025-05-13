@@ -7,7 +7,6 @@ import (
 	"time"
 
 	_watermillSql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
-	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/eventpublisher"
 )
@@ -22,14 +21,12 @@ func NewTaskUseCase(
 	exerciseUseCase domain.ExerciseUseCase,
 	dictionaryUseCase domain.DictionaryUseCase,
 	repo domain.TaskRepository,
-	validator *validator.Validate,
 	publisher ExerciseCompletedPublisherInterface,
 ) domain.TaskUseCase {
 	return &taskUseCase{
 		exerciseUseCase:   exerciseUseCase,
 		dictionaryUseCase: dictionaryUseCase,
 		taskRepo:          repo,
-		validate:          validator,
 		publisher:         publisher,
 	}
 }
@@ -38,7 +35,6 @@ type taskUseCase struct {
 	exerciseUseCase   domain.ExerciseUseCase
 	dictionaryUseCase domain.DictionaryUseCase
 	taskRepo          domain.TaskRepository
-	validate          *validator.Validate
 	publisher         ExerciseCompletedPublisherInterface
 }
 
