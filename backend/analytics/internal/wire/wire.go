@@ -102,6 +102,9 @@ func InitializeApp() (*App, error) {
 		ProvideTracingEndpoint,
 		tracing.NewTracer,
 
+		// Responder
+		response.NewResponder,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -156,16 +159,16 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseCompleteHandler(router, exerciseCompleteUseCase, authService)
+	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "analytics-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "analytics-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

@@ -34,12 +34,19 @@ type DictionaryData struct {
 }
 
 type dictionaryHandler struct {
+	responder         response.Responder
 	dictionaryUseCase domain.DictionaryUseCase
 	validator         *validator.Validate
 }
 
-func NewDictionaryHandler(router *http.ServeMux, dictionaryUseCase domain.DictionaryUseCase, validator *validator.Validate) {
+func NewDictionaryHandler(
+	router *http.ServeMux,
+	responder response.Responder,
+	dictionaryUseCase domain.DictionaryUseCase,
+	validator *validator.Validate,
+) {
 	handler := &dictionaryHandler{
+		responder:         responder,
 		dictionaryUseCase: dictionaryUseCase,
 		validator:         validator,
 	}
@@ -64,24 +71,22 @@ func (h *dictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 	dictionaries, err := h.dictionaryUseCase.GetByIDs(r.Context(), []domain.DictionaryID{dictID})
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
 	if len(dictionaries) == 0 {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", domain.DictNotFoundError)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
 	dictionary := dictionaries[0]
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Data: map[string]any{
-			"dictionary": dictionary,
-		},
+	h.responder.Success(w, http.StatusOK, map[string]any{
+		"dictionary": dictionary,
 	})
 }
 
@@ -97,7 +102,7 @@ func (h *dictionaryHandler) GetByID(w http.ResponseWriter, r *http.Request, id u
 func (h *dictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var requestBody DictionaryStoreRequest
 	if err := h.validateRequest(r, &requestBody); err != nil {
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -107,7 +112,7 @@ func (h *dictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 	for _, t := range dictionary.Translations {
 		if t.Dictionary.Lang == dictionary.Lang {
 			err := _internalError.NewAppError(http.StatusBadRequest, "Ошибка валидации", domain.DictTranslationLangInvalidError)
-			response.Error(err, r)
+			h.responder.Error(w, err)
 
 			return
 		}
@@ -115,15 +120,13 @@ func (h *dictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.dictionaryUseCase.Store(r.Context(), &dictionary); err != nil {
 		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка сохранения словаря", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, response.APIResponse{
-		Data: map[string]any{
-			"dictionary": dictionary,
-		},
+	h.responder.Success(w, http.StatusCreated, map[string]any{
+		"dictionary": dictionary,
 	})
 }
 
@@ -141,14 +144,14 @@ func (h *dictionaryHandler) Store(w http.ResponseWriter, r *http.Request) {
 func (h *dictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, id uint64) {
 	var requestBody DictionaryChangeNameRequest
 	if err := h.validateRequest(r, &requestBody); err != nil {
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	if err := h.dictionaryUseCase.ChangeName(r.Context(), domain.DictionaryID(id), requestBody.Name); err != nil {
 		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка сохранения словаря", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -156,24 +159,22 @@ func (h *dictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 	dictID := domain.DictionaryID(id)
 	dictionaries, err := h.dictionaryUseCase.GetByIDs(r.Context(), []domain.DictionaryID{dictID})
 	if err != nil {
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	if len(dictionaries) == 0 {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", domain.DictNotFoundError)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
 	dictionary := dictionaries[0]
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Data: map[string]any{
-			"dictionary": dictionary,
-		},
+	h.responder.Success(w, http.StatusOK, map[string]any{
+		"dictionary": dictionary,
 	})
 }
 
@@ -189,12 +190,12 @@ func (h *dictionaryHandler) ChangeName(w http.ResponseWriter, r *http.Request, i
 func (h *dictionaryHandler) Delete(w http.ResponseWriter, r *http.Request, id uint64) {
 	if err := h.dictionaryUseCase.Delete(r.Context(), domain.DictionaryID(id)); err != nil {
 		err = _internalError.NewAppError(http.StatusNotFound, "Словарь не найден", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
-	response.JSON(w, http.StatusNoContent, response.APIResponse{})
+	h.responder.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *dictionaryHandler) validateRequest(r *http.Request, req any) error {

@@ -21,13 +21,15 @@ type ExerciseData struct {
 }
 
 type exerciseHandler struct {
+	responder       response.Responder
 	exerciseUseCase domain.ExerciseUseCase
 	validator       *validator.Validate
 	auth            *auth.AuthService
 }
 
-func NewExerciseHandler(router *http.ServeMux, exerciseUseCase domain.ExerciseUseCase, validator *validator.Validate, auth *auth.AuthService) {
+func NewExerciseHandler(router *http.ServeMux, responder response.Responder, exerciseUseCase domain.ExerciseUseCase, validator *validator.Validate, auth *auth.AuthService) {
 	handler := &exerciseHandler{
+		responder:       responder,
 		exerciseUseCase: exerciseUseCase,
 		validator:       validator,
 		auth:            auth,
@@ -50,15 +52,13 @@ func (h *exerciseHandler) GetByID(w http.ResponseWriter, r *http.Request, id uin
 	exercise, err := h.exerciseUseCase.GetByID(r.Context(), domain.ExerciseID(id))
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Упражнение не найдено", err)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Data: map[string]any{
-			"exercise": exercise,
-		},
+	h.responder.Success(w, http.StatusOK, map[string]any{
+		"exercise": exercise,
 	})
 }
 
@@ -76,14 +76,14 @@ func (h *exerciseHandler) Store(w http.ResponseWriter, r *http.Request) {
 	userID, err := h.auth.GetUserID(r.Context())
 	if err != nil {
 		err = _internalError.NewAppError(http.StatusUnauthorized, "Не удалось получить userID", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	var requestBody ExerciseStoreRequest
 	if err := h.validateRequest(r, &requestBody); err != nil {
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -96,15 +96,13 @@ func (h *exerciseHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	if err = h.exerciseUseCase.Store(r.Context(), &exercise); err != nil {
 		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка сохранения упражнения", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, response.APIResponse{
-		Data: map[string]any{
-			"exercise": exercise,
-		},
+	h.responder.Success(w, http.StatusCreated, map[string]any{
+		"exercise": exercise,
 	})
 }
 

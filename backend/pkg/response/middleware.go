@@ -1,14 +1,9 @@
 package response
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
-
-	"github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	_internalError "github.com/vovancho/lingua-cat-go/pkg/error"
+	"runtime/debug"
 )
 
 type ValidationErrorItem struct {
@@ -18,72 +13,19 @@ type ValidationErrorItem struct {
 
 type ErrorKey struct{}
 
-func ErrorMiddleware(next http.Handler, trans ut.Translator) http.Handler {
+func ErrorMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if err := recover(); err != nil {
-				var errMsg string
-				switch e := err.(type) {
-				case error:
-					errMsg = e.Error()
-				case string:
-					errMsg = e
-				default:
-					errMsg = fmt.Sprintf("%v", e)
-				}
+			if rec := recover(); rec != nil {
+				slog.Error("panic recovered", "error", rec, "stack", string(debug.Stack()))
 
 				JSON(w, http.StatusInternalServerError, APIResponse{
 					Message: "Внутренняя ошибка сервера",
-					Error:   errMsg,
+					Error:   "panic: см. логи сервера",
 				})
 			}
 		}()
 
-		// Вызываем следующий обработчик в цепочке
 		next.ServeHTTP(w, r)
-
-		// Проверяем, есть ли ошибка в контексте
-		if err, ok := r.Context().Value(ErrorKey{}).(error); ok && err != nil {
-			switch e := err.(type) {
-			case validator.ValidationErrors:
-				var details []ValidationErrorItem
-				for _, ei := range e {
-					details = append(details, ValidationErrorItem{
-						Field:   formatFieldName(ei.Namespace()),
-						Message: ei.Translate(trans),
-					})
-				}
-
-				JSON(w, http.StatusBadRequest, APIResponse{
-					Message: "Ошибка валидации",
-					Data:    details,
-				})
-			case _internalError.AppErrorInterface:
-				var unwrapped string
-				if errUnwrapped := e.Unwrap(); errUnwrapped != nil {
-					unwrapped = errUnwrapped.Error()
-				}
-
-				JSON(w, e.StatusCode(), APIResponse{
-					Message: e.Error(),
-					Error:   unwrapped,
-				})
-			case error:
-				slog.Error("unhandled error", "error", e)
-				JSON(w, http.StatusInternalServerError, APIResponse{
-					Message: "Внутренняя ошибка сервера",
-					Error:   e.Error(),
-				})
-			}
-		}
 	})
-}
-
-func formatFieldName(namespace string) string {
-	parts := strings.SplitN(namespace, ".", 2)
-	if len(parts) < 2 {
-		return namespace // Если нет точек, возвращаем как есть
-	}
-
-	return parts[1]
 }

@@ -15,12 +15,19 @@ type AnalyticsData struct {
 }
 
 type exerciseCompleteHandler struct {
+	responder               response.Responder
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase
 	auth                    *auth.AuthService
 }
 
-func NewExerciseCompleteHandler(router *http.ServeMux, exerciseCompleteUseCase domain.ExerciseCompleteUseCase, auth *auth.AuthService) {
+func NewExerciseCompleteHandler(
+	router *http.ServeMux,
+	responder response.Responder,
+	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	auth *auth.AuthService,
+) {
 	handler := &exerciseCompleteHandler{
+		responder:               responder,
 		exerciseCompleteUseCase: exerciseCompleteUseCase,
 		auth:                    auth,
 	}
@@ -41,14 +48,12 @@ func (h *exerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Req
 	exerciseCompleteList, err := h.exerciseCompleteUseCase.GetItemsByUserID(r.Context(), id)
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Аналитика не найдена", err)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Data: map[string]any{
-			"analytics": exerciseCompleteList,
-		},
+	h.responder.Success(w, http.StatusOK, map[string]any{
+		"analytics": exerciseCompleteList,
 	})
 }

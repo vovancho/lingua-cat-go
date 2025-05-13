@@ -75,7 +75,8 @@ func InitializeApp() (*App, error) {
 	taskRepository := postgres.NewTaskRepository(sqlxDB, manager)
 	exerciseCompletedPublisherInterface := ProvideExerciseCompletedPublisher(configConfig)
 	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, exerciseCompletedPublisherInterface)
-	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
+	responder := response.NewResponder(utTranslator)
+	server := newHTTPServer(configConfig, validate, authService, exerciseUseCase, taskUseCase, responder)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(sqlxDB, loggerAdapter)
 	if err != nil {
@@ -177,18 +178,18 @@ func ProvideGRPCConn(cfg *config.Config) (*grpc2.ClientConn, error) {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config, validator4 *validator.Validate,
-	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseUseCase domain.ExerciseUseCase,
 	taskUseCase domain.TaskUseCase,
+	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	http2.NewExerciseHandler(router, exerciseUseCase, validator4, authService)
-	http2.NewTaskHandler(router, taskUseCase, exerciseUseCase, validator4, authService)
+	http2.NewExerciseHandler(router, responder, exerciseUseCase, validator4, authService)
+	http2.NewTaskHandler(router, responder, taskUseCase, exerciseUseCase, validator4, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "exercise-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "exercise-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

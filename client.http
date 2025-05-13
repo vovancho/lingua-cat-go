@@ -222,7 +222,7 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/324/task
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/325/task
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
@@ -238,13 +238,13 @@ Authorization: Bearer {{token}}
 ###
 
 // @no-cookie-jar
-POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/324/task/318/word-selected
+POST http://api.lingua-cat-go.localhost/exercise/v1/exercise/325/task/319/word-selected
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "word_select": 53
+  "word_select": 57
 }
 
 ###

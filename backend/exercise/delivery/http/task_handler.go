@@ -24,6 +24,7 @@ type TaskData struct {
 }
 
 type taskHandler struct {
+	responder       response.Responder
 	taskUseCase     domain.TaskUseCase
 	exerciseUseCase domain.ExerciseUseCase
 	validator       *validator.Validate
@@ -32,12 +33,14 @@ type taskHandler struct {
 
 func NewTaskHandler(
 	router *http.ServeMux,
+	responder response.Responder,
 	taskUseCase domain.TaskUseCase,
 	exerciseUseCase domain.ExerciseUseCase,
 	validator *validator.Validate,
 	auth *auth.AuthService,
 ) {
 	handler := &taskHandler{
+		responder:       responder,
 		taskUseCase:     taskUseCase,
 		exerciseUseCase: exerciseUseCase,
 		validator:       validator,
@@ -64,22 +67,20 @@ func (h *taskHandler) GetByID(w http.ResponseWriter, r *http.Request, exerciseID
 	task, err := h.taskUseCase.GetByID(r.Context(), *taskID)
 	if err != nil {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Задача не найдена", err)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
 	if task.Exercise.ID != exerciseID {
 		appError := _internalError.NewAppError(http.StatusNotFound, "Задача не найдена", domain.TaskNotFoundError)
-		response.Error(appError, r)
+		h.responder.Error(w, appError)
 
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.APIResponse{
-		Data: map[string]any{
-			"task": task,
-		},
+	h.responder.Success(w, http.StatusOK, map[string]any{
+		"task": task,
 	})
 }
 
@@ -99,14 +100,14 @@ func (h *taskHandler) Create(w http.ResponseWriter, r *http.Request, id uint64) 
 	userID, err := h.auth.GetUserID(r.Context())
 	if err != nil {
 		err = _internalError.NewAppError(http.StatusUnauthorized, "Не удалось получить userID", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	if ok, err := h.exerciseUseCase.IsExerciseOwner(r.Context(), exerciseID, *userID); !ok {
 		err = _internalError.NewAppError(http.StatusForbidden, "Только автор упражнения может получить задачу", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -114,15 +115,13 @@ func (h *taskHandler) Create(w http.ResponseWriter, r *http.Request, id uint64) 
 	task, err := h.taskUseCase.Create(r.Context(), exerciseID)
 	if err != nil {
 		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка генерации задачи", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, response.APIResponse{
-		Data: map[string]any{
-			"task": task,
-		},
+	h.responder.Success(w, http.StatusCreated, map[string]any{
+		"task": task,
 	})
 }
 
@@ -142,7 +141,7 @@ func (h *taskHandler) Create(w http.ResponseWriter, r *http.Request, id uint64) 
 func (h *taskHandler) SelectWord(w http.ResponseWriter, r *http.Request, exerciseID domain.ExerciseID, taskID *domain.TaskID) {
 	var requestBody TaskWordSelectRequest
 	if err := h.validateRequest(r, &requestBody); err != nil {
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -152,21 +151,21 @@ func (h *taskHandler) SelectWord(w http.ResponseWriter, r *http.Request, exercis
 	userID, err := h.auth.GetUserID(r.Context())
 	if err != nil {
 		err = _internalError.NewAppError(http.StatusUnauthorized, "Не удалось получить userID", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	if ok, err := h.exerciseUseCase.IsExerciseOwner(r.Context(), exerciseID, *userID); !ok {
 		err = _internalError.NewAppError(http.StatusForbidden, "Только автор упражнения может выбрать слово", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
 	if ok, err := h.taskUseCase.IsTaskOwnerExercise(r.Context(), exerciseID, *taskID); !ok {
 		err = _internalError.NewAppError(http.StatusForbidden, "Только автор задания может выбрать слово", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
@@ -174,15 +173,13 @@ func (h *taskHandler) SelectWord(w http.ResponseWriter, r *http.Request, exercis
 	task, err := h.taskUseCase.SelectWord(r.Context(), exerciseID, *taskID, dictionaryID)
 	if err != nil {
 		err = _internalError.NewAppError(http.StatusBadRequest, "Ошибка выбора слова", err)
-		response.Error(err, r)
+		h.responder.Error(w, err)
 
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, response.APIResponse{
-		Data: map[string]any{
-			"task": task,
-		},
+	h.responder.Success(w, http.StatusCreated, map[string]any{
+		"task": task,
 	})
 }
 
@@ -209,7 +206,7 @@ func withTaskID(h HandlerFuncWithExerciseIDAndTaskID) request.HandlerFuncWithID 
 			if err != nil {
 				messageErr := fmt.Sprintf("Парсинг \"%s\": некорректный формат ID задачи", idString)
 				appErr := _internalError.NewAppError(http.StatusBadRequest, messageErr, _internalError.InvalidPathParamError)
-				response.Error(appErr, r)
+				response.HandleError(w, appErr, nil)
 
 				return
 			}

@@ -64,7 +64,8 @@ func InitializeApp() (*App, error) {
 	manager := txmanager.New(sqlxDB)
 	dictionaryRepository := postgres.NewDictionaryRepository(sqlxDB, manager)
 	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate)
-	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase)
+	responder := response.NewResponder(utTranslator)
+	server := newHTTPServer(configConfig, validate, utTranslator, authService, dictionaryUseCase, responder)
 	grpcServer := newGRPCServer(authService, dictionaryUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
@@ -143,9 +144,10 @@ func newHTTPServer(
 	trans ut.Translator,
 	authService *auth.AuthService,
 	dictionaryUseCase domain.DictionaryUseCase,
+	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	http2.NewDictionaryHandler(router, dictionaryUseCase, validator4)
+	http2.NewDictionaryHandler(router, responder, dictionaryUseCase, validator4)
 
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -155,10 +157,10 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(otelhttp.NewHandler(gwmux, "grpc-gateway")))
+	mainMux.Handle("/grpc-gateway/", otelhttp.NewHandler(authService.AuthMiddleware(gwmux), "grpc-gateway"))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "dictionary-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "dictionary-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

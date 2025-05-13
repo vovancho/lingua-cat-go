@@ -103,6 +103,9 @@ func InitializeApp() (*App, error) {
 		ProvideTracingEndpoint,
 		tracing.NewTracer,
 
+		// Responder
+		response.NewResponder,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -174,18 +177,18 @@ func ProvideGRPCConn(cfg *config.Config) (*grpc.ClientConn, error) {
 func newHTTPServer(
 	cfg *config.Config,
 	validator *validator.Validate,
-	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseUseCase domain.ExerciseUseCase,
 	taskUseCase domain.TaskUseCase,
+	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseHandler(router, exerciseUseCase, validator, authService)
-	_internalHttp.NewTaskHandler(router, taskUseCase, exerciseUseCase, validator, authService)
+	_internalHttp.NewExerciseHandler(router, responder, exerciseUseCase, validator, authService)
+	_internalHttp.NewTaskHandler(router, responder, taskUseCase, exerciseUseCase, validator, authService)
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "exercise-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "exercise-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

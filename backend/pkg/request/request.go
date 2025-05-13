@@ -31,7 +31,8 @@ func WithID(h HandlerFuncWithID) http.HandlerFunc {
 		if err != nil {
 			messageErr := fmt.Sprintf("Парсинг \"%s\": некорректный формат ID", idString)
 			appErr := _internalError.NewAppError(http.StatusBadRequest, messageErr, _internalError.InvalidPathParamError)
-			response.Error(appErr, r)
+			response.HandleError(w, appErr, nil)
+
 			return
 		}
 
@@ -47,7 +48,8 @@ func WithUserID(h HandlerFuncWithUserID) http.HandlerFunc {
 		if err != nil {
 			messageErr := fmt.Sprintf("Парсинг \"%s\": некорректный формат UUID", idString)
 			appErr := _internalError.NewAppError(http.StatusBadRequest, messageErr, _internalError.InvalidPathParamError)
-			response.Error(appErr, r)
+			response.HandleError(w, appErr, nil)
+
 			return
 		}
 

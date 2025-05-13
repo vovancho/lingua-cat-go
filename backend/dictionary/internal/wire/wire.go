@@ -92,6 +92,9 @@ func InitializeApp() (*App, error) {
 		ProvideTracingEndpoint,
 		tracing.NewTracer,
 
+		// Responder
+		response.NewResponder,
+
 		// HTTP Delivery
 		newHTTPServer,
 
@@ -145,9 +148,10 @@ func newHTTPServer(
 	trans ut.Translator,
 	authService *auth.AuthService,
 	dictionaryUseCase domain.DictionaryUseCase,
+	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewDictionaryHandler(router, dictionaryUseCase, validator)
+	_internalHttp.NewDictionaryHandler(router, responder, dictionaryUseCase, validator)
 
 	// Register gRPC-Gateway handlers
 	gwmux := runtime.NewServeMux()
@@ -158,10 +162,10 @@ func newHTTPServer(
 
 	mainMux := http.NewServeMux()
 	mainMux.Handle("/grpc-gw-swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/grpc-gateway/", authService.AuthMiddleware(otelhttp.NewHandler(gwmux, "grpc-gateway")))
+	mainMux.Handle("/grpc-gateway/", otelhttp.NewHandler(authService.AuthMiddleware(gwmux), "grpc-gateway"))
 
 	mainMux.Handle("/swagger.json", http.FileServer(http.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "dictionary-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "dictionary-http"))
 
 	return &http.Server{
 		Addr:    cfg.HTTPPort,

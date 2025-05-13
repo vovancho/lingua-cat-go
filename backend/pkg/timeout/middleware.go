@@ -36,7 +36,7 @@ func TimeoutMiddleware(next http.Handler, timeout time.Duration) http.Handler {
 
 			slog.Info("TimeoutMiddleware: context deadline exceeded2")
 			appError := _internalError.NewAppError(http.StatusGatewayTimeout, "Request timed out", ctx.Err())
-			response.Error(appError, r)
+			response.HandleError(w, appError, nil)
 		}
 	})
 }

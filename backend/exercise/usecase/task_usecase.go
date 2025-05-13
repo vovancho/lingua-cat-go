@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"time"
 
 	_watermillSql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
@@ -153,11 +154,9 @@ func (uc taskUseCase) SelectWord(ctx context.Context, exerciseID domain.Exercise
 	}
 
 	// проверить, что dictId есть в Words
-	for _, dict := range task.Words {
-		if dict.ID == dictId {
-			break
-		}
-
+	if !slices.ContainsFunc(task.Words, func(d domain.Dictionary) bool {
+		return d.ID == dictId
+	}) {
 		return nil, domain.DictionaryNotFoundError
 	}
 

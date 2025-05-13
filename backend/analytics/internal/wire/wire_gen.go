@@ -44,10 +44,6 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	utTranslator, err := translator.NewTranslator()
-	if err != nil {
-		return nil, err
-	}
 	publicKeyPath := ProvidePublicKeyPath(configConfig)
 	authService, err := auth.NewAuthService(publicKeyPath)
 	if err != nil {
@@ -60,9 +56,14 @@ func InitializeApp() (*App, error) {
 		return nil, err
 	}
 	exerciseCompleteRepository := clickhouse.NewExerciseCompleteRepository(sqlxDB)
+	utTranslator, err := translator.NewTranslator()
+	if err != nil {
+		return nil, err
+	}
 	validate := ProvideInternalValidator(utTranslator)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate)
-	server := newHTTPServer(configConfig, utTranslator, authService, exerciseCompleteUseCase)
+	responder := response.NewResponder(utTranslator)
+	server := newHTTPServer(configConfig, authService, exerciseCompleteUseCase, responder)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
 	if err != nil {
@@ -157,16 +158,16 @@ func ProvideTracingEndpoint(cfg *config.Config) tracing.Endpoint {
 // newHTTPServer создаёт новый HTTP-сервер
 func newHTTPServer(
 	cfg *config.Config,
-	trans ut.Translator,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	responder response.Responder,
 ) *http2.Server {
 	router := http2.NewServeMux()
-	http3.NewExerciseCompleteHandler(router, exerciseCompleteUseCase, authService)
+	http3.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
 
 	mainMux := http2.NewServeMux()
 	mainMux.Handle("/swagger.json", http2.FileServer(http2.Dir("docs")))
-	mainMux.Handle("/", response.ErrorMiddleware(authService.AuthMiddleware(otelhttp.NewHandler(router, "analytics-http")), trans))
+	mainMux.Handle("/", otelhttp.NewHandler(response.ErrorMiddleware(authService.AuthMiddleware(router)), "analytics-http"))
 
 	return &http2.Server{
 		Addr:    cfg.HTTPPort,

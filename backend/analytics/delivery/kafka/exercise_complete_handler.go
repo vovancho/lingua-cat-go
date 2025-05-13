@@ -79,7 +79,5 @@ func (h *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 		return err
 	}
 
-	fmt.Println("Message processed successfully:", ec.ExerciseID)
-
 	return nil
 }
