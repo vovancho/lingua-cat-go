@@ -11,6 +11,10 @@ func RegisterAll(v *validator.Validate, trans ut.Translator) error {
 		return err
 	}
 
+	if trans == nil {
+		return nil
+	}
+
 	registerFn := func(ut ut.Translator) error {
 		return ut.Add("valid_dict_translation_lang", "{0} перевод не может быть того же языка, что и основной словарь", true)
 	}

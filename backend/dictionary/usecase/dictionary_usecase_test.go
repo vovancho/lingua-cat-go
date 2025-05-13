@@ -619,16 +619,16 @@ func TestDictionaryUseCase_Delete(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 	})
 
-	//t.Run("NotFound", func(t *testing.T) {
-	//	uc, mockRepo := newUseCaseWithMock()
-	//
-	//	mockRepo.On("GetBynantsIDs", mock.Anything, []domain.DictionaryID{dictID}).Return([]domain.Dictionary{}, errors.New("not found")).Once()
-	//
-	//	err := uc.Delete(ctx, dictID)
-	//	assert.ErrorIs(t, err, domain.Dict СергеNotFoundError)
-	//	mockRepo.AssertExpectations(t)
-	//	mockRepo.AssertNotCalled(t, "Delete")
-	//})
+	t.Run("NotFound", func(t *testing.T) {
+		uc, mockRepo := newUseCaseWithMock()
+
+		mockRepo.On("GetByIDs", mock.Anything, []domain.DictionaryID{dictID}).Return([]domain.Dictionary{}, errors.New("not found")).Once()
+
+		err := uc.Delete(ctx, dictID)
+		assert.ErrorIs(t, err, domain.DictNotFoundError)
+		mockRepo.AssertExpectations(t)
+		mockRepo.AssertNotCalled(t, "Delete")
+	})
 
 	t.Run("EmptyResult", func(t *testing.T) {
 		uc, mockRepo := newUseCaseWithMock()

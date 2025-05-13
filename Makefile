@@ -4,6 +4,17 @@ up:
 stop:
 	docker compose stop
 
+test-dictionary:
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary golang:1.24-alpine3.21 go test -v ./usecase
+
+test-exercise:
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/exercise golang:1.24-alpine3.21 go test -v ./usecase
+
+test-analytics:
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/analytics golang:1.24-alpine3.21 go test -v ./usecase
+
+test-all: test-dictionary test-exercise test-analytics
+
 wire-dictionary:
 	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 

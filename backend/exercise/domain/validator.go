@@ -10,6 +10,10 @@ func RegisterAll(v *validator.Validate, trans ut.Translator) error {
 		return err
 	}
 
+	if trans == nil {
+		return nil
+	}
+
 	if err := v.RegisterTranslation("valid_exercise_lang", trans,
 		func(ut ut.Translator) error {
 			return ut.Add("valid_exercise_lang", "{0} должен быть валидным языком", true)
