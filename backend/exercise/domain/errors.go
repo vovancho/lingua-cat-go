@@ -5,6 +5,8 @@ import "errors"
 var (
 	ExerciseNotFoundError        = errors.New("EXERCISE_NOT_FOUND")
 	ExerciseCompletedError       = errors.New("EXERCISE_COMPLETED")
+	ExerciseIsNotOwnerOfTask     = errors.New("EXERCISE_IS_NOT_OWNER_OF_TASK")
+	UserIsNotOwnerOfExercise     = errors.New("USER_IS_NOT_OWNER_OF_EXERCISE")
 	TaskNotFoundError            = errors.New("TASK_NOT_FOUND")
 	NewTaskNotAllowedError       = errors.New("NEW_TASK_NOT_ALLOWED")
 	DictionaryNotFoundError      = errors.New("DICTIONARY_NOT_FOUND")

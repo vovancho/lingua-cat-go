@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type ExerciseCompletedTopic string
@@ -21,7 +23,7 @@ type Config struct {
 	KeycloakAdminRealmEndpoint  string
 	KeycloakAdminToken          string
 	JaegerCollectorEndpoint     string
-	Timeout                     int // in seconds
+	Timeout                     time.Duration
 }
 
 func Load() (*Config, error) {
@@ -45,7 +47,7 @@ func Load() (*Config, error) {
 		KeycloakAdminRealmEndpoint:  os.Getenv("KEYCLOAK_ADMIN_REALM_ENDPOINT"),
 		KeycloakAdminToken:          os.Getenv("KEYCLOAK_ADMIN_TOKEN"),
 		JaegerCollectorEndpoint:     os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
-		Timeout:                     timeout,
+		Timeout:                     time.Duration(timeout) * time.Second,
 	}
 
 	if cfg.DBDSN == "" {

@@ -2,19 +2,17 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
-	"time"
 )
 
-func NewExerciseUseCase(er domain.ExerciseRepository, v *validator.Validate, timeout Timeout) domain.ExerciseUseCase {
+func NewExerciseUseCase(repo domain.ExerciseRepository, validator *validator.Validate) domain.ExerciseUseCase {
 	return &exerciseUseCase{
-		exerciseRepo:   er,
-		validate:       v,
-		contextTimeout: time.Duration(timeout),
+		exerciseRepo: repo,
+		validate:     validator,
 	}
 }
 
@@ -25,19 +23,8 @@ type exerciseUseCase struct {
 }
 
 func (e exerciseUseCase) GetByID(ctx context.Context, id domain.ExerciseID) (*domain.Exercise, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	ctx, cancel := context.WithTimeout(ctx, e.contextTimeout)
-	defer cancel()
-
 	exercise, err := e.exerciseRepo.GetByID(ctx, id)
 	if err != nil {
-		// Если это таймаут — не затираем ошибку
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			return nil, err
-		}
-
 		return nil, domain.ExerciseNotFoundError
 	}
 
@@ -45,29 +32,16 @@ func (e exerciseUseCase) GetByID(ctx context.Context, id domain.ExerciseID) (*do
 }
 
 func (e exerciseUseCase) IsExerciseOwner(ctx context.Context, exerciseID domain.ExerciseID, userID auth.UserID) (bool, error) {
-	if err := ctx.Err(); err != nil {
-		return false, err
-	}
-	ctx, cancel := context.WithTimeout(ctx, e.contextTimeout)
-	defer cancel()
-
-	ok, err := e.exerciseRepo.IsExerciseOwner(ctx, exerciseID, userID)
+	isOwner, err := e.exerciseRepo.IsExerciseOwner(ctx, exerciseID, userID)
 	if err != nil {
-		return false, err
+		return false, domain.UserIsNotOwnerOfExercise
 	}
 
-	return ok, nil
+	return isOwner, nil
 }
 
 func (e exerciseUseCase) Store(ctx context.Context, exercise *domain.Exercise) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(ctx, e.contextTimeout)
-	defer cancel()
-
 	if err := e.validate.Struct(exercise); err != nil {
-		fmt.Println(exercise)
 		return err
 	}
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -11,7 +13,6 @@ import (
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"time"
 )
 
 type ExerciseCompleteMessage struct {
@@ -84,6 +85,8 @@ func (ech *ExerciseCompleteHandler) Handle(msg *message.Message) error {
 	if err := ech.ECUseCase.Store(ctx, ec); err != nil {
 		return err
 	}
+
+	fmt.Println("Message processed successfully:", ec.ExerciseID)
 
 	return nil
 }

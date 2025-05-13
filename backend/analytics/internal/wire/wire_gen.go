@@ -31,7 +31,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/sdk/trace"
 	http2 "net/http"
-	"time"
 )
 
 import (
@@ -62,8 +61,7 @@ func InitializeApp() (*App, error) {
 		return nil, err
 	}
 	exerciseCompleteRepository := clickhouse.NewExerciseCompleteRepository(sqlxDB)
-	timeout := ProvideUseCaseTimeout(configConfig)
-	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate, timeout)
+	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseCompleteUseCase)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
@@ -77,7 +75,7 @@ func InitializeApp() (*App, error) {
 	httpConfig := ProvideKeycloakConfig(configConfig)
 	client := ProvideUserHttpClient()
 	userRepository := http.NewUserRepository(httpConfig, client)
-	userUseCase := usecase.NewUserUseCase(userRepository, timeout)
+	userUseCase := usecase.NewUserUseCase(userRepository)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(validate, exerciseCompleteUseCase, userUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
@@ -146,11 +144,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {

@@ -2,44 +2,30 @@ package usecase
 
 import (
 	"context"
-	"errors"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/vovancho/lingua-cat-go/exercise/domain"
-	"time"
 )
 
-func NewDictionaryUseCase(dr domain.DictionaryRepository, v *validator.Validate, timeout Timeout) domain.DictionaryUseCase {
+func NewDictionaryUseCase(repo domain.DictionaryRepository, validator *validator.Validate) domain.DictionaryUseCase {
 	return &dictionaryUseCase{
-		dictionaryRepo: dr,
-		validate:       v,
-		contextTimeout: time.Duration(timeout),
+		dictionaryRepo: repo,
+		validate:       validator,
 	}
 }
 
 type dictionaryUseCase struct {
 	dictionaryRepo domain.DictionaryRepository
 	validate       *validator.Validate
-	contextTimeout time.Duration
 }
 
 func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domain.DictionaryLang, limit uint8) ([]domain.Dictionary, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
-	defer cancel()
-
 	if limit < 4 || limit > 8 {
 		return nil, domain.DictionariesLimitError
 	}
 
 	dicts, err := d.dictionaryRepo.GetRandomDictionaries(ctx, lang, limit)
 	if err != nil {
-		// Если это таймаут — не затираем ошибку
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			return nil, err
-		}
-
 		return nil, domain.DictionariesNotFoundError
 	}
 
@@ -47,19 +33,8 @@ func (d dictionaryUseCase) GetRandomDictionaries(ctx context.Context, lang domai
 }
 
 func (d dictionaryUseCase) GetDictionariesByIds(ctx context.Context, dictIds []domain.DictionaryID) ([]domain.Dictionary, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	ctx, cancel := context.WithTimeout(ctx, d.contextTimeout)
-	defer cancel()
-
 	dicts, err := d.dictionaryRepo.GetDictionariesByIds(ctx, dictIds)
 	if err != nil {
-		// Если это таймаут — не затираем ошибку
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			return nil, err
-		}
-
 		return nil, domain.DictionariesNotFoundError
 	}
 

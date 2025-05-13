@@ -5,6 +5,8 @@ package wire
 
 import (
 	"context"
+	"net/http"
+
 	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
@@ -29,8 +31,6 @@ import (
 	_pkgValidator "github.com/vovancho/lingua-cat-go/pkg/validator"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"net/http"
-	"time"
 )
 
 // App представляет приложение с конфигурацией и серверами
@@ -94,7 +94,6 @@ func InitializeApp() (*App, error) {
 		_httpRepo.NewUserRepository,
 
 		// Use case
-		ProvideUseCaseTimeout,
 		usecase.NewExerciseCompleteUseCase,
 		usecase.NewUserUseCase,
 
@@ -144,11 +143,6 @@ func ProvideInternalValidator(trans ut.Translator) *validator.Validate {
 
 func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
-}
-
-// getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {

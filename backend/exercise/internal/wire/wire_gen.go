@@ -23,6 +23,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/exercise/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/eventpublisher"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
@@ -33,7 +34,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	grpc2 "google.golang.org/grpc"
 	"net/http"
-	"time"
 )
 
 import (
@@ -64,18 +64,17 @@ func InitializeApp() (*App, error) {
 		return nil, err
 	}
 	exerciseRepository := postgres.NewExerciseRepository(sqlxDB)
-	timeout := ProvideUseCaseTimeout(configConfig)
-	exerciseUseCase := usecase.NewExerciseUseCase(exerciseRepository, validate, timeout)
+	exerciseUseCase := usecase.NewExerciseUseCase(exerciseRepository, validate)
 	clientConn, err := ProvideGRPCConn(configConfig)
 	if err != nil {
 		return nil, err
 	}
 	dictionaryRepository := grpc.NewDictionaryRepository(clientConn, authService)
-	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate, timeout)
+	dictionaryUseCase := usecase.NewDictionaryUseCase(dictionaryRepository, validate)
 	manager := txmanager.New(sqlxDB)
 	taskRepository := postgres.NewTaskRepository(sqlxDB, manager)
-	exerciseCompletedTopic := ProvideKafkaExerciseCompletedTopic(configConfig)
-	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, timeout, exerciseCompletedTopic)
+	exerciseCompletedPublisherInterface := ProvideExerciseCompletedPublisher(configConfig)
+	taskUseCase := usecase.NewTaskUseCase(exerciseUseCase, dictionaryUseCase, taskRepository, validate, exerciseCompletedPublisherInterface)
 	server := newHTTPServer(configConfig, validate, utTranslator, authService, exerciseUseCase, taskUseCase)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(sqlxDB, loggerAdapter)
@@ -153,9 +152,10 @@ func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
 }
 
-// getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideExerciseCompletedPublisher(cfg *config.Config) usecase.ExerciseCompletedPublisherInterface {
+	topic := eventpublisher.EventTopicName(cfg.KafkaExerciseCompletedTopic)
+
+	return eventpublisher.NewEventPublisher(topic)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
@@ -195,11 +195,6 @@ func newHTTPServer(
 		Addr:    cfg.HTTPPort,
 		Handler: mainMux,
 	}
-}
-
-// ProvideKafkaExerciseCompletedTopic возвращает имя топика о выполненных упражнениях
-func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase.ExerciseCompletedTopic {
-	return usecase.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
 }
 
 // ProvideLogger создает Watermill логгер

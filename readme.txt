@@ -55,6 +55,9 @@ docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C error mod init github.com/vovancho/lingua-cat-go/pkg/error
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C error mod tidy
 
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C eventpublisher mod init github.com/vovancho/lingua-cat-go/pkg/eventpublisher
+docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C eventpublisher mod tidy
+
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C request mod init github.com/vovancho/lingua-cat-go/pkg/request
 docker run --rm -v ${PWD}/backend/pkg:/src -v pkgmod:/go/pkg/mod -w /src golang:1.24-alpine3.21 go -C request mod tidy
 
@@ -192,6 +195,8 @@ apk add --no-cache curl && curl -X POST --location "http://lcg-keycloak/realms/l
     -d 'grant_type=client_credentials&client_id=lingua-cat-go-admin&client_secret=OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR'
 
 "access_token" => KEYCLOAK_ADMIN_TOKEN
+
+docker compose restart lcg-analytics-backend
 ------------------------------------------------------------------------------------------------------------------------
 
 

@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -17,7 +19,7 @@ type Config struct {
 	KafkaBroker                 string
 	KafkaExerciseCompletedTopic string
 	JaegerCollectorEndpoint     string
-	Timeout                     int // in seconds
+	Timeout                     time.Duration
 }
 
 func Load() (*Config, error) {
@@ -39,7 +41,7 @@ func Load() (*Config, error) {
 		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
 		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
 		JaegerCollectorEndpoint:     os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
-		Timeout:                     timeout,
+		Timeout:                     time.Duration(timeout) * time.Second,
 	}
 
 	if cfg.DBDSN == "" {

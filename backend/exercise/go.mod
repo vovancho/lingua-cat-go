@@ -16,6 +16,7 @@ require (
 	github.com/vovancho/lingua-cat-go/pkg/auth v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/db v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/error v0.0.0
+	github.com/vovancho/lingua-cat-go/pkg/eventpublisher v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/request v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/response v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/tracing v0.0.0-00010101000000-000000000000
@@ -24,7 +25,6 @@ require (
 	github.com/vovancho/lingua-cat-go/pkg/validator v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
-	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/sdk v1.35.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
@@ -35,6 +35,7 @@ replace (
 	github.com/vovancho/lingua-cat-go/pkg/auth => ../pkg/auth
 	github.com/vovancho/lingua-cat-go/pkg/db => ../pkg/db
 	github.com/vovancho/lingua-cat-go/pkg/error => ../pkg/error
+	github.com/vovancho/lingua-cat-go/pkg/eventpublisher => ../pkg/eventpublisher
 	github.com/vovancho/lingua-cat-go/pkg/request => ../pkg/request
 	github.com/vovancho/lingua-cat-go/pkg/response => ../pkg/response
 	github.com/vovancho/lingua-cat-go/pkg/tracing => ../pkg/tracing
@@ -82,6 +83,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect

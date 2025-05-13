@@ -4,6 +4,8 @@
 package wire
 
 import (
+	"net/http"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
@@ -23,6 +25,7 @@ import (
 	_internalValidator "github.com/vovancho/lingua-cat-go/exercise/internal/validator"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/eventpublisher"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
@@ -32,8 +35,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
-	"net/http"
-	"time"
 )
 
 // App представляет приложение с конфигурацией и серверами
@@ -92,7 +93,7 @@ func InitializeApp() (*App, error) {
 		_internalGrpc.NewDictionaryRepository,
 
 		// Use case
-		ProvideUseCaseTimeout,
+		ProvideExerciseCompletedPublisher,
 		usecase.NewExerciseUseCase,
 		usecase.NewTaskUseCase,
 		usecase.NewDictionaryUseCase,
@@ -106,7 +107,6 @@ func InitializeApp() (*App, error) {
 		newHTTPServer,
 
 		// Watermill Outbox
-		ProvideKafkaExerciseCompletedTopic,
 		ProvideLogger,
 		ProvideSubscriber,
 		ProvidePublisher,
@@ -144,9 +144,10 @@ func ProvidePublicKeyPath(cfg *config.Config) auth.PublicKeyPath {
 	return auth.PublicKeyPath(cfg.AuthPublicKeyPath)
 }
 
-// getUseCaseTimeout возвращает таймаут для use case из конфигурации
-func ProvideUseCaseTimeout(cfg *config.Config) usecase.Timeout {
-	return usecase.Timeout(time.Duration(cfg.Timeout) * time.Second)
+func ProvideExerciseCompletedPublisher(cfg *config.Config) usecase.ExerciseCompletedPublisherInterface {
+	topic := eventpublisher.EventTopicName(cfg.KafkaExerciseCompletedTopic)
+
+	return eventpublisher.NewEventPublisher(topic)
 }
 
 func ProvideTracingServiceName(cfg *config.Config) tracing.ServiceName {
@@ -190,11 +191,6 @@ func newHTTPServer(
 		Addr:    cfg.HTTPPort,
 		Handler: mainMux,
 	}
-}
-
-// ProvideKafkaExerciseCompletedTopic возвращает имя топика о выполненных упражнениях
-func ProvideKafkaExerciseCompletedTopic(cfg *config.Config) usecase.ExerciseCompletedTopic {
-	return usecase.ExerciseCompletedTopic(cfg.KafkaExerciseCompletedTopic)
 }
 
 // ProvideLogger создает Watermill логгер
