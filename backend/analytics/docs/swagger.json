@@ -65,7 +65,6 @@
             "required": [
                 "exercise_id",
                 "exercise_lang",
-                "spent_time",
                 "user_id",
                 "user_name",
                 "words_corrected_count",

@@ -26,7 +26,6 @@ docker compose exec -it lcg-keycloak /opt/keycloak/bin/kc.sh export --realm ling
 docker compose exec -it lcg-keycloak /opt/keycloak/bin/kc.sh import --file /tmp/keycloak-export/lingua-cat-go-realm.json
 docker compose exec -it lcg-keycloak ls -l /tmp/keycloak-export
 
-docker compose exec -it lcg-keycloak /opt/keycloak/bin/kc.sh export --realm lingua-cat-go --users realm_file --dir /tmp/keycloak-export
 
 
 
@@ -157,6 +156,7 @@ func init() {
 ```
 
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 sh -c "apk add --no-cache git && go -C dictionary mod tidy"
+docker run --rm -v ${PWD}/backend:/app golang:1.24-alpine3.21 sh -c "ls -l /app"
 
 
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
@@ -235,11 +235,11 @@ docker run --rm -v ${PWD}:/defs ghcr.io/grpc-ecosystem/grpc-gateway/dev protoc -
 docker run --rm -v ${PWD}/backend/dictionary/dictionary/delivery/grpc:/defs namely/protoc-all:1.51_2 -f proto/dictionary.proto -l go -o /defs
 
 Сгенерировать grpc-gateway и swagger.json:
-docker run --rm -v ${PWD}/backend/dictionary:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
-docker run --rm -v ${PWD}/backend/exercise:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
-docker run --rm -v ${PWD}/backend/analytics:/code -v pkgmod:/go/pkg/mod -w /code ghcr.io/swaggo/swag:v1.16.4 init --ot json -g app/main.go -o ./docs
+docker run --rm -v ${PWD}/backend:/code -v pkgmod:/go/pkg/mod -w /code/dictionary ghcr.io/swaggo/swag:v1.16.4 init -d /code/dictionary,/code/pkg --ot json -g cmd/main.go -o ./docs
+docker run --rm -v ${PWD}/backend:/code -v pkgmod:/go/pkg/mod -w /code/exercise ghcr.io/swaggo/swag:v1.16.4 init -d /code/exercise,/code/pkg --ot json -g cmd/main.go -o ./docs
+docker run --rm -v ${PWD}/backend:/code -v pkgmod:/go/pkg/mod -w /code/analytics ghcr.io/swaggo/swag:v1.16.4 init -d /code/analytics,/code/pkg --ot json -g cmd/main.go -o ./docs
 
-docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/doc/grpc-gw-swagger.json && rm -r dictionary/delivery/grpc/proto"
+docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o dictionary/delivery/grpc --with-gateway --with-openapi-json-names --generate-unbound-methods && mv dictionary/delivery/grpc/proto/dictionary.swagger.json dictionary/docs/grpc-gw-swagger.json && rm -r dictionary/delivery/grpc/proto"
 docker run --rm --entrypoint sh -v ${PWD}/backend:/defs namely/protoc-all:1.51_2 -c "entrypoint.sh -f proto/dictionary.proto -l go -o exercise/repository/grpc"
 
 
