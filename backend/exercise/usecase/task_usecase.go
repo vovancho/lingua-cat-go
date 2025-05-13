@@ -148,6 +148,11 @@ func (uc taskUseCase) SelectWord(ctx context.Context, exerciseID domain.Exercise
 		return nil, domain.TaskNotFoundError
 	}
 
+	// проверить, что задача не была выбрана
+	if task.WordSelected != nil {
+		return nil, domain.TaskWordAlreadySelectedError
+	}
+
 	// проверить, что задача принадлежит упражнению
 	if exerciseID != task.Exercise.ID {
 		return nil, domain.ExerciseIsNotOwnerOfTask
