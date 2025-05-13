@@ -20,7 +20,6 @@ prometheus
 тесты
 logger
 debug
-request timeout
 viper
 
 

@@ -164,9 +164,9 @@ docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/exercise/in
 docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/analytics/internal/wire golang:1.24-alpine3.21 sh -c "go install github.com/google/wire/cmd/wire@latest && wire"
 
 
-docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase
-docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase -run TestDictionaryUseCase_GetByID/Timeout
-docker run --rm -v .\backend\dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase -run TestDictionaryUseCase_GetByID/InternalTimeout
+docker run --rm -v ${PWD}/backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary golang:1.24-alpine3.21 go test -v ./usecase
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase -run TestDictionaryUseCase_GetByID/Timeout
+docker run --rm -v ${PWD}/backend/dictionary:/app -v pkgmod:/go/pkg/mod -w /app golang:1.24-alpine3.21 go test -v ./dictionary/usecase -run TestDictionaryUseCase_GetByID/InternalTimeout
 
 
 
