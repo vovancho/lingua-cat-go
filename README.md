@@ -210,7 +210,7 @@ GET /v1/analytics/user/{user_id}    # получить статистику по
 
 1. Склонировать репозиторий:
 ```bash
-   git clone https://github.com/your-org/lingua-cat-go.git
+   git clone https://github.com/vovancho/lingua-cat-go.git
    cd lingua-cat-go
 ```
 
