@@ -20,27 +20,22 @@
 │  │  │  └── exercise_complete_handler.go  # HTTP-эндпоинты
 │  │  └── kafka
 │  │     └── exercise_complete_handler.go  # Kafka-обработчик
-│  ├── docker-compose.yml          # Конфигурация Docker
+│  ├── docker-compose.yml          # Конфиг Docker для analytics
 │  ├── docs
-│  │  └── swagger.json             # OpenAPI-спецификация для analytics
+│  │  └── swagger.json             # OpenAPI-спецификация для HTTP analytics
 │  ├── domain                      # Бизнес-модель
 │  │  ├── errors.go                # Определение бизнес-ошибок
 │  │  ├── exercise_complete.go     # Интерфейсы и сущность выполненного упражнения
 │  │  ├── user.go                  # Интерфейсы и сущность пользователя
 │  │  └── validator.go             # Кастомные валидаторы доменных структур
-│  ├── go.mod
-│  ├── go.sum
 │  ├── internal                    # Внутренние пакеты
-│  │  ├── config                   # Чтение конфигурации
+│  │  ├── config
 │  │  │  └── config.go             # Конфигурация сервиса (из переменных окружения)
 │  │  ├── validator
 │  │  │  └── validator.go          # Интеграция кастомных валидаторов
 │  │  └── wire
 │  │     ├── wire.go               # DI-конфигурация с Google Wire
-│  │     └── wire_gen.go
 │  ├── migrations                  # SQL-миграции для ClickHouse
-│  │  ├── 20250506122921_init_schema.down.sql
-│  │  └── 20250506122921_init_schema.up.sql
 │  ├── repository                  # Реализация хранилищ
 │  │  ├── clickhouse
 │  │  │  └── exercise_complete.go  # Запись и чтение статистики по выполненным упражнениям
@@ -51,144 +46,102 @@
 │     ├── exercise_complete_usecase_test.go  # Тесты для exercise_complete-usecase
 │     ├── user_usecase.go          # Получение имени пользователя
 │     └── user_usecase_test.go     # Тесты для user-usecase
-├── dictionary                # Сервис словаря: CRUD-операции со словами и переводами
-│  ├── cmd                  # Точка входа
-│  │  └── main.go           # Запуск HTTP и gRPC серверов
-│  ├── delivery             # Handlers для запросов
-│  │  ├── grpc              # gRPC-сервер
-│  │  │  ├── dictionary_handler.go  # Обработка gRPC-запросов
-│  │  │  └── gen            # Сгенерированные файлы протобуфа
-│  │  │     ├── dictionary.pb.go
-│  │  │     ├── dictionary.pb.gw.go
-│  │  │     └── dictionary_grpc.pb.go
-│  │  └── http              # HTTP-сервер и валидация
-│  │     ├── dictionary_handler.go  # Обработка HTTP-эндпоинтов
-│  │     └── validator.go    # HTTP-валидация входных данных
-│  ├── docker-compose.yml   # Конфиг Docker для dictionary
-│  ├── docs                 # OpenAPI-и gRPC-документация
-│  │  ├── grpc-gw-swagger.json
-│  │  └── swagger.json
-│  ├── domain               # Доменные модели и ошибки
-│  │  ├── dictionary.go
-│  │  ├── errors.go
-│  │  ├── sentence.go
-│  │  ├── translation.go
-│  │  └── validator.go
-│  ├── go.mod
-│  ├── go.sum
-│  ├── internal             # Внутренние реализации
-│  │  ├── config
-│  │  │  └── config.go
-│  │  ├── validator
-│  │  │  └── validator.go
-│  │  └── wire
-│  │     ├── wire.go
-│  │     └── wire_gen.go
-│  ├── migrations
-│  │  ├── 20250424135436_init_schema.down.sql
-│  │  ├── 20250424135436_init_schema.up.sql
-│  │  ├── 20250429112627_init_data.down.sql
-│  │  └── 20250429112627_init_data.up.sql
-│  ├── repository
-│  │  └── postgres
-│  │     └── dictionary.go  # Реализация репозитория на PostgreSQL
-│  └── usecase
-│     ├── dictionary_usecase.go   # Бизнес-правила работы со словарём
-│     └── dictionary_usecase_test.go  # Тесты для dictionary usecase
-├── exercise                # Сервис упражнений: создание и прохождение
+│
+├── dictionary                     # Сервис словаря: Получение и сохранение слов и переводов
 │  ├── cmd
-│  │  └── main.go           # Запуск HTTP-сервера и продюсера Kafka (Outbox)
-│  ├── delivery
-│  │  └── http
-│  │     ├── exercise_handler.go  # HTTP-эндпоинты для упражнений
-│  │     └── task_handler.go      # HTTP-эндпоинты для задач внутри упражнения
-│  ├── docker-compose.yml   # Docker-окружение для exercise
-│  ├── docs
-│  │  └── swagger.json      # OpenAPI-спецификация для exercise
-│  ├── domain
-│  │  ├── dictionary.go
-│  │  ├── errors.go
-│  │  ├── exercise.go       # Сущность упражнения
-│  │  ├── sentence.go
-│  │  ├── task.go           # Сущность задачи внутри упражнения
-│  │  ├── translation.go
-│  │  └── validator.go      # Валидация доменных структур
-│  ├── go.mod
-│  ├── go.sum
-│  ├── internal
-│  │  ├── config
-│  │  │  └── config.go
-│  │  ├── validator
-│  │  │  └── validator.go
-│  │  └── wire
-│  │     ├── wire.go
-│  │     └── wire_gen.go
-│  ├── migrations
-│  │  ├── 20250501080432_init_schema.down.sql
-│  │  ├── 20250501080432_init_schema.up.sql
-│  │  ├── 20250506034401_outbox_init.down.sql
-│  │  └── 20250506034401_outbox_init.up.sql
-│  ├── repository
+│  │  └── main.go                  # Точка входа: запуск HTTP и gRPC серверов
+│  ├── delivery                    # Внешний слой
 │  │  ├── grpc
-│  │  │  ├── dictionary.go   # К gRPC-репозиторию словаря
-│  │  │  └── gen
-│  │  │     ├── dictionary.pb.go
-│  │  │     └── dictionary_grpc.pb.go
+│  │  │  ├── dictionary_handler.go  # Обработка gRPC-запросов
+│  │  │  └── gen                    # Сгенерированные proto-файлы
+│  │  └── http
+│  │     ├── dictionary_handler.go  # HTTP-эндпоинты
+│  │     └── validator.go          # Кастомные валидаторы входных данных
+│  ├── docker-compose.yml          # Конфиг Docker для dictionary
+│  ├── docs
+│  │  ├── grpc-gw-swagger.json     # OpenAPI-спецификация для gRPC-gateway analytics
+│  │  └── swagger.json             # OpenAPI-спецификация для HTTP analytics
+│  ├── domain                      # Бизнес-модель
+│  │  ├── dictionary.go            # Интерфейсы и сущность слова
+│  │  ├── errors.go                # Определение бизнес-ошибок
+│  │  ├── sentence.go              # Сущность примеров предложений с переводимым словом
+│  │  ├── translation.go           # Сущность перевода слова
+│  │  └── validator.go             # Кастомные валидаторы доменных структур
+│  ├── internal                    # Внутренние пакеты
+│  │  ├── config
+│  │  │  └── config.go             # Конфигурация сервиса (из переменных окружения)
+│  │  ├── validator
+│  │  │  └── validator.go          # Интеграция кастомных валидаторов
+│  │  └── wire
+│  │     ├── wire.go               # DI-конфигурация с Google Wire
+│  ├── migrations                  # SQL-миграции для PostgreSQL
+│  ├── repository                  # Реализация хранилищ
 │  │  └── postgres
-│  │     ├── exercise.go     # Реализация репозитория упражнений
-│  │     └── task.go         # Репозиторий задач (tasks)
-│  └── usecase
-│     ├── dictionary_usecase.go  # Использование словаря в exercise
-│     ├── dictionary_usecase_test.go
-│     ├── exercise_usecase.go    # Логика создания и завершения упражнений
-│     ├── exercise_usecase_test.go
-│     ├── task_usecase.go        # Логика задач внутри упражнения
-│     └── task_usecase_test.go
-├── pkg                     # Общие пакеты, разделяемые между сервисами
-│  ├── auth                 # JWT-аутентификация и middleware
-│  │  ├── auth.go
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  ├── interceptor.go
-│  │  └── middleware.go
-│  ├── db                   # Инициализация и доступ к базе данных
-│  │  ├── db.go
-│  │  ├── go.mod
-│  │  └── go.sum
-│  ├── error                # Утилиты для работы с ошибками
-│  │  ├── error.go
-│  │  └── go.mod
-│  ├── eventpublisher       # Абстракция публикации событий (Outbox, Kafka)
-│  │  ├── eventpublisher.go
-│  │  ├── go.mod
-│  │  └── go.sum
-│  ├── request              # Утилиты парсинга HTTP-запросов
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  └── request.go
-│  ├── response             # Формирование HTTP-ответов и middleware
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  ├── middleware.go
-│  │  └── response.go
-│  ├── tracing              # Инструменты для распределённого трейсинга
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  └── tracing.go
-│  ├── translator          # Утилиты для перевода текста (например, внешние API)
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  └── translator.go
-│  ├── txmanager           # Управление транзакциями (DB и Outbox)
-│  │  ├── go.mod
-│  │  ├── go.sum
-│  │  └── txmanager.go
-│  └── validator           # Общие правила валидации и обёртка validator.v10
-│     ├── go.mod
-│     ├── go.sum
-│     └── validator.go
-└── proto                   # Папка с Proto-файлами для gRPC-генерации
-   └── dictionary.proto    # Описание сервисов и сообщений для словаря
+│  │     └── dictionary.go         # Запись и чтение слов с их переводами и предложениями
+│  └── usecase                     # Бизнес-логика
+│     ├── dictionary_usecase.go    # Получение и сохранение слов с их переводами и предложениями
+│     └── dictionary_usecase_test.go  # Тесты для dictionary-usecase
+│
+├── exercise                       # Сервис упражнений: создание упражнений и прохождение заданий
+│  ├── cmd
+│  │  └── main.go                  # Точка входа: запуск HTTP-сервера и продюсера Kafka (Outbox)
+│  ├── delivery                    # Внешний слой
+│  │  └── http
+│  │     ├── exercise_handler.go   # HTTP-эндпоинты для упражнений
+│  │     └── task_handler.go       # HTTP-эндпоинты для заданий упражнения
+│  ├── docker-compose.yml          # Конфиг Docker для exercise
+│  ├── docs
+│  │  └── swagger.json             # OpenAPI-спецификация для HTTP exercise
+│  ├── domain                      # Бизнес-модель
+│  │  ├── dictionary.go            # Интерфейсы и сущность слова
+│  │  ├── errors.go                # Определение бизнес-ошибок
+│  │  ├── exercise.go              # Интерфейсы и сущность упражнения
+│  │  ├── sentence.go              # Сущность примеров предложений с переводимым словом
+│  │  ├── task.go                  # Интерфейсы и сущность задания упражнения
+│  │  ├── translation.go           # Сущность перевода слова
+│  │  └── validator.go             # Валидация доменных структур
+│  ├── internal                    # Внутренние пакеты
+│  │  ├── config
+│  │  │  └── config.go             # Конфигурация сервиса (из переменных окружения)
+│  │  ├── validator
+│  │  │  └── validator.go          # Интеграция кастомных валидаторов
+│  │  └── wire
+│  │     ├── wire.go               # DI-конфигурация с Google Wire
+│  ├── migrations                  # SQL-миграции для PostgreSQL
+│  ├── repository                  # Реализация хранилищ
+│  │  ├── grpc
+│  │  │  ├── dictionary.go         # Чтение случайного набора слов или слов по идентификаторам
+│  │  │  └── gen                   # Сгенерированные proto-файлы
+│  │  └── postgres
+│  │     ├── exercise.go           # Запись и чтение упражнений, проверка владельца
+│  │     └── task.go               # Запись и чтение заданий упражнения, проверка принадлежности
+│  └── usecase                     # Бизнес-логика
+│     ├── dictionary_usecase.go    # Получение случайного набора слов или слов по идентификаторам
+│     ├── dictionary_usecase_test.go  # Тесты для dictionary-usecase
+│     ├── exercise_usecase.go      # Получение и сохранение упражнений, проверка владельца
+│     ├── exercise_usecase_test.go  # Тесты для exercise-usecase
+│     ├── task_usecase.go          # Получение и сохранение заданий упражнения, проверка принадлежности
+│     └── task_usecase_test.go     # Тесты для task-usecase
+│
+├── pkg                            # Общие пакеты, разделяемые между сервисами
+│  ├── auth                        # JWT-аутентификация и middleware
+│  │  ├── auth.go                  # Сервис аутентификации
+│  │  ├── interceptor.go           # interceptor для gRPC (проверка JWT-токена, сохранение в контекст)
+│  │  └── middleware.go            # middleware для HTTP (проверка JWT-токена, сохранение в контекст)
+│  ├── db                          # Инициализация и доступ к базе данных
+│  ├── error                       # Утилиты для работы с ошибками
+│  ├── eventpublisher              # Публикация событий (Outbox, Kafka)
+│  ├── request                     # Утилиты парсинга HTTP-запросов
+│  ├── response                    # Формирование HTTP-ответов и middleware
+│  │  ├── middleware.go            # middleware для обработки паник
+│  │  └── response.go              # Утилиты формирования HTTP-ответов (в том числе ошибок)
+│  ├── tracing                     # Инструменты для распределённого трейсинга
+│  ├── translator                  # Инициализация переводчика
+│  ├── txmanager                   # Управление транзакциями базы данных
+│  └── validator                   # Инициализация валидатора
+│
+└── proto                          # Папка с Proto-файлами для gRPC-генерации
+   └── dictionary.proto            # Описание сервисов и сообщений для dictionary
 
 ```
 
