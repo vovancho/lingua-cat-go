@@ -1,6 +1,7 @@
 # Lingua-Cat-Go
 
 **Lingua-Cat-Go** — это проект для обучения иностранным словам.
+
 Система состоит из API Gateway (Traefik), сервиса аутентификации (Keycloak), трёх основных микросервисов (Dictionary, Exercise, Analytics), а также Kafka для асинхронной передачи событий и ClickHouse для аналитики.
 
 ![Architecture Diagram](project/scheme.png)
