@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2025-05-14T12:34:38.885Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="9wnublTuwxx-6A9znyX1" version="21.6.8" type="device">
+<mxfile host="Electron" modified="2025-05-14T12:40:46.207Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="hgVjnaPwt8Fcb7kSZ-Mc" version="21.6.8" type="device">
   <diagram name="Page-1" id="UlOoKLjMKQyOIYjccCiV">
-    <mxGraphModel dx="6913" dy="3190" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="2304" dy="512" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -422,7 +422,7 @@
           <mxGeometry x="2193.81" y="4385.85" width="172.38" height="107" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-40" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:1400/1*o59-2_98TPsQQllPT2uzEw.png;imageBorder=default;strokeWidth=2;perimeterSpacing=0;" vertex="1" parent="1">
-          <mxGeometry x="2756.4800000000005" y="4870" width="124.6" height="40.600000000000364" as="geometry" />
+          <mxGeometry x="2711.4800000000005" y="4870" width="124.6" height="40.600000000000364" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-41" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:1400/1*C3as2QUymjCBJi317gMgMg.png;strokeWidth=2;imageBorder=default;" vertex="1" parent="1">
           <mxGeometry x="2086.99" y="4860" width="145.87" height="40.600000000000364" as="geometry" />
@@ -504,7 +504,7 @@
           <mxGeometry x="2058.6000000000004" y="4073" width="411.4" height="183" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-68" value="lcg_exercise_completed" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="1">
-          <mxGeometry x="2371.67" y="4443" width="140" height="30" as="geometry" />
+          <mxGeometry x="2377.02" y="4417.5" width="140" height="17" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-73" style="edgeStyle=orthogonalEdgeStyle;shape=connector;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;labelBackgroundColor=default;strokeColor=default;fontFamily=Helvetica;fontSize=11;fontColor=default;endArrow=open;endFill=0;dashed=1;endSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;curved=1;" edge="1" parent="1" source="PAYdBrqbt7uTRZZeqFU2-25" target="PAYdBrqbt7uTRZZeqFU2-23">
           <mxGeometry relative="1" as="geometry">
@@ -525,7 +525,7 @@
           <mxGeometry x="2230" y="4033" width="240" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-77" value="&lt;font style=&quot;&quot; face=&quot;Lucida Console&quot;&gt;HOST&amp;nbsp;&lt;/font&gt;&lt;font face=&quot;Lucida Console&quot;&gt;&lt;b&gt;http://jaeger.localhost/&lt;/b&gt;&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;&quot; face=&quot;Lucida Console&quot;&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;JAEGER UI&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;operations&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;dictionary-http&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;exercise-http&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;analytics-http&lt;/span&gt;&lt;/li&gt;&lt;li&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;grpc-gateway&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="1">
-          <mxGeometry x="2756.4799999999996" y="4910.6" width="533.01" height="164.4" as="geometry" />
+          <mxGeometry x="2711.4799999999996" y="4910.6" width="533.01" height="164.4" as="geometry" />
         </mxCell>
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-78" value="&lt;font style=&quot;&quot; face=&quot;Lucida Console&quot;&gt;HOST&amp;nbsp;&lt;/font&gt;&lt;font face=&quot;Lucida Console&quot;&gt;&lt;b&gt;http://swagger.localhost/&lt;/b&gt;&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;&quot; face=&quot;Lucida Console&quot;&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;SWAGGER UI&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;schemes&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;http://api.lingua-cat-go.localhost/dictionary/swagger.json&lt;/li&gt;&lt;li&gt;http://api.lingua-cat-go.localhost/dictionary/grpc-gw-swagger.json&lt;/li&gt;&lt;li&gt;http://api.lingua-cat-go.localhost/exercise/swagger.json&lt;/li&gt;&lt;li&gt;http://api.lingua-cat-go.localhost/analytics/swagger.json&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;/span&gt;&lt;/div&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="1">
           <mxGeometry x="2086.99" y="4900.6" width="533.01" height="174.4" as="geometry" />
@@ -551,8 +551,8 @@
         <mxCell id="PAYdBrqbt7uTRZZeqFU2-83" value="" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=default;fillColor=none;strokeColor=none;" vertex="1" parent="1">
           <mxGeometry x="2531.71" y="5100" width="297.47" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="PAYdBrqbt7uTRZZeqFU2-84" value="" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=default;fillColor=none;strokeColor=none;" vertex="1" parent="1">
-          <mxGeometry x="2510.75" y="2380" width="297.47" height="20" as="geometry" />
+        <mxCell id="PAYdBrqbt7uTRZZeqFU2-85" value="" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=default;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="2512.02" y="2370" width="297.47" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
