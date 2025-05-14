@@ -34,7 +34,7 @@ type Dictionary struct {
 	ID           DictionaryID   `json:"id" db:"id"`
 	DeletedAt    *time.Time     `json:"-" db:"deleted_at"`
 	Lang         DictionaryLang `json:"lang" db:"lang" validate:"required,valid_dictionary_lang"`
-	Name         string         `json:"name" db:"name" validate:"required,min=2"`
+	Name         string         `json:"name" db:"name" validate:"min=2"`
 	Type         DictionaryType `json:"type" db:"type" validate:"required,valid_dictionary_type"`
 	Translations []Translation  `json:"translations,omitempty" db:"-" validate:"dive"`
 	Sentences    []Sentence     `json:"sentences" db:"-" validate:"dive"`

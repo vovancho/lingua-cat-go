@@ -5,13 +5,13 @@ stop:
 	docker compose stop
 
 test-dictionary:
-	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary golang:1.24-alpine3.21 go test -v ./usecase
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/dictionary golang:1.24-alpine3.21 go test ./usecase
 
 test-exercise:
-	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/exercise golang:1.24-alpine3.21 go test -v ./usecase
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/exercise golang:1.24-alpine3.21 go test ./usecase
 
 test-analytics:
-	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/analytics golang:1.24-alpine3.21 go test -v ./usecase
+	docker run --rm -v .\backend:/app -v pkgmod:/go/pkg/mod -w /app/analytics golang:1.24-alpine3.21 go test ./usecase
 
 test-all: test-dictionary test-exercise test-analytics
 

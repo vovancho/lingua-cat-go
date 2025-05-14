@@ -25,7 +25,7 @@ type Exercise struct {
 	UpdatedAt        time.Time    `json:"-" db:"updated_at"`
 	UserID           auth.UserID  `json:"user_id" db:"user_id" validate:"required"`
 	Lang             ExerciseLang `json:"lang" db:"lang" validate:"required,valid_exercise_lang"`
-	TaskAmount       uint16       `json:"task_amount" db:"task_amount" validate:"required,min=1,max=100"`
+	TaskAmount       uint16       `json:"task_amount" db:"task_amount" validate:"min=1,max=100"`
 	ProcessedCounter uint16       `json:"processed_counter" db:"processed_counter"`
 	SelectedCounter  uint16       `json:"selected_counter" db:"selected_counter"`
 	CorrectedCounter uint16       `json:"corrected_counter" db:"corrected_counter"`

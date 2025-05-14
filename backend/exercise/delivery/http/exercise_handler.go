@@ -13,7 +13,7 @@ import (
 
 type ExerciseStoreRequest struct {
 	Lang       domain.ExerciseLang `json:"lang" validate:"required,valid_exercise_lang"`
-	TaskAmount uint16              `json:"task_amount" validate:"required,min=1,max=100"`
+	TaskAmount uint16              `json:"task_amount" validate:"min=1,max=100"`
 }
 
 type ExerciseData struct {

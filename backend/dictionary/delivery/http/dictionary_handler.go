@@ -12,21 +12,21 @@ import (
 
 type DictionaryStoreRequest struct {
 	Lang         domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang"`
-	Name         string                `json:"name" validate:"required,min=2"`
+	Name         string                `json:"name" validate:"min=2"`
 	Type         domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
 	Translations []struct {
 		Lang domain.DictionaryLang `json:"lang" validate:"required,valid_dictionary_lang,valid_dict_translation_lang"`
-		Name string                `json:"name" validate:"required,min=2"`
+		Name string                `json:"name" validate:"min=2"`
 		Type domain.DictionaryType `json:"type" validate:"required,valid_dictionary_type"`
-	} `json:"translations" validate:"required,min=1,dive"`
+	} `json:"translations" validate:"min=1,dive"`
 	Sentences []struct {
-		TextRU string `json:"text_ru" validate:"required,min=5"`
-		TextEN string `json:"text_en" validate:"required,min=5"`
+		TextRU string `json:"text_ru" validate:"min=5"`
+		TextEN string `json:"text_en" validate:"min=5"`
 	} `json:"sentences" validate:"dive"`
 }
 
 type DictionaryChangeNameRequest struct {
-	Name string `json:"name" validate:"required,min=2"`
+	Name string `json:"name" validate:"min=2"`
 }
 
 type DictionaryData struct {
