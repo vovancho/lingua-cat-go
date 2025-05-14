@@ -90,5 +90,5 @@ keycloak-import:
 tree:
 	docker run --rm -v .\backend:/src -w /src johnfmorton/tree-cli tree -o backend.txt -l 10
 
-ab-start:
-	docker run --rm -v .\project\ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh
+ab-test:
+	docker run --rm -v .\project\ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh --requests=100 --concurrency=10

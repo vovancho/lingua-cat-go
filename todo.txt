@@ -14,10 +14,9 @@ console command
 cache
 Заменить KEYCLOAK_ADMIN_TOKEN на долгоживущий refresh_token в backend/analytics/.env
 поправить миграцию sql загруженных слов (нет обратных переводов с ru на en)
-ждать БД до запуска сервиса
+ждать БД до запуска сервиса (wait-for-it)
 lcg-jaeger basic auth
 prometheus
-тесты
 logger
 debug
 viper
@@ -26,11 +25,7 @@ viper
 
 
 
-Refactoring
------------
-pkg
-убрать лишние папки dictionary, etc
-изменить имена файлов
+
 
 
 
