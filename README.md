@@ -220,7 +220,7 @@ GET /v1/analytics/user/{user_id}    # получить статистику по
 make init
 ```
 
-- Эта команда подымет контейнеры, импортирует конфиг keycloak, выполнит миграции.
+- Эта команда поднимет контейнеры, импортирует конфиг Keycloak, выполнит миграции.
 
 3. Открыть в браузере:
 
@@ -228,9 +228,9 @@ make init
   * **Jaeger UI**: `http://jaeger.lingua-cat-go.localhost/`
   * **Kafka UI**: `http://kafka-ui.lingua-cat-go.localhost/`
   * **Keycloak**: `http://keycloak.lingua-cat-go.localhost/` (логин/пароль по умолчанию: `admin/admin`)
-  * **Dictionary API**: `http://api.lingua-cat-go.localhost/dictionary/`
-  * **Exercise API**: `http://api.lingua-cat-go.localhost/exercise/`
-  * **Analytics API**: `http://api.lingua-cat-go.localhost/analytics/`
+  * **Dictionary API**: `http://api.lingua-cat-go.localhost/dictionary/swagger.json`
+  * **Exercise API**: `http://api.lingua-cat-go.localhost/exercise/swagger.json`
+  * **Analytics API**: `http://api.lingua-cat-go.localhost/analytics/swagger.json`
 
 4. Получить JWT и начать отправлять запросы через Traefik.
 
