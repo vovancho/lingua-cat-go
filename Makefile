@@ -1,3 +1,5 @@
+init: up keycloak-import migrations-reset-all
+
 up:
 	docker compose up -d --remove-orphans
 

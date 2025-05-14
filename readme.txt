@@ -191,7 +191,7 @@ echo '{"event":"exercise_completed","user_id":123}' |  /opt/kafka/bin/kafka-cons
 
 
 
-docker ps --format "{{.Names}}"
+docker ps --format "{{.Names}}" | sort
 
 
 ------------------------------------- Получить KEYCLOAK_ADMIN_TOKEN ----------------------------------------------------
@@ -259,6 +259,58 @@ docker run --rm -v ${PWD}/project/ab:/src -w /src --network host ricsanfre/docke
 
 
 docker run --rm -v ${PWD}/backend:/src -w /src johnfmorton/tree-cli tree -o backend.txt -l 10
+
+------------------------------------------------------------------------------------------------------------------------
+
+Описание проекта и его сервисов
+
+tree
+
+как поднять проект
+    миграции
+
+как собрать DI-контейнер
+
+grpc
+swagger
+keykcloak
+
+запуск тестов
+
+ab-test
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
