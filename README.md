@@ -221,7 +221,7 @@ make init
 
 3. Открыть в браузере:
 
-  * **Swagger UI**: `http://swagger.localhost/`
+  * **Swagger UI**: `http://swagger.lingua-cat-go.localhost/`
   * **Jaeger UI**: `http://jaeger.localhost/`
   * **Keycloak**: `http://keycloak.localhost/` (логин/пароль по умолчанию: `admin/admin`)
   * **Dictionary API**: `http://api.lingua-cat-go.localhost/dictionary/`
@@ -242,11 +242,61 @@ curl -X POST --location "http://keycloak.localhost/realms/lingua-cat-go/protocol
 
 ---
 
+## Swagger
+
+Swagger UI доступен по адресу `http://swagger.lingua-cat-go.localhost/`.
+
+![Swagger UI](project/swagger.png)
+
+В списке _"Select a definition"_ можно выбрать нужный сервис:
+- **Dictionary HTTP API**: `http://api.lingua-cat-go.localhost/dictionary/`
+- **Dictionary gRPC-Gateway API**: `http://api.lingua-cat-go.localhost/dictionary/grpc-gateway/`
+- **Exercise HTTP API**: `http://api.lingua-cat-go.localhost/exercise/`
+- **Analytics HTTP API**: `http://api.lingua-cat-go.localhost/analytics/`
+
+Для выполнения вызовов из UI необходимо указать JWT-токен в заголовке `Authorization`. Для этого необходимо получить JWT-токен доступа в добавить его через форму кнопки _"Authorize"_. В поле Value ввести `Bearer <token>` и нажать кнопку _"Authorize"_.
+
+### Генерация схем Swagger
+
+```bash
+make swagger-dictionary
+make swagger-exercise
+make swagger-analytics
+```
+
+---
+
+## Jaeger
+
+Jaeger UI доступен по адресу `http://jaeger.localhost/`.
+
+![Jaeger UI](project/jaeger.png)
+
+В Jaeger можно посмотреть распределённые трассировки запросов, которые проходят через все сервисы. Это позволяет отследить время выполнения каждого шага и проанализировать производительность.
+
+Доступны сервисы:
+- **dictionary-service**
+- **exercise-service**
+- **analytics-service**
+
+---
+
+## Миграции
+
+### Сброс миграций баз данных сервисов
+```bash
+make migrations-reset-all
+```
+
+---
+
 ## Запуск тестов
 
 ```bash
 make test-all
 ```
+
+---
 
 ## Запуск A/B теста
 
