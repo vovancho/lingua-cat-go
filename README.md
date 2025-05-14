@@ -12,47 +12,46 @@
 ```
 
 /backend
-├── analytics               # Сервис аналитики: потребляет события из Kafka и отдаёт статистику
+├── analytics                      # Сервис аналитики: потребляет события из Kafka и отдаёт статистику
 │  ├── cmd
-│  │  └── main.go           # Точка входа: запуск HTTP-сервера и Kafka-консьюмера
-│  ├── delivery             # Внешний слой
+│  │  └── main.go                  # Точка входа: запуск HTTP-сервера и Kafka-консьюмера
+│  ├── delivery                    # Внешний слой
 │  │  ├── http
 │  │  │  └── exercise_complete_handler.go  # HTTP-эндпоинты
 │  │  └── kafka
 │  │     └── exercise_complete_handler.go  # Kafka-обработчик
-│  ├── docker-compose.yml   # Конфигурация Docker
+│  ├── docker-compose.yml          # Конфигурация Docker
 │  ├── docs
-│  │  └── swagger.json      # OpenAPI-спецификация для analytics
-│  ├── domain               # Бизнес-модель
-│  │  ├── errors.go         # Определение бизнес-ошибок
-│  │  ├── exercise_complete.go  # Сущность события завершения упражнения
-│  │  ├── user.go           # Сущность пользователя и статистика
-│  │  └── validator.go      # Валидаторы доменных структур
-│  ├── go.mod               # Модуль Go для analytics
-│  ├── go.sum               # Контрольные суммы зависимостей
-│  ├── internal             # Внутренние пакеты, не экспортируются извне
-│  │  ├── config            # Чтение конфигурации
-│  │  │  └── config.go      # Структуры и загрузка из файла/окружения
-│  │  ├── validator         # Повторно используемые правила валидации
-│  │  │  └── validator.go   # Интеграция с github.com/go-playground/validator
-│  │  └── wire              # DI-конфигурация с Google Wire
-│  │     ├── wire.go        # Объявление провайдеров
-│  │     └── wire_gen.go    # Сгенерированный код инъекций
-│  ├── migrations           # SQL-миграции для ClickHouse
-│  │  ├── 20250506122921_init_schema.down.sql  # Откат схемы
-│  │  └── 20250506122921_init_schema.up.sql    # Создание таблиц статистики
-│  ├── repository           # Реализация хранилищ
-│  │  ├── clickhouse        # ClickHouse-репозиторий
-│  │  │  └── exercise_complete.go  # Запись и чтение агрегаций
-│  │  └── http              # HTTP-репозиторий (для user-данных при необходимости)
-│  │     └── user.go        # Запросы к внешним HTTP-сервисам
-│  └── usecase              # Бизнес-логика (сценарии применения)
-│     ├── exercise_complete_usecase.go  # Обработка события и сохранение статистики
-│     ├── exercise_complete_usecase_test.go  # Тесты для этого usecase
-│     ├── user_usecase.go   # Логика получения/агрегации статистики по пользователю
-│     └── user_usecase_test.go  # Тесты для user-usecase
-├── backend.txt             # Описание или документация на уровне корня (текстовый файл)
-/dictionary                # Сервис словаря: CRUD-операции со словами и переводами
+│  │  └── swagger.json             # OpenAPI-спецификация для analytics
+│  ├── domain                      # Бизнес-модель
+│  │  ├── errors.go                # Определение бизнес-ошибок
+│  │  ├── exercise_complete.go     # Интерфейсы и сущность выполненного упражнения
+│  │  ├── user.go                  # Интерфейсы и сущность пользователя
+│  │  └── validator.go             # Кастомные валидаторы доменных структур
+│  ├── go.mod
+│  ├── go.sum
+│  ├── internal                    # Внутренние пакеты
+│  │  ├── config                   # Чтение конфигурации
+│  │  │  └── config.go             # Конфигурация сервиса (из переменных окружения)
+│  │  ├── validator
+│  │  │  └── validator.go          # Интеграция кастомных валидаторов
+│  │  └── wire
+│  │     ├── wire.go               # DI-конфигурация с Google Wire
+│  │     └── wire_gen.go
+│  ├── migrations                  # SQL-миграции для ClickHouse
+│  │  ├── 20250506122921_init_schema.down.sql
+│  │  └── 20250506122921_init_schema.up.sql
+│  ├── repository                  # Реализация хранилищ
+│  │  ├── clickhouse
+│  │  │  └── exercise_complete.go  # Запись и чтение статистики по выполненным упражнениям
+│  │  └── http
+│  │     └── user.go               # Получение имени пользователя в сервисе аутентификации
+│  └── usecase                     # Бизнес-логика
+│     ├── exercise_complete_usecase.go  # Получение и сохранение статистики
+│     ├── exercise_complete_usecase_test.go  # Тесты для exercise_complete-usecase
+│     ├── user_usecase.go          # Получение имени пользователя
+│     └── user_usecase_test.go     # Тесты для user-usecase
+├── dictionary                # Сервис словаря: CRUD-операции со словами и переводами
 │  ├── cmd                  # Точка входа
 │  │  └── main.go           # Запуск HTTP и gRPC серверов
 │  ├── delivery             # Handlers для запросов
