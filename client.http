@@ -9,13 +9,13 @@
 
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/auth
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/auth
 
 ###
 
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 
@@ -34,11 +34,11 @@ grant_type=client_credentials&scope=openid&client_id=lingua-cat-go&client_secret
 # }
 
 
-# http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/auth?client_id=account-console&redirect_uri=http%3A%2F%2Fkeycloak.localhost%2Frealms%2Flingua-cat-go%2Faccount%2F&state=e23979c6-1f8d-4220-8a3c-d63becb31909&response_mode=query&response_type=code&scope=openid&nonce=904ec333-e851-40ce-a8d9-88e72d78cbcf&code_challenge=IEcIynSnvRIVJcq-45nqBfwQMSmjs7FCd-Y2Gqw35xY&code_challenge_method=S256
+# http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/auth?client_id=account-console&redirect_uri=http%3A%2F%2Fkeycloak.lingua-cat-go.localhost%2Frealms%2Flingua-cat-go%2Faccount%2F&state=e23979c6-1f8d-4220-8a3c-d63becb31909&response_mode=query&response_type=code&scope=openid&nonce=904ec333-e851-40ce-a8d9-88e72d78cbcf&code_challenge=IEcIynSnvRIVJcq-45nqBfwQMSmjs7FCd-Y2Gqw35xY&code_challenge_method=S256
 
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 
@@ -48,7 +48,7 @@ grant_type=password&scope=openid&client_id=lingua-cat-go&client_secret=lsb2JfgG7
 
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 
@@ -68,7 +68,7 @@ grant_type=client_credentials&scope=openid&client_id=lingua-cat-go-dev&client_se
 ###
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 
@@ -79,14 +79,14 @@ client_secret = OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR
 ###
 
 // @no-cookie-jar
-GET http://keycloak.localhost/admin/realms/lingua-cat-go/users/11c65e41-2496-43af-ac4c-daa898c24664
+GET http://keycloak.lingua-cat-go.localhost/admin/realms/lingua-cat-go/users/11c65e41-2496-43af-ac4c-daa898c24664
 Accept: application/json
 Authorization: Bearer {{admin_token}}
 
 ###
 
 // @no-cookie-jar
-POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 Accept: application/json
 

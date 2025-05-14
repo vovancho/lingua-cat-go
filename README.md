@@ -222,8 +222,9 @@ make init
 3. Открыть в браузере:
 
   * **Swagger UI**: `http://swagger.lingua-cat-go.localhost/`
-  * **Jaeger UI**: `http://jaeger.localhost/`
-  * **Keycloak**: `http://keycloak.localhost/` (логин/пароль по умолчанию: `admin/admin`)
+  * **Jaeger UI**: `http://jaeger.lingua-cat-go.localhost/`
+  * **Kafka UI**: `http://kafka-ui.lingua-cat-go.localhost/`
+  * **Keycloak**: `http://keycloak.lingua-cat-go.localhost/` (логин/пароль по умолчанию: `admin/admin`)
   * **Dictionary API**: `http://api.lingua-cat-go.localhost/dictionary/`
   * **Exercise API**: `http://api.lingua-cat-go.localhost/exercise/`
   * **Analytics API**: `http://api.lingua-cat-go.localhost/analytics/`
@@ -232,7 +233,7 @@ make init
 
 Получение JWT-токена для встроенного dummy-user:
 ```bash
-curl -X POST --location "http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token" \
+curl -X POST --location "http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -H "Accept: application/json" \
     -d 'grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ&username=dummy-user&password=password'
@@ -268,7 +269,7 @@ make swagger-analytics
 
 ## Jaeger
 
-Jaeger UI доступен по адресу `http://jaeger.localhost/`.
+Jaeger UI доступен по адресу `http://jaeger.lingua-cat-go.localhost/`.
 
 ![Jaeger UI](project/jaeger.png)
 

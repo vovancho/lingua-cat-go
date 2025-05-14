@@ -4,7 +4,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.jaeger.entrypoints=web
-      - traefik.http.routers.jaeger.rule=Host(`jaeger.localhost`)
+      - traefik.http.routers.jaeger.rule=Host(`jaeger.lingua-cat-go.localhost`)
 #      - traefik.http.routers.jaeger.middlewares=jaeger-auth
       - traefik.http.services.jaeger.loadbalancer.server.port=16686
       - traefik.http.middlewares.jaeger-auth.basicauth.usersfile=/run/secrets/jaeger_ui_password

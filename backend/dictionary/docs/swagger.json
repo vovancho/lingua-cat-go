@@ -213,7 +213,6 @@
             "type": "object",
             "required": [
                 "lang",
-                "name",
                 "type"
             ],
             "properties": {
@@ -272,10 +271,6 @@
         },
         "domain.Sentence": {
             "type": "object",
-            "required": [
-                "text_en",
-                "text_ru"
-            ],
             "properties": {
                 "text_en": {
                     "type": "string",
@@ -297,9 +292,6 @@
         },
         "http.DictionaryChangeNameRequest": {
             "type": "object",
-            "required": [
-                "name"
-            ],
             "properties": {
                 "name": {
                     "type": "string",
@@ -319,8 +311,6 @@
             "type": "object",
             "required": [
                 "lang",
-                "name",
-                "translations",
                 "type"
             ],
             "properties": {
@@ -335,10 +325,6 @@
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": [
-                            "text_en",
-                            "text_ru"
-                        ],
                         "properties": {
                             "text_en": {
                                 "type": "string",
@@ -358,7 +344,6 @@
                         "type": "object",
                         "required": [
                             "lang",
-                            "name",
                             "type"
                         ],
                         "properties": {
@@ -395,7 +380,7 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
+            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

@@ -375,7 +375,6 @@
             "type": "object",
             "required": [
                 "lang",
-                "task_amount",
                 "user_id"
             ],
             "properties": {
@@ -468,8 +467,7 @@
         "http.ExerciseStoreRequest": {
             "type": "object",
             "required": [
-                "lang",
-                "task_amount"
+                "lang"
             ],
             "properties": {
                 "lang": {
@@ -516,7 +514,7 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
+            "description": "Для авторизации используйте Bearer токен, полученный от Keycloak:\n1. Получите access_token:\ncurl -X POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H \"Content-Type: application/x-www-form-urlencoded\" -d 'grant_type=password\u0026scope=openid\u0026client_id=lingua-cat-go-dev\u0026client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ\u0026username=username\u0026password=password'\n2. Используйте access_token в заголовке Authorization: Bearer \u003ctoken\u003e",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

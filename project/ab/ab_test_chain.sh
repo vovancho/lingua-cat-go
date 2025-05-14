@@ -7,7 +7,7 @@ set -euo pipefail
 # Значения по умолчанию
 REQUESTS=100
 CONCURRENCY=10
-KEYCLOAK_URL="http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token"
+KEYCLOAK_URL="http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token"
 CLIENT_ID="lingua-cat-go-dev"
 CLIENT_SECRET="GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ"
 USERNAME="dummy-user"

@@ -22,7 +22,7 @@ import (
 // @name Authorization
 // @description Для авторизации используйте Bearer токен, полученный от Keycloak:
 // @description 1. Получите access_token:
-// @description    curl -X POST http://keycloak.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d 'grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ&username=username&password=password'
+// @description    curl -X POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token -H "Content-Type: application/x-www-form-urlencoded" -d 'grant_type=password&scope=openid&client_id=lingua-cat-go-dev&client_secret=GatPbS9gsEfplvCpiNitwBdmIRc0QqyQ&username=username&password=password'
 // @description 2. Используйте access_token в заголовке Authorization: Bearer <token>
 func main() {
 	// Инициализация приложения с помощью Wire
