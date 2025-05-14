@@ -6,7 +6,6 @@ include:
     - backend/dictionary/docker-compose.yml
     - backend/exercise/docker-compose.yml
     - backend/analytics/docker-compose.yml
-#    - backend/api/docker-compose.yml
 
 services:
     lcg-traefik:
