@@ -4,6 +4,8 @@
 
 Система состоит из API Gateway (Traefik), сервиса аутентификации (Keycloak), трёх основных микросервисов (Dictionary, Exercise, Analytics), а также Kafka для асинхронной передачи событий и ClickHouse для аналитики.
 
+Код микросервисов придерживается Clean-Architecture, каждый микросервис имеет свою бизнес-модель (domain), бизнес-логику (usecase) и внешний слой (delivery).
+
 ![Architecture Diagram](project/scheme.png)
 
 ---
