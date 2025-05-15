@@ -867,7 +867,7 @@
     "frontchannelLogout" : true,
     "protocol" : "openid-connect",
     "attributes" : {
-      "access.token.lifespan" : "31536000",
+      "access.token.lifespan" : "315360000",
       "client.secret.creation.time" : "1743046663",
       "client.introspection.response.allow.jwt.claim.enabled" : "false",
       "post.logout.redirect.uris" : "+",
@@ -881,12 +881,14 @@
       "client.use.lightweight.access.token.enabled" : "false",
       "backchannel.logout.session.required" : "true",
       "client_credentials.use_refresh_token" : "false",
+      "client.offline.session.idle.timeout" : "315360000",
       "tls.client.certificate.bound.access.tokens" : "false",
       "require.pushed.authorization.requests" : "false",
       "acr.loa.map" : "{}",
       "display.on.consent.screen" : "false",
-      "token.response.type.bearer.lower-case" : "false",
-      "client.session.idle.timeout" : "31536000"
+      "client.session.max.lifespan" : "315360000",
+      "client.session.idle.timeout" : "315360000",
+      "token.response.type.bearer.lower-case" : "false"
     },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : true,
@@ -937,8 +939,8 @@
         "jsonType.label" : "String"
       }
     } ],
-    "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "basic", "email" ],
-    "optionalClientScopes" : [ "address", "phone", "organization", "offline_access", "microprofile-jwt" ],
+    "defaultClientScopes" : [ "web-origins", "acr", "offline_access", "roles", "profile", "basic", "email" ],
+    "optionalClientScopes" : [ "address", "phone", "organization", "microprofile-jwt" ],
     "authorizationSettings" : {
       "allowRemoteResourceManagement" : true,
       "policyEnforcementMode" : "ENFORCING",
