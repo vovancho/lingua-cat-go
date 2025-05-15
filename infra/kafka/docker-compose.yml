@@ -12,7 +12,7 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@lcg-kafka:19091
       KAFKA_LOG_DIRS: /var/lib/kafka/data
     healthcheck:
-      test: [ "CMD-SHELL", "/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server lcg-kafka:9092 || exit 1" ]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server lcg-kafka:9092 >/dev/null 2>&1 || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
