@@ -134,6 +134,7 @@
 │  ├── db                          # Инициализация и доступ к базе данных
 │  ├── error                       # Утилиты для работы с ошибками
 │  ├── eventpublisher              # Публикация событий (Outbox, Kafka)
+│  ├── keycloak                    # Интеграция с Keycloak
 │  ├── request                     # Утилиты парсинга HTTP-запросов
 │  ├── response                    # Формирование HTTP-ответов и middleware
 │  │  ├── middleware.go            # middleware для обработки паник

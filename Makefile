@@ -95,3 +95,6 @@ tree:
 
 ab-test:
 	docker run --rm -v .\project\ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh --requests=100 --concurrency=10
+
+ab-test-1:
+	docker run --rm -v .\project\ab:/src -w /src --network host ricsanfre/docker-curl-jq /src/ab_test_chain.sh --requests=1 --concurrency=1

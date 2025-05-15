@@ -17,7 +17,6 @@ type AnalyticsData struct {
 type exerciseCompleteHandler struct {
 	responder               response.Responder
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase
-	userUseCase             domain.UserUseCase
 	auth                    *auth.AuthService
 }
 
@@ -25,18 +24,15 @@ func NewExerciseCompleteHandler(
 	router *http.ServeMux,
 	responder response.Responder,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
-	userUseCase domain.UserUseCase,
 	auth *auth.AuthService,
 ) {
 	handler := &exerciseCompleteHandler{
 		responder:               responder,
 		exerciseCompleteUseCase: exerciseCompleteUseCase,
-		userUseCase:             userUseCase,
 		auth:                    auth,
 	}
 
 	router.HandleFunc("GET /v1/analytics/user/{id}", request.WithUserID(handler.GetByUserID))
-	router.HandleFunc("GET /v1/analytics/user/test/{id}", request.WithUserID(handler.GetByUserIDTest))
 }
 
 // GetByUserID godoc
@@ -59,19 +55,5 @@ func (h *exerciseCompleteHandler) GetByUserID(w http.ResponseWriter, r *http.Req
 
 	h.responder.Success(w, http.StatusOK, map[string]any{
 		"analytics": exerciseCompleteList,
-	})
-}
-
-func (h *exerciseCompleteHandler) GetByUserIDTest(w http.ResponseWriter, r *http.Request, id auth.UserID) {
-	user, err := h.userUseCase.GetByID(r.Context(), id)
-	if err != nil {
-		appError := _internalError.NewAppError(http.StatusNotFound, "Пользователь не найден", err)
-		h.responder.Error(w, appError)
-
-		return
-	}
-
-	h.responder.Success(w, http.StatusOK, map[string]any{
-		"user": user,
 	})
 }

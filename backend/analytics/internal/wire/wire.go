@@ -160,11 +160,10 @@ func newHTTPServer(
 	cfg *config.Config,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
-	userUseCase domain.UserUseCase,
 	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, userUseCase, authService)
+	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
 
 	handler := authService.AuthMiddleware(router)
 	handler = response.ErrorMiddleware(handler)

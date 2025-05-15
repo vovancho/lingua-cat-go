@@ -63,12 +63,8 @@ func InitializeApp() (*App, error) {
 	}
 	validate := ProvideInternalValidator(utTranslator)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate)
-	client := ProvideUserHttpClient()
-	adminClient := ProvideKeycloakAdminClient(configConfig, client)
-	userRepository := http.NewUserRepository(adminClient)
-	userUseCase := usecase.NewUserUseCase(userRepository)
 	responder := response.NewResponder(utTranslator)
-	server := newHTTPServer(configConfig, authService, exerciseCompleteUseCase, userUseCase, responder)
+	server := newHTTPServer(configConfig, authService, exerciseCompleteUseCase, responder)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
 	if err != nil {
@@ -78,6 +74,10 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	client := ProvideUserHttpClient()
+	adminClient := ProvideKeycloakAdminClient(configConfig, client)
+	userRepository := http.NewUserRepository(adminClient)
+	userUseCase := usecase.NewUserUseCase(userRepository)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(exerciseCompleteUseCase, userUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
@@ -161,11 +161,10 @@ func newHTTPServer(
 	cfg *config.Config,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
-	userUseCase domain.UserUseCase,
 	responder response.Responder,
 ) *http2.Server {
 	router := http2.NewServeMux()
-	http3.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, userUseCase, authService)
+	http3.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
 
 	handler := authService.AuthMiddleware(router)
 	handler = response.ErrorMiddleware(handler)
