@@ -1,6 +1,6 @@
 module github.com/vovancho/lingua-cat-go/analytics
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0
@@ -16,6 +16,7 @@ require (
 	github.com/vovancho/lingua-cat-go/pkg/auth v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/db v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/error v0.0.0
+	github.com/vovancho/lingua-cat-go/pkg/keycloak v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/request v0.0.0-00010101000000-000000000000
 	github.com/vovancho/lingua-cat-go/pkg/response v0.0.0
 	github.com/vovancho/lingua-cat-go/pkg/tracing v0.0.0-00010101000000-000000000000
@@ -30,6 +31,7 @@ replace (
 	github.com/vovancho/lingua-cat-go/pkg/auth => ../pkg/auth
 	github.com/vovancho/lingua-cat-go/pkg/db => ../pkg/db
 	github.com/vovancho/lingua-cat-go/pkg/error => ../pkg/error
+	github.com/vovancho/lingua-cat-go/pkg/keycloak => ../pkg/keycloak
 	github.com/vovancho/lingua-cat-go/pkg/request => ../pkg/request
 	github.com/vovancho/lingua-cat-go/pkg/response => ../pkg/response
 	github.com/vovancho/lingua-cat-go/pkg/tracing => ../pkg/tracing

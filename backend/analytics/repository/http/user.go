@@ -2,19 +2,13 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/vovancho/lingua-cat-go/analytics/domain"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
+	"github.com/vovancho/lingua-cat-go/pkg/keycloak"
 )
-
-type keycloakUser struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-}
 
 type Config struct {
 	AdminRealmEndpoint string
@@ -22,52 +16,24 @@ type Config struct {
 }
 
 type userRepository struct {
-	config Config
-	client *http.Client
+	client *keycloak.AdminClient
 }
 
-func NewUserRepository(config Config, client *http.Client) domain.UserRepository {
+func NewUserRepository(client *keycloak.AdminClient) domain.UserRepository {
 	return &userRepository{
-		config: config,
 		client: client,
 	}
 }
 
 func (r userRepository) GetByID(ctx context.Context, userId auth.UserID) (*domain.User, error) {
-	url := fmt.Sprintf("%susers/%s", r.config.AdminRealmEndpoint, uuid.UUID(userId).String())
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	keycloakUser, err := r.client.GetUser(ctx, uuid.UUID(userId).String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+r.config.AdminToken)
-
-	resp, err := r.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, domain.UserNotFoundError
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get user: status %d", resp.StatusCode)
-	}
-
-	var ku keycloakUser
-	if err := json.NewDecoder(resp.Body).Decode(&ku); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	parsedID, err := uuid.Parse(ku.ID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	user := &domain.User{
-		ID:       auth.UserID(parsedID),
-		Username: ku.Username,
+		ID:       auth.UserID(keycloakUser.ID),
+		Username: keycloakUser.Username,
 	}
 
 	return user, nil

@@ -79,6 +79,19 @@ client_secret = OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR
 ###
 
 // @no-cookie-jar
+POST http://keycloak.lingua-cat-go.localhost/realms/lingua-cat-go/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+grant_type = refresh_token &
+scope = openid &
+client_id = lingua-cat-go-admin &
+client_secret = OZhDEZkDUVcDCrkhgAERGrUITRQ1LhiR &
+refresh_token = eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkOWEwYzljNC1kMTM4LTRmZWQtOTU5NC05MmY0M2IwYWIyODQifQ.eyJpYXQiOjE3NDczMDg0OTUsImp0aSI6IjdjMjE2YWQ2LTM4NDktNDUwZC1iNzExLWFhMGNlNWE0ODE4NyIsImlzcyI6Imh0dHA6Ly9rZXljbG9hay5saW5ndWEtY2F0LWdvLmxvY2FsaG9zdC9yZWFsbXMvbGluZ3VhLWNhdC1nbyIsImF1ZCI6Imh0dHA6Ly9rZXljbG9hay5saW5ndWEtY2F0LWdvLmxvY2FsaG9zdC9yZWFsbXMvbGluZ3VhLWNhdC1nbyIsInR5cCI6Ik9mZmxpbmUiLCJhenAiOiJsaW5ndWEtY2F0LWdvLWFkbWluIiwic2lkIjoiOGRiNjBhNjgtOTBhYy00MjFjLTllYTctY2UzNTAwZTRiNGRlIiwic2NvcGUiOiJ3ZWItb3JpZ2lucyBhY3Igcm9sZXMgcHJvZmlsZSBiYXNpYyBlbWFpbCBvZmZsaW5lX2FjY2VzcyJ9.vxG_tqT83-p-_wbnyaarcv0CzF95DzCviz8ECdA6uSoA9MbzcPi73AvwOHxqZGtzmq6uv6zJLhiHYrdi13A_RQ
+
+###
+
+// @no-cookie-jar
 GET http://keycloak.lingua-cat-go.localhost/admin/realms/lingua-cat-go/users/11c65e41-2496-43af-ac4c-daa898c24664
 Accept: application/json
 Authorization: Bearer {{admin_token}}
@@ -251,6 +264,14 @@ Authorization: Bearer {{token}}
 
 // @no-cookie-jar
 GET http://api.lingua-cat-go.localhost/analytics/v1/analytics/user/11c65e41-2496-43af-ac4c-daa898c24664
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+// @no-cookie-jar
+GET http://api.lingua-cat-go.localhost/analytics/v1/analytics/user/test/11c65e41-2496-43af-ac4c-daa898c24664
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}

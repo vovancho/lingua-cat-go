@@ -25,6 +25,7 @@ import (
 	usecase "github.com/vovancho/lingua-cat-go/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/keycloak"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
@@ -85,12 +86,10 @@ func InitializeApp() (*App, error) {
 		ProvidePublicKeyPath,
 		auth.NewAuthService,
 
-		// Keycloak
-		ProvideKeycloakConfig,
-
 		// Репозиторий
 		clickhouse.NewExerciseCompleteRepository,
 		ProvideUserHttpClient,
+		ProvideKeycloakAdminClient,
 		_httpRepo.NewUserRepository,
 
 		// Use case
@@ -161,10 +160,11 @@ func newHTTPServer(
 	cfg *config.Config,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	userUseCase domain.UserUseCase,
 	responder response.Responder,
 ) *http.Server {
 	router := http.NewServeMux()
-	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
+	_internalHttp.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, userUseCase, authService)
 
 	handler := authService.AuthMiddleware(router)
 	handler = response.ErrorMiddleware(handler)
@@ -205,17 +205,23 @@ func ProvideMessages(cfg *config.Config, subscriber *kafka.Subscriber) (<-chan *
 	return subscriber.Subscribe(ctx, cfg.KafkaExerciseCompletedTopic)
 }
 
-// ProvideKeycloakConfig создает конфигурацию для Keycloak из общей конфигурации
-func ProvideKeycloakConfig(cfg *config.Config) _httpRepo.Config {
-	return _httpRepo.Config{
-		AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
-		AdminToken:         cfg.KeycloakAdminToken,
-	}
-}
-
 // ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
 func ProvideUserHttpClient() *http.Client {
 	return &http.Client{
 		Transport: otelhttp.NewTransport(http.DefaultTransport),
 	}
+}
+
+// ProvideKeycloakAdminClient создает Keycloak AdminClient
+func ProvideKeycloakAdminClient(cfg *config.Config, client *http.Client) *keycloak.AdminClient {
+	return keycloak.NewAdminClient(
+		keycloak.AdminClientConfig{
+			TokenEndpoint:      cfg.KeycloakAdminTokenEndpoint,
+			AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
+			ClientID:           cfg.KeycloakAdminClientID,
+			ClientSecret:       cfg.KeycloakAdminClientSecret,
+			RefreshToken:       cfg.KeycloakAdminRefreshToken,
+		},
+		client,
+	)
 }

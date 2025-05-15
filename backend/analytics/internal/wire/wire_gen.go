@@ -24,6 +24,7 @@ import (
 	"github.com/vovancho/lingua-cat-go/analytics/usecase"
 	"github.com/vovancho/lingua-cat-go/pkg/auth"
 	"github.com/vovancho/lingua-cat-go/pkg/db"
+	"github.com/vovancho/lingua-cat-go/pkg/keycloak"
 	"github.com/vovancho/lingua-cat-go/pkg/response"
 	"github.com/vovancho/lingua-cat-go/pkg/tracing"
 	"github.com/vovancho/lingua-cat-go/pkg/translator"
@@ -62,8 +63,12 @@ func InitializeApp() (*App, error) {
 	}
 	validate := ProvideInternalValidator(utTranslator)
 	exerciseCompleteUseCase := usecase.NewExerciseCompleteUseCase(exerciseCompleteRepository, validate)
+	client := ProvideUserHttpClient()
+	adminClient := ProvideKeycloakAdminClient(configConfig, client)
+	userRepository := http.NewUserRepository(adminClient)
+	userUseCase := usecase.NewUserUseCase(userRepository)
 	responder := response.NewResponder(utTranslator)
-	server := newHTTPServer(configConfig, authService, exerciseCompleteUseCase, responder)
+	server := newHTTPServer(configConfig, authService, exerciseCompleteUseCase, userUseCase, responder)
 	loggerAdapter := ProvideLogger()
 	subscriber, err := ProvideSubscriber(configConfig, loggerAdapter)
 	if err != nil {
@@ -73,10 +78,6 @@ func InitializeApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpConfig := ProvideKeycloakConfig(configConfig)
-	client := ProvideUserHttpClient()
-	userRepository := http.NewUserRepository(httpConfig, client)
-	userUseCase := usecase.NewUserUseCase(userRepository)
 	exerciseCompleteHandler := kafka.NewExerciseCompleteHandler(exerciseCompleteUseCase, userUseCase)
 	serviceName := ProvideTracingServiceName(configConfig)
 	endpoint := ProvideTracingEndpoint(configConfig)
@@ -160,10 +161,11 @@ func newHTTPServer(
 	cfg *config.Config,
 	authService *auth.AuthService,
 	exerciseCompleteUseCase domain.ExerciseCompleteUseCase,
+	userUseCase domain.UserUseCase,
 	responder response.Responder,
 ) *http2.Server {
 	router := http2.NewServeMux()
-	http3.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, authService)
+	http3.NewExerciseCompleteHandler(router, responder, exerciseCompleteUseCase, userUseCase, authService)
 
 	handler := authService.AuthMiddleware(router)
 	handler = response.ErrorMiddleware(handler)
@@ -202,17 +204,21 @@ func ProvideMessages(cfg *config.Config, subscriber *kafka2.Subscriber) (<-chan 
 	return subscriber.Subscribe(ctx, cfg.KafkaExerciseCompletedTopic)
 }
 
-// ProvideKeycloakConfig создает конфигурацию для Keycloak из общей конфигурации
-func ProvideKeycloakConfig(cfg *config.Config) http.Config {
-	return http.Config{
-		AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
-		AdminToken:         cfg.KeycloakAdminToken,
-	}
-}
-
 // ProvideUserHttpClient создает HTTP-клиент для httpUserRepository
 func ProvideUserHttpClient() *http2.Client {
 	return &http2.Client{
 		Transport: otelhttp.NewTransport(http2.DefaultTransport),
 	}
+}
+
+// ProvideKeycloakAdminClient создает Keycloak AdminClient
+func ProvideKeycloakAdminClient(cfg *config.Config, client *http2.Client) *keycloak.AdminClient {
+	return keycloak.NewAdminClient(keycloak.AdminClientConfig{
+		TokenEndpoint:      cfg.KeycloakAdminTokenEndpoint,
+		AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
+		ClientID:           cfg.KeycloakAdminClientID,
+		ClientSecret:       cfg.KeycloakAdminClientSecret,
+		RefreshToken:       cfg.KeycloakAdminRefreshToken,
+	}, client,
+	)
 }

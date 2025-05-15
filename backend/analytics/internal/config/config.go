@@ -20,8 +20,11 @@ type Config struct {
 	KafkaBroker                 string
 	KafkaExerciseCompletedTopic string
 	KafkaExerciseCompletedGroup string
+	KeycloakAdminTokenEndpoint  string
 	KeycloakAdminRealmEndpoint  string
-	KeycloakAdminToken          string
+	KeycloakAdminClientID       string
+	KeycloakAdminClientSecret   string
+	KeycloakAdminRefreshToken   string
 	JaegerCollectorEndpoint     string
 	Timeout                     time.Duration
 }
@@ -44,8 +47,11 @@ func Load() (*Config, error) {
 		KafkaBroker:                 os.Getenv("KAFKA_BROKER"),
 		KafkaExerciseCompletedTopic: os.Getenv("KAFKA_EXERCISE_COMPLETED_TOPIC"),
 		KafkaExerciseCompletedGroup: os.Getenv("KAFKA_EXERCISE_COMPLETED_GROUP"),
+		KeycloakAdminTokenEndpoint:  os.Getenv("KEYCLOAK_TOKEN_ENDPOINT"),
 		KeycloakAdminRealmEndpoint:  os.Getenv("KEYCLOAK_ADMIN_REALM_ENDPOINT"),
-		KeycloakAdminToken:          os.Getenv("KEYCLOAK_ADMIN_TOKEN"),
+		KeycloakAdminClientID:       os.Getenv("KEYCLOAK_ADMIN_CLIENT_ID"),
+		KeycloakAdminClientSecret:   os.Getenv("KEYCLOAK_ADMIN_CLIENT_SECRET"),
+		KeycloakAdminRefreshToken:   os.Getenv("KEYCLOAK_ADMIN_REFRESH_TOKEN"),
 		JaegerCollectorEndpoint:     os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
 		Timeout:                     time.Duration(timeout) * time.Second,
 	}
