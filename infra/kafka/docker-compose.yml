@@ -10,6 +10,7 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:19091
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://lcg-kafka:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@lcg-kafka:19091
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_LOG_DIRS: /var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server lcg-kafka:9092 >/dev/null 2>&1 || exit 1"]
@@ -22,7 +23,8 @@ services:
   lcg-kafka-init:
     image: apache/kafka:3.7.2
     depends_on:
-      - lcg-kafka
+      lcg-kafka:
+        condition: service_healthy
     command: >
       bash -c "
       until /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server lcg-kafka:9092; do

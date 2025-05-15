@@ -20,9 +20,12 @@ services:
             - traefik.http.services.lcg-exercise-backend.loadbalancer.server.port=80
         command: sh -c "go build -o /tmp/main cmd/main.go && exec /tmp/main"
         depends_on:
-            - lcg-exercise-db
-            - lcg-kafka
-            - lcg-jaeger
+            lcg-kafka:
+                condition: service_healthy
+            lcg-exercise-db:
+                condition: service_healthy
+            lcg-jaeger:
+                condition: service_started
 
     lcg-exercise-db:
         image: postgres:17.2-alpine
