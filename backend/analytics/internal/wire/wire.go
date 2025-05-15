@@ -220,7 +220,6 @@ func ProvideKeycloakAdminClient(cfg *config.Config, client *http.Client) *keyclo
 			AdminRealmEndpoint: cfg.KeycloakAdminRealmEndpoint,
 			ClientID:           cfg.KeycloakAdminClientID,
 			ClientSecret:       cfg.KeycloakAdminClientSecret,
-			RefreshToken:       cfg.KeycloakAdminRefreshToken,
 		},
 		client,
 	)

@@ -24,7 +24,6 @@ type Config struct {
 	KeycloakAdminRealmEndpoint  string
 	KeycloakAdminClientID       string
 	KeycloakAdminClientSecret   string
-	KeycloakAdminRefreshToken   string
 	JaegerCollectorEndpoint     string
 	Timeout                     time.Duration
 }
@@ -51,7 +50,6 @@ func Load() (*Config, error) {
 		KeycloakAdminRealmEndpoint:  os.Getenv("KEYCLOAK_ADMIN_REALM_ENDPOINT"),
 		KeycloakAdminClientID:       os.Getenv("KEYCLOAK_ADMIN_CLIENT_ID"),
 		KeycloakAdminClientSecret:   os.Getenv("KEYCLOAK_ADMIN_CLIENT_SECRET"),
-		KeycloakAdminRefreshToken:   os.Getenv("KEYCLOAK_ADMIN_REFRESH_TOKEN"),
 		JaegerCollectorEndpoint:     os.Getenv("JAEGER_COLLECTOR_ENDPOINT"),
 		Timeout:                     time.Duration(timeout) * time.Second,
 	}

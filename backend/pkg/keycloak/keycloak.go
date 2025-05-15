@@ -22,7 +22,6 @@ type AdminClientConfig struct {
 	AdminRealmEndpoint string // Эндпойнт для работы с пользователями
 	ClientID           string // Идентификатор клиента
 	ClientSecret       string // Секрет клиента
-	RefreshToken       string // Долгоживущий refresh-токен
 }
 
 type AdminClient struct {
@@ -70,7 +69,7 @@ func (c *AdminClient) GetUser(ctx context.Context, userID string) (*User, error)
 
 		// Если токен истек, обновляем его и повторяем запрос
 		if resp.StatusCode == http.StatusUnauthorized {
-			if err := c.refreshToken(); err != nil {
+			if err := c.getNewToken(); err != nil {
 				return nil, fmt.Errorf("ошибка обновления токена: %w", err)
 			}
 			continue
@@ -94,21 +93,19 @@ func (c *AdminClient) GetUser(ctx context.Context, userID string) (*User, error)
 }
 
 type tokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken string `json:"access_token"`
 }
 
-// refreshToken обновляет access_token с использованием refresh_token
-func (c *AdminClient) refreshToken() error {
+// getNewToken обновляет access_token с использованием grant_type=client_credentials
+func (c *AdminClient) getNewToken() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Формируем данные для запроса
 	data := url.Values{}
-	data.Set("grant_type", "refresh_token")
+	data.Set("grant_type", "client_credentials")
 	data.Set("client_id", c.config.ClientID)
 	data.Set("client_secret", c.config.ClientSecret)
-	data.Set("refresh_token", c.config.RefreshToken)
 
 	// Создаем запрос на обновление токена
 	req, err := http.NewRequest("POST", c.config.TokenEndpoint, strings.NewReader(data.Encode()))
