@@ -11,6 +11,11 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://lcg-kafka:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@lcg-kafka:19091
       KAFKA_LOG_DIRS: /var/lib/kafka/data
+    healthcheck:
+      test: [ "CMD-SHELL", "/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server lcg-kafka:9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # инициализируем топик lcg_exercise_topic
   lcg-kafka-init:

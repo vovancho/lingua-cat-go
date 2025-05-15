@@ -1,10 +1,15 @@
 services:
-    lcg-keycloak-postgresql:
+    lcg-keycloak-db:
         image: postgres:17.2-alpine
         environment:
             POSTGRES_USER: keycloak
             POSTGRES_PASSWORD_FILE: /run/secrets/keycloak_db_password
             POSTGRES_DB: keycloak
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U keycloak" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
         volumes:
             - keycloak-postgres:/var/lib/postgresql/data
         secrets:
@@ -14,12 +19,12 @@ services:
             - traefik.http.routers.keycloak-postgres.rule=Host(`keycloak-postgres.localhost`)
             - traefik.http.routers.keycloak-postgres.entryPoints=web
             - traefik.http.services.keycloak-postgres.loadbalancer.server.port=5432
-            
+
     lcg-keycloak:
         image: quay.io/keycloak/keycloak:26.0
         environment:
             KC_DB: postgres
-            KC_DB_URL_HOST: lcg-keycloak-postgresql
+            KC_DB_URL_HOST: lcg-keycloak-db
             KC_DB_URL_DATABASE: keycloak
             KC_DB_USERNAME: keycloak
             KC_DB_PASSWORD: secret
@@ -30,7 +35,7 @@ services:
         volumes:
             - ./keycloak-export:/tmp/keycloak-export
         depends_on:
-            - lcg-keycloak-postgresql
+            - lcg-keycloak-db
         command: start-dev
         labels:
             - traefik.enable=true

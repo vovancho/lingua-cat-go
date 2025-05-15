@@ -27,3 +27,7 @@ services:
             - traefik.http.routers.lcg-swagger-ui.entrypoints=web
             - traefik.http.routers.lcg-swagger-ui.rule=Host(`swagger.lingua-cat-go.localhost`)
             - traefik.http.services.lcg-swagger-ui.loadbalancer.server.port=8080
+        depends_on:
+            - lcg-dictionary-backend
+            - lcg-exercise-backend
+            - lcg-analytics-backend

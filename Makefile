@@ -31,6 +31,9 @@ wire-all: wire-dictionary wire-exercise wire-analytics
 logs:
 	docker compose logs -f lcg-dictionary-backend lcg-exercise-backend lcg-analytics-backend
 
+list:
+	powershell -Command "$$c = docker compose ps --format '{{.Names}}' | Sort-Object; $$c; 'Total: ' + $$c.Count"
+
 restart-dictionary:
 	docker compose restart lcg-dictionary-backend
 

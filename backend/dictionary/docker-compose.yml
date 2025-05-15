@@ -25,6 +25,7 @@ services:
         command: sh -c "go build -o /tmp/main cmd/main.go && exec /tmp/main"
         depends_on:
             - lcg-dictionary-db
+            - lcg-jaeger
 
     lcg-dictionary-db:
         image: postgres:17.2-alpine
@@ -32,6 +33,11 @@ services:
             POSTGRES_USER: dictionary
             POSTGRES_PASSWORD_FILE: /run/secrets/dictionary_db_password
             POSTGRES_DB: dictionary
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U dictionary" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
         volumes:
             - dictionary-db:/var/lib/postgresql/data
         secrets:
