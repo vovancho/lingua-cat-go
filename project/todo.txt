@@ -12,9 +12,6 @@ inbox pattern
 consul
 console command
 cache
-Заменить KEYCLOAK_ADMIN_TOKEN на долгоживущий refresh_token в backend/analytics/.env
-поправить миграцию sql загруженных слов (нет обратных переводов с ru на en)
-ждать БД до запуска сервиса (wait-for-it)
 lcg-jaeger basic auth
 prometheus
 logger
