@@ -18,6 +18,12 @@ services:
             - traefik.http.routers.lcg-exercise-backend.middlewares=strip-exercise-prefix,cors
             - traefik.http.middlewares.strip-exercise-prefix.stripprefix.prefixes=/exercise
             - traefik.http.services.lcg-exercise-backend.loadbalancer.server.port=80
+            # delve debug
+        #     - traefik.tcp.routers.lcg-exercise-backend-debug.entrypoints=web-debug
+        #     - traefik.tcp.routers.lcg-exercise-backend-debug.service=lcg-exercise-backend-debug
+        #     - traefik.tcp.routers.lcg-exercise-backend-debug.rule=HostSNI(`*`)
+        #     - traefik.tcp.services.lcg-exercise-backend-debug.loadbalancer.server.port=2345
+        # command: sh -c "go install github.com/go-delve/delve/cmd/dlv@v1.24 && go build -o /tmp/main -gcflags 'all=-N -l' cmd/main.go && dlv --listen=0.0.0.0:2345 --headless --api-version=2 --continue --accept-multiclient exec /tmp/main"
         command: sh -c "go build -o /tmp/main cmd/main.go && exec /tmp/main"
         depends_on:
             lcg-kafka:

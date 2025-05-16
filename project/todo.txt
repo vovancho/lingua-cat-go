@@ -15,7 +15,6 @@ cache
 lcg-jaeger basic auth
 prometheus
 logger
-debug
 viper
 
 
